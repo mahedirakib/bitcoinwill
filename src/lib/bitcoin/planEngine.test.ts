@@ -7,7 +7,7 @@ describe('PlanEngine', () => {
     network: 'testnet',
     inheritance_type: 'timelock_recovery',
     owner_pubkey: '02e9634f19b165239105436a5c17e3371901c5651581452a329978747474747474', // Mock valid pubkey
-    beneficiary_pubkey: '03a634f19b165239105436a5c17e3371901c5651581452a329978747474747474',
+    beneficiary_pubkey: '03a634f19b165239105436a5c17e3371901c5651581452a329978747474747474f',
     locktime_blocks: 1000,
   };
 
@@ -28,7 +28,7 @@ describe('PlanEngine', () => {
 
   it('throws error on invalid locktime', () => {
     const badInput = { ...sampleInput, locktime_blocks: 0 };
-    expect(() => buildPlan(badInput)).toThrow('Locktime must be between 1 and 65535');
+    expect(() => buildPlan(badInput)).toThrow('Delay must be between 1 and 52,560 blocks');
   });
 
   it('contains human readable explanation', () => {

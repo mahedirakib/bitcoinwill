@@ -131,225 +131,238 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto py-8">
+    <div className="w-full max-w-4xl mx-auto py-12">
       {state.step !== 'RESULT' && (
-        <div className="mb-12">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-3xl font-bold">New Spending Plan</h2>
-            <span className="text-sm font-mono text-foreground/40">Step {getStepNumber(state.step)} of 4</span>
+        <div className="mb-16 space-y-6">
+          <div className="flex justify-between items-end">
+            <div className="space-y-1">
+              <h2 className="text-4xl font-black tracking-tight">New Spending Plan</h2>
+              <p className="text-foreground/40 font-medium">Follow the steps to secure your inheritance.</p>
+            </div>
+            <span className="text-xs font-bold tracking-widest text-primary uppercase bg-primary/10 px-3 py-1 rounded-full">
+              Step {getStepNumber(state.step)} of 4
+            </span>
           </div>
-          <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+          <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
             <div 
-              className="h-full bg-primary transition-all duration-500 ease-out"
+              className="h-full bg-primary shadow-[0_0_20px_rgba(247,147,26,0.3)] transition-all duration-700 ease-out"
               style={{ width: `${(getStepNumber(state.step) / 4) * 100}%` }}
             />
           </div>
         </div>
       )}
 
-      <div className="space-y-8">
+      <div className="space-y-10">
         {state.step === 'TYPE' && (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
-            <div className="space-y-2">
-              <h3 className="text-xl font-bold">Choose your inheritance strategy</h3>
-              <p className="text-foreground/60">This app creates technical spending plans, not legal documents.</p>
+          <div className="space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
+            <div className="space-y-3 text-center">
+              <h3 className="text-2xl font-bold">Choose your inheritance strategy</h3>
+              <p className="text-foreground/50 max-w-xl mx-auto font-medium">This app creates technical spending plans, not legal documents.</p>
             </div>
-            <div className="glass p-6 border-primary/40 bg-primary/5">
-              <div className="flex gap-4">
-                <div className="bg-primary/20 p-3 rounded-xl h-fit">
-                  <Clock className="text-primary w-6 h-6" />
+            <div className="glass p-10 border-primary/20 bg-primary/5 space-y-6 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.05] transition-opacity">
+                <Clock className="w-40 h-40" />
+              </div>
+              <div className="flex gap-6 relative">
+                <div className="bg-primary shadow-lg shadow-primary/20 p-4 rounded-2xl h-fit">
+                  <Clock className="text-primary-foreground w-8 h-8" />
                 </div>
-                <div>
-                  <h4 className="text-lg font-bold mb-1">Timelock Recovery</h4>
-                  <p className="text-sm text-foreground/70 leading-relaxed">
-                    You maintain 100% control of your funds. If you stop moving your Bitcoin for a specific period, 
+                <div className="space-y-3">
+                  <h4 className="text-2xl font-bold">Timelock Recovery</h4>
+                  <p className="text-lg text-foreground/70 leading-relaxed font-medium">
+                    Maintain 100% control of your funds. If you stop moving your Bitcoin for a specific period, 
                     a secondary key (your heir) becomes eligible to claim the funds.
                   </p>
                 </div>
               </div>
             </div>
-            <div className="flex justify-between pt-4">
-              <button onClick={onCancel} className="text-foreground/60 px-4 py-2">Cancel</button>
-              <button onClick={nextStep} className="bg-primary text-primary-foreground px-8 py-3 rounded-xl font-bold flex items-center gap-2">
-                Continue <ChevronRight className="w-4 h-4" />
+            <div className="flex justify-between items-center pt-6">
+              <button onClick={onCancel} className="text-foreground/40 font-bold hover:text-foreground/60 transition-colors">Cancel</button>
+              <button onClick={nextStep} className="btn-primary flex items-center gap-2">
+                Continue <ChevronRight className="w-5 h-5" />
               </button>
             </div>
           </div>
         )}
 
         {state.step === 'KEYS' && (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
-            <div className="space-y-2">
-              <h3 className="text-xl font-bold">Identify the players</h3>
-              <p className="text-foreground/60">Provide the 66-character compressed public keys.</p>
+          <div className="space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
+            <div className="space-y-3">
+              <h3 className="text-2xl font-bold">Identify the players</h3>
+              <p className="text-foreground/50 font-medium">Provide the 66-character compressed public keys.</p>
             </div>
 
             <button 
               onClick={() => setShowKeyHelp(!showKeyHelp)}
-              className="flex items-center gap-2 text-primary text-sm font-medium hover:underline"
+              className="flex items-center gap-2 text-primary text-sm font-bold hover:opacity-80 transition-opacity"
             >
               <HelpCircle className="w-4 h-4" /> What is a Public Key?
             </button>
 
             {showKeyHelp && (
-              <div className="p-4 bg-zinc-900 rounded-xl text-sm text-foreground/70 border border-white/5 space-y-2">
+              <div className="p-6 bg-white/5 rounded-2xl text-sm text-foreground/60 border border-white/5 space-y-3 font-medium leading-relaxed animate-in fade-in zoom-in-95">
                 <p>A <strong>Public Key</strong> allows you to receive funds and create scripts. It is <strong>NOT</strong> a private key and cannot be used alone to spend your money.</p>
               </div>
             )}
 
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-sm font-bold flex justify-between">
+            <div className="space-y-10">
+              <div className="space-y-3">
+                <label className="text-sm font-bold tracking-tight flex justify-between">
                   Owner Public Key
-                  <button onClick={() => dispatch({ type: 'UPDATE_INPUT', payload: { owner_pubkey: SAMPLE_KEYS.owner }})} className="text-[10px] text-primary">Use Sample</button>
+                  <button onClick={() => dispatch({ type: 'UPDATE_INPUT', payload: { owner_pubkey: SAMPLE_KEYS.owner }})} className="text-[10px] text-primary hover:underline uppercase tracking-widest font-black">Use Sample</button>
                 </label>
                 <input 
                   type="text" 
                   value={state.input.owner_pubkey}
                   onChange={(e) => dispatch({ type: 'UPDATE_INPUT', payload: { owner_pubkey: e.target.value.trim() }})}
-                  className={cn("w-full bg-background border p-4 rounded-xl font-mono text-sm outline-none transition-all", state.errors.owner ? "border-red-500/50" : "border-border")}
+                  className={cn("w-full bg-white/5 border p-5 rounded-2xl font-mono text-sm outline-none transition-all focus:ring-2 focus:ring-primary/20", state.errors.owner ? "border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.1)]" : "border-white/10 hover:border-white/20 focus:border-primary/50")}
                   placeholder="02..."
                 />
-                {state.errors.owner && <p className="text-xs text-red-400">{state.errors.owner}</p>}
+                {state.errors.owner && <p className="text-xs text-red-400 font-bold">{state.errors.owner}</p>}
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-bold flex justify-between">
+              <div className="space-y-3">
+                <label className="text-sm font-bold tracking-tight flex justify-between">
                   Beneficiary Public Key
-                  <button onClick={() => dispatch({ type: 'UPDATE_INPUT', payload: { beneficiary_pubkey: SAMPLE_KEYS.beneficiary }})} className="text-[10px] text-primary">Use Sample</button>
+                  <button onClick={() => dispatch({ type: 'UPDATE_INPUT', payload: { beneficiary_pubkey: SAMPLE_KEYS.beneficiary }})} className="text-[10px] text-primary hover:underline uppercase tracking-widest font-black">Use Sample</button>
                 </label>
                 <input 
                   type="text" 
                   value={state.input.beneficiary_pubkey}
                   onChange={(e) => dispatch({ type: 'UPDATE_INPUT', payload: { beneficiary_pubkey: e.target.value.trim() }})}
-                  className={cn("w-full bg-background border p-4 rounded-xl font-mono text-sm outline-none transition-all", state.errors.beneficiary ? "border-red-500/50" : "border-border")}
+                  className={cn("w-full bg-white/5 border p-5 rounded-2xl font-mono text-sm outline-none transition-all focus:ring-2 focus:ring-primary/20", state.errors.beneficiary ? "border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.1)]" : "border-white/10 hover:border-white/20 focus:border-primary/50")}
                   placeholder="03..."
                 />
-                {state.errors.beneficiary && <p className="text-xs text-red-400">{state.errors.beneficiary}</p>}
+                {state.errors.beneficiary && <p className="text-xs text-red-400 font-bold">{state.errors.beneficiary}</p>}
               </div>
             </div>
 
-            <div className="flex justify-between pt-4">
-              <button onClick={prevStep} className="text-foreground/60 px-4 py-2">Back</button>
-              <button onClick={nextStep} className="bg-primary text-primary-foreground px-8 py-3 rounded-xl font-bold">Continue</button>
+            <div className="flex justify-between items-center pt-6">
+              <button onClick={prevStep} className="text-foreground/40 font-bold hover:text-foreground/60 transition-colors">Back</button>
+              <button onClick={nextStep} className="btn-primary">Continue</button>
             </div>
           </div>
         )}
 
         {state.step === 'TIMELOCK' && (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
-            <div className="space-y-2">
-              <h3 className="text-xl font-bold">Set the Delay (Blocks)</h3>
-              <p className="text-foreground/60">How long should the network wait before allowing your heir to claim funds?</p>
+          <div className="space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
+            <div className="space-y-3">
+              <h3 className="text-2xl font-bold">Set the Delay</h3>
+              <p className="text-foreground/50 font-medium">How long should the network wait before allowing your heir to claim funds?</p>
             </div>
 
-            <div className="glass p-8 space-y-8">
-              <div className="flex justify-between items-end">
-                <div>
-                  <span className="text-4xl font-bold text-primary">{state.input.locktime_blocks}</span>
-                  <span className="ml-2 text-foreground/40 font-medium">Blocks</span>
+            <div className="glass p-12 space-y-12">
+              <div className="flex justify-between items-center">
+                <div className="space-y-1">
+                  <span className="text-6xl font-black text-primary">{state.input.locktime_blocks}</span>
+                  <p className="text-xs font-bold uppercase tracking-widest text-foreground/30">Network Blocks</p>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm font-medium">Approx. Delay</p>
-                  <p className="text-xl font-bold">~{calculateTime(state.input.locktime_blocks)}</p>
+                <div className="text-right space-y-1">
+                  <p className="text-xs font-bold uppercase tracking-widest text-foreground/30">Approx. Delay</p>
+                  <p className="text-4xl font-black">~{calculateTime(state.input.locktime_blocks)}</p>
                 </div>
               </div>
 
-              <input 
-                type="range" min="1" max="52560" step="144"
-                value={state.input.locktime_blocks}
-                onChange={(e) => dispatch({ type: 'UPDATE_INPUT', payload: { locktime_blocks: parseInt(e.target.value) }})}
-                className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-primary"
-              />
+              <div className="relative py-4">
+                <input 
+                  type="range" min="1" max="52560" step="144"
+                  value={state.input.locktime_blocks}
+                  onChange={(e) => dispatch({ type: 'UPDATE_INPUT', payload: { locktime_blocks: parseInt(e.target.value) }})}
+                  className="w-full h-3 bg-white/5 rounded-full appearance-none cursor-pointer accent-primary"
+                />
+              </div>
             </div>
 
-            <div className="p-4 bg-yellow-500/5 border border-yellow-500/20 rounded-xl text-xs text-yellow-200/80 space-y-2">
+            <div className="p-6 bg-orange-500/5 border border-orange-500/10 rounded-2xl text-xs text-orange-200/60 space-y-3 font-medium leading-relaxed">
               <p>• The timer resets every time you move the funds.</p>
               <p>• The delay starts <strong>only after</strong> the funding transaction confirms on-chain.</p>
             </div>
 
-            <div className="flex justify-between pt-4">
-              <button onClick={prevStep} className="text-foreground/60 px-4 py-2">Back</button>
-              <button onClick={nextStep} className="bg-primary text-primary-foreground px-8 py-3 rounded-xl font-bold">Continue</button>
+            <div className="flex justify-between items-center pt-6">
+              <button onClick={prevStep} className="text-foreground/40 font-bold hover:text-foreground/60 transition-colors">Back</button>
+              <button onClick={nextStep} className="btn-primary">Continue</button>
             </div>
           </div>
         )}
 
         {state.step === 'REVIEW' && (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
-            <h3 className="text-xl font-bold">Final Review</h3>
-            <div className="glass p-6 space-y-4">
+          <div className="space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
+            <h3 className="text-2xl font-bold">Final Review</h3>
+            <div className="glass p-8 space-y-6">
               <div className="flex justify-between items-center text-sm">
-                <span className="opacity-40">Network</span>
-                <span className="font-bold uppercase text-primary">{network}</span>
+                <span className="opacity-40 font-bold uppercase tracking-widest">Network</span>
+                <span className="font-black uppercase text-primary bg-primary/10 px-3 py-1 rounded-lg">{network}</span>
               </div>
-              <div className="pt-4 border-t border-white/5 space-y-1">
-                <p className="text-xs font-bold opacity-40 uppercase">Delay</p>
-                <p className="text-lg font-bold">{state.input.locktime_blocks} Blocks (~{calculateTime(state.input.locktime_blocks)})</p>
+              <div className="pt-6 border-t border-white/5 space-y-2">
+                <p className="text-xs font-bold opacity-40 uppercase tracking-widest">Delay Settings</p>
+                <p className="text-2xl font-black">{state.input.locktime_blocks} Blocks (~{calculateTime(state.input.locktime_blocks)})</p>
               </div>
             </div>
 
             {network === 'mainnet' && (
-              <div className="p-4 bg-red-600/10 border border-red-600/30 rounded-xl flex gap-3 text-red-400 text-sm">
-                <AlertTriangle className="w-5 h-5 flex-shrink-0" />
-                <p><strong>CAUTION:</strong> You are creating a plan on Mainnet. This involves real Bitcoin.</p>
+              <div className="p-6 bg-red-600/10 border border-red-600/20 rounded-2xl flex gap-4 text-red-400 text-sm font-medium">
+                <AlertTriangle className="w-6 h-6 flex-shrink-0" />
+                <p><strong>CAUTION:</strong> You are creating a plan on Mainnet. This involves real Bitcoin. Verify all keys carefully.</p>
               </div>
             )}
 
             {state.errors.global && (
-              <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm">
-                <p><strong>Error:</strong> {state.errors.global}</p>
+              <div className="p-6 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 text-sm font-bold">
+                <p>Error: {state.errors.global}</p>
               </div>
             )}
 
-            <div className="flex justify-between pt-4">
-              <button onClick={prevStep} className="text-foreground/60 px-4 py-2">Back</button>
-              <button onClick={handleGenerate} className="bg-primary text-primary-foreground px-12 py-4 rounded-xl font-bold text-lg">Generate Plan</button>
+            <div className="flex justify-between items-center pt-6">
+              <button onClick={prevStep} className="text-foreground/40 font-bold hover:text-foreground/60 transition-colors">Back</button>
+              <button onClick={handleGenerate} className="btn-primary !px-16 !py-5">Generate Plan</button>
             </div>
           </div>
         )}
 
         {state.step === 'RESULT' && state.result && (
-          <div className="space-y-8 animate-in zoom-in-95">
-            <div className="text-center space-y-2">
-              <CheckCircle2 className="text-primary w-12 h-12 mx-auto mb-4" />
-              <h2 className="text-4xl font-bold">Plan Generated</h2>
-              <p className="text-foreground/60">Your Vault Address is ready for funding.</p>
+          <div className="space-y-12 animate-in zoom-in-95 duration-1000">
+            <div className="text-center space-y-4">
+              <div className="relative inline-block">
+                <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full" />
+                <CheckCircle2 className="text-primary w-20 h-20 relative drop-shadow-lg" />
+              </div>
+              <h2 className="text-5xl font-black tracking-tight">Plan Secured</h2>
+              <p className="text-foreground/50 text-lg font-medium">Your Vault Address is ready for funding.</p>
             </div>
 
-            <div className="grid md:grid-cols-5 gap-8">
-              <div className="md:col-span-3 space-y-6">
-                <div className="glass p-6 space-y-4">
-                  <h4 className="font-bold text-xs uppercase opacity-40">Vault Address ({network})</h4>
-                  <div className="flex gap-2">
-                    <div className="flex-1 p-4 bg-background border border-border rounded-xl font-mono text-xs break-all">
+            <div className="grid lg:grid-cols-5 gap-8 items-start">
+              <div className="lg:col-span-3 space-y-6">
+                <div className="glass p-8 space-y-5">
+                  <h4 className="font-black text-[10px] uppercase tracking-[0.2em] opacity-30">Vault Address ({network})</h4>
+                  <div className="flex gap-3">
+                    <div className="flex-1 p-5 bg-black/40 border border-white/5 rounded-2xl font-mono text-xs break-all leading-relaxed shadow-inner">
                       {state.result.address}
                     </div>
-                    <button onClick={() => copyToClipboard(state.result!.address, 'Address')} className="p-3 bg-zinc-900 border border-white/5 rounded-lg hover:bg-zinc-800">
-                      <Copy className="w-4 h-4 opacity-40" />
+                    <button onClick={() => copyToClipboard(state.result!.address, 'Address')} className="p-4 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/10 transition-colors group">
+                      <Copy className="w-5 h-5 opacity-40 group-hover:opacity-100 transition-opacity" />
                     </button>
                   </div>
                 </div>
 
-                <div className="glass p-6 space-y-2">
-                  <h4 className="font-bold text-xs uppercase opacity-40">Witness Script</h4>
-                  <div className="flex gap-2">
-                    <pre className="flex-1 p-4 bg-background border border-border rounded-xl text-[10px] font-mono overflow-x-auto opacity-60">
+                <div className="glass p-8 space-y-4">
+                  <h4 className="font-black text-[10px] uppercase tracking-[0.2em] opacity-30">Witness Script</h4>
+                  <div className="flex gap-3">
+                    <pre className="flex-1 p-5 bg-black/40 border border-white/5 rounded-2xl text-[10px] font-mono overflow-x-auto opacity-60 leading-relaxed shadow-inner">
                       {state.result.script_asm}
                     </pre>
-                    <button onClick={() => copyToClipboard(state.result!.script_hex, 'Script')} className="p-3 bg-zinc-900 border border-white/5 rounded-lg h-fit">
-                      <Copy className="w-4 h-4 opacity-40" />
+                    <button onClick={() => copyToClipboard(state.result!.script_hex, 'Script')} className="p-4 bg-white/5 border border-white/5 rounded-2xl h-fit hover:bg-white/10 transition-colors group">
+                      <Copy className="w-5 h-5 opacity-40 group-hover:opacity-100 transition-opacity" />
                     </button>
                   </div>
                 </div>
               </div>
 
-              <div className="md:col-span-2 space-y-6">
-                <button onClick={handleDownload} className="w-full flex items-center justify-center gap-3 bg-white text-black py-4 rounded-xl font-bold">
-                  <Download className="w-5 h-5" /> Download Recovery Kit
+              <div className="lg:col-span-2 space-y-4 pt-4">
+                <button onClick={handleDownload} className="w-full btn-primary !bg-white !text-black flex items-center justify-center gap-3">
+                  <Download className="w-6 h-6" /> Download Recovery Kit
                 </button>
-                <button onClick={() => onViewInstructions({ plan: state.input, result: state.result, created_at: new Date().toISOString() })} className="w-full flex items-center justify-center gap-3 bg-primary/10 text-primary py-4 rounded-xl font-bold">
-                  <FileText className="w-5 h-5" /> View Instructions
+                <button onClick={() => onViewInstructions({ plan: state.input, result: state.result, created_at: new Date().toISOString() })} className="w-full btn-secondary flex items-center justify-center gap-3">
+                  <FileText className="w-6 h-6 text-primary" /> View Instructions
                 </button>
               </div>
             </div>

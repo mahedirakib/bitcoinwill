@@ -41,7 +41,7 @@ Inheritance in the Bitcoin space is often either too complex (multisig setups) o
 
 ## Tech Stack
 - **Frontend:** React + Vite + TypeScript
-- **Styling:** Tailwind CSS (Forest Green Theme)
+- **Styling:** Tailwind CSS (Bitcoin Orange Theme)
 - **Logic:** `bitcoinjs-lib` for script and address derivation.
 - **Hosting:** 100% static (No backend, no database).
 
