@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 120 10% 4%;
+  --foreground: 120 10% 98%;
+  --card: 120 10% 7%;
+  --card-foreground: 120 10% 98%;
+  --primary: 142 76% 36%;
+  --primary-foreground: 142 76% 5%;
+  --border: 120 10% 15%;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+}
+
+.glass {
+  @apply bg-card/50 backdrop-blur-md border border-white/10 rounded-2xl;
+}

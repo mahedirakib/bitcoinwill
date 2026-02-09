@@ -1,36 +1,51 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Bitcoin Will 🔐
+
+A minimal, privacy-first web application for creating non-custodial Bitcoin inheritance spending plans.
+
+## Status: MVP / Educational & Practical Tool
+This project is an **initial release (v0.1.0)**. It is a functional tool for generating Bitcoin-native scripts, but it should be treated as experimental. Always verify your generated scripts and test with small amounts of Testnet Bitcoin before moving to Mainnet.
+
+## What is this?
+Bitcoin Will is a **stateless, client-side utility** that helps you create a "Dead Man's Switch" for your Bitcoin. It generates a unique Vault Address with a built-in rule: you can spend your funds at any time, but if you remain inactive for a specified delay, a beneficiary can claim the funds using their own key.
+
+## Why this exists
+Inheritance in the Bitcoin space is often either too complex (multisig setups) or too centralized (custodians). We wanted to build the simplest possible implementation of a **Relative Timelock (CSV)** spending plan that is:
+1. **Easy to understand:** No complex smart contract logic.
+2. **Easy to backup:** A single JSON file (the Recovery Kit) contains everything needed.
+3. **Sovereign:** No accounts, no servers, no middleman.
+
+## Who is this for?
+- **Sovereign Individuals:** Those who want a simple, math-based recovery plan.
+- **Privacy Advocates:** Users who refuse to provide KYC or email addresses for security tools.
+- **Bitcoin Educators:** A practical way to see Bitcoin scripts in action.
+
+## Who is this NOT for?
+- **Legal Advice:** This is not a legal will. It does not replace estate laws in your jurisdiction.
+- **Active Monitoring:** The app does not watch the blockchain for you. Your beneficiary must be proactive.
+- **Key Loss Protection:** If you lose both your private keys AND your Recovery Kit, funds are gone.
+
+## How to try it safely
+1. **Use Testnet:** The app defaults to Testnet. Use a testnet faucet to get "fake" coins.
+2. **Verify the Address:** Check the generated Vault Address in a blockchain explorer.
+3. **Simulate Recovery:** Wait for the delay to pass and use an advanced wallet to attempt a claim.
+4. **Offline Use:** For maximum safety, you can download this repository and run it on an air-gapped machine.
+
+## Documentation
+- [Learning Center](/learn) - Concepts for beginners.
+- [Protocol Specification](/protocol) - Technical deep-dive into the script logic.
+- [Security Policy](./SECURITY.md) - Threat model and safety tips.
+
+## Tech Stack
+- **Frontend:** React + Vite + TypeScript
+- **Styling:** Tailwind CSS (Forest Green Theme)
+- **Logic:** `bitcoinjs-lib` for script and address derivation.
+- **Hosting:** 100% static (No backend, no database).
 
 ## Getting Started
-
-First, run the development server:
-
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## License
+MIT
