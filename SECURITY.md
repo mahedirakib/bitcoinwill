@@ -32,4 +32,4 @@ Bitcoin Will is designed as a **stateless, client-side utility**.
 - Use a hardware wallet to manage your keys.
 
 ## 🚩 Reporting a Security Issue
-If you find a vulnerability, please report it to: `security@bitcoinwill.io` (placeholder).
+If you find a vulnerability, please report it to: `security@bitcoinwill.app`

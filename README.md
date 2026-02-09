@@ -35,9 +35,12 @@ Inheritance in the Bitcoin space is often either too complex (multisig setups) o
 4. **Offline Use:** For maximum safety, you can download this repository and run it on an air-gapped machine.
 
 ## Documentation
-- [Learning Center](/learn) - Concepts for beginners.
-- [Protocol Specification](/protocol) - Technical deep-dive into the script logic.
+- [Learning Center](./docs/LEARNING.md) - Concepts for beginners.
+- [Protocol Specification](./PROTOCOL.md) - Technical deep-dive into the script logic.
 - [Security Policy](./SECURITY.md) - Threat model and safety tips.
+- [API Reference](./src/lib/bitcoin/README.md) - Bitcoin module documentation.
+- [Testing Guide](./TESTING.md) - How to run and write tests.
+- [Troubleshooting](./docs/TROUBLESHOOTING.md) - Common issues and solutions.
 
 ## Tech Stack
 - **Frontend:** React + Vite + TypeScript

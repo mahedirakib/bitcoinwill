@@ -189,7 +189,7 @@ describe('buildPlan', () => {
 
 **DO NOT** open public issues for security vulnerabilities.
 
-Instead, email: `security@bitcoinwill.io` (placeholder - update with real contact)
+Instead, email: `security@bitcoinwill.app`
 
 Include:
 - Description of the vulnerability
