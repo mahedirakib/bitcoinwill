@@ -13,6 +13,8 @@ import {
 import { InstructionModel, buildInstructions, generateInstructionTxt } from '@/lib/bitcoin/instructions';
 import { downloadTxt } from '@/lib/utils/download';
 import type { PlanInput, PlanOutput } from '@/lib/bitcoin/types';
+import logo from '@/assets/logo.png';
+import { useToast } from '@/components/Toast';
 
 interface InstructionsProps {
   initialData?: {
@@ -26,6 +28,7 @@ interface InstructionsProps {
 const Instructions = ({ initialData, onBack }: InstructionsProps) => {
   const [model, setModel] = useState<InstructionModel | null>(null);
   const [jsonInput, setJsonInput] = useState('');
+  const { showToast } = useToast();
 
   useEffect(() => {
     if (initialData?.plan && initialData?.result) {
@@ -40,11 +43,12 @@ const Instructions = ({ initialData, onBack }: InstructionsProps) => {
       if (data.plan && data.result) {
         const m = buildInstructions(data.plan, data.result, data.created_at);
         setModel(m);
+        showToast("Instructions Loaded Successfully");
       } else {
-        alert("Invalid JSON: Missing plan or result data.");
+        showToast("Invalid Recovery Kit: Missing data");
       }
     } catch {
-      alert("Invalid JSON: Please check the format.");
+      showToast("Error parsing JSON");
     }
   };
 
@@ -100,7 +104,7 @@ const Instructions = ({ initialData, onBack }: InstructionsProps) => {
 
       <article className="space-y-12 print:text-black print:space-y-8 bg-white p-8 md:p-12 rounded-3xl border border-border shadow-sm print:border-none print:shadow-none print:p-0">
         <header className="space-y-4 text-center flex flex-col items-center">
-          <img src="/logo.png" alt="Bitcoin Will Logo" className="w-20 h-20 object-contain mb-2" />
+          <img src={logo} alt="Bitcoin Will Logo" className="w-20 h-20 object-contain mb-2" />
           <h1 className="text-4xl font-black tracking-tight">Beneficiary Instructions</h1>
           <p className="text-foreground/60 print:text-gray-500 uppercase tracking-widest text-[10px] font-bold">
             Bitcoin Will • Non-Custodial Inheritance Vault

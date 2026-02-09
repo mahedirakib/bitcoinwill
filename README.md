@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="public/logo.png" width="200" alt="Bitcoin Will Logo">
+  <img src="src/assets/logo.png" width="200" alt="Bitcoin Will Logo">
 </p>
 
 # Bitcoin Will 🔐

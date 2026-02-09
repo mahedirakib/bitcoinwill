@@ -10,6 +10,7 @@ import { NetworkSelector } from './components/NetworkSelector'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { ToastProvider } from './components/Toast'
 import type { PlanInput, PlanOutput } from './lib/bitcoin/types'
+import logo from './assets/logo.png'
 
 const AppContent = () => {
   const [activeView, setActiveView] = useState<'home' | 'create' | 'recover' | 'dev' | 'learn' | 'instructions' | 'protocol'>('home')
@@ -58,7 +59,7 @@ const AppContent = () => {
         >
           <div className="relative">
             <div className="absolute inset-0 bg-primary/10 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
-            <img src="/logo.png" alt="Bitcoin Will Logo" className="w-8 h-8 md:w-10 md:h-10 object-contain relative" />
+            <img src={logo} alt="Bitcoin Will Logo" className="w-8 h-8 md:w-10 md:h-10 object-contain relative" />
           </div>
           <span className="text-lg md:text-xl font-bold tracking-tight">Bitcoin Will</span>
           {network === 'mainnet' && (
@@ -122,14 +123,14 @@ const AppContent = () => {
           <div className="space-y-20 md:space-y-32 max-w-5xl mx-auto py-12 md:py-20">
             {/* Hero */}
             <div className="text-center space-y-8 md:space-y-10 flex flex-col items-center animate-in fade-in slide-in-from-bottom-8 duration-1000">
-              <div className="relative">
-                <div className="absolute inset-0 bg-primary/10 blur-3xl rounded-full" />
-                <img src="/logo.png" alt="Bitcoin Will Logo" className="w-24 h-24 md:w-40 md:h-40 object-contain relative drop-shadow-xl" />
-              </div>
-              <h1 className="text-4xl md:text-hero">
-                A Simple Bitcoin <br className="hidden md:block" />
-                <span className="text-primary">Inheritance Plan</span>
-              </h1>
+            <div className="relative">
+              <div className="absolute inset-0 bg-primary/10 blur-3xl rounded-full" />
+              <img src={logo} alt="Bitcoin Will Logo" className="w-24 h-24 md:w-40 md:h-40 object-contain relative drop-shadow-xl" />
+            </div>
+            <h1 className="text-4xl md:text-hero">
+              A Simple Bitcoin <br className="hidden md:block" />
+              <span className="text-primary">Inheritance Plan</span>
+            </h1>
               <p className="text-lg md:text-2xl text-foreground/70 max-w-2xl mx-auto font-medium leading-relaxed px-4">
                 Create a non-custodial Bitcoin spending plan that unlocks funds after a delay. 
                 <span className="text-foreground/90"> No accounts. No custody. No private keys.</span>
