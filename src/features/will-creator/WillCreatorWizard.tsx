@@ -1,14 +1,16 @@
 import { useReducer, useState, useEffect } from 'react';
-import { 
-  ChevronRight, 
-  CheckCircle2, 
-  Download, 
+import {
+  ChevronRight,
+  CheckCircle2,
+  Download,
   AlertTriangle,
   Clock,
   HelpCircle,
   FileText,
-  Copy
+  Copy,
+  QrCode
 } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import { buildPlan } from '@/lib/bitcoin/planEngine';
 import { PlanInput, PlanOutput, type BitcoinNetwork } from '@/lib/bitcoin/types';
 import { validatePubkey } from '@/lib/bitcoin/validation';
@@ -54,8 +56,10 @@ const createInitialState = (network: BitcoinNetwork | 'mainnet'): WizardState =>
 
 const SAMPLE_KEYS = {
   owner: '02e9634f19b165239105436a5c17e3371901c5651581452a329978747474747474',
-  beneficiary: '03a634f19b165239105436a5c17e3371901c5651581452a329978747474747474',
+  beneficiary: '03e9634f19b165239105436a5c17e3371901c5651581452a329978747474747474',
 };
+
+const STORAGE_KEY = 'bitcoinwill_wizard_state';
 
 // --- Reducer ---
 
@@ -76,6 +80,36 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
   const { showToast } = useToast();
   const [state, dispatch] = useReducer(wizardReducer, createInitialState(network));
   const [showKeyHelp, setShowKeyHelp] = useState(false);
+  const [hasRestored, setHasRestored] = useState(false);
+
+  useEffect(() => {
+    if (hasRestored) return;
+    
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.input && parsed.step && parsed.step !== 'RESULT') {
+          dispatch({ type: 'UPDATE_INPUT', payload: parsed.input });
+          dispatch({ type: 'SET_STEP', payload: parsed.step });
+          showToast('Previous progress restored');
+        }
+      }
+    } catch {
+    }
+    setHasRestored(true);
+  }, [hasRestored, showToast]);
+
+  useEffect(() => {
+    if (!hasRestored || state.step === 'RESULT') return;
+    
+    const dataToSave = {
+      step: state.step,
+      input: state.input,
+      timestamp: new Date().toISOString(),
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+  }, [state.step, state.input, hasRestored]);
 
   useEffect(() => {
     if (state.step !== 'RESULT') {
@@ -108,9 +142,15 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
       const result = buildPlan(state.input);
       dispatch({ type: 'SET_RESULT', payload: result });
       dispatch({ type: 'SET_STEP', payload: 'RESULT' });
+      localStorage.removeItem(STORAGE_KEY);
     } catch (e) {
       dispatch({ type: 'SET_ERRORS', payload: { global: (e as Error).message } });
     }
+  };
+
+  const handleCancel = () => {
+    localStorage.removeItem(STORAGE_KEY);
+    onCancel();
   };
 
   const handleDownload = () => {
@@ -143,9 +183,9 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
               Step {getStepNumber(state.step)} of 4
             </span>
           </div>
-          <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+          <div className="h-1.5 bg-muted rounded-full overflow-hidden">
             <div 
-              className="h-full bg-primary shadow-[0_0_20px_rgba(247,147,26,0.3)] transition-all duration-700 ease-out"
+              className="h-full bg-primary shadow-lg shadow-primary/20 transition-all duration-700 ease-out"
               style={{ width: `${(getStepNumber(state.step) / 4) * 100}%` }}
             />
           </div>
@@ -160,7 +200,7 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
               <p className="text-foreground/50 max-w-xl mx-auto font-medium">This app creates technical spending plans, not legal documents.</p>
             </div>
             <div className="glass p-10 border-primary/20 bg-primary/5 space-y-6 relative overflow-hidden group">
-              <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.05] transition-opacity">
+              <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:opacity-[0.08] transition-opacity">
                 <Clock className="w-40 h-40" />
               </div>
               <div className="flex gap-6 relative">
@@ -177,7 +217,7 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
               </div>
             </div>
             <div className="flex justify-between items-center pt-6">
-              <button onClick={onCancel} className="text-foreground/40 font-bold hover:text-foreground/60 transition-colors">Cancel</button>
+              <button onClick={handleCancel} className="text-foreground/40 font-bold hover:text-foreground/60 transition-colors">Cancel</button>
               <button onClick={nextStep} className="btn-primary flex items-center gap-2">
                 Continue <ChevronRight className="w-5 h-5" />
               </button>
@@ -200,7 +240,7 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
             </button>
 
             {showKeyHelp && (
-              <div className="p-6 bg-white/5 rounded-2xl text-sm text-foreground/60 border border-white/5 space-y-3 font-medium leading-relaxed animate-in fade-in zoom-in-95">
+              <div className="p-6 bg-muted rounded-2xl text-sm text-foreground/60 border border-border space-y-3 font-medium leading-relaxed animate-in fade-in zoom-in-95">
                 <p>A <strong>Public Key</strong> allows you to receive funds and create scripts. It is <strong>NOT</strong> a private key and cannot be used alone to spend your money.</p>
               </div>
             )}
@@ -215,10 +255,10 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
                   type="text" 
                   value={state.input.owner_pubkey}
                   onChange={(e) => dispatch({ type: 'UPDATE_INPUT', payload: { owner_pubkey: e.target.value.trim() }})}
-                  className={cn("w-full bg-white/5 border p-5 rounded-2xl font-mono text-sm outline-none transition-all focus:ring-2 focus:ring-primary/20", state.errors.owner ? "border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.1)]" : "border-white/10 hover:border-white/20 focus:border-primary/50")}
+                  className={cn("w-full bg-muted border p-5 rounded-2xl font-mono text-sm outline-none transition-all focus:ring-2 focus:ring-primary/20", state.errors.owner ? "border-red-500/50 shadow-sm" : "border-border hover:border-primary/20 focus:border-primary/50")}
                   placeholder="02..."
                 />
-                {state.errors.owner && <p className="text-xs text-red-400 font-bold">{state.errors.owner}</p>}
+                {state.errors.owner && <p className="text-xs text-red-500 font-bold">{state.errors.owner}</p>}
               </div>
 
               <div className="space-y-3">
@@ -230,10 +270,10 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
                   type="text" 
                   value={state.input.beneficiary_pubkey}
                   onChange={(e) => dispatch({ type: 'UPDATE_INPUT', payload: { beneficiary_pubkey: e.target.value.trim() }})}
-                  className={cn("w-full bg-white/5 border p-5 rounded-2xl font-mono text-sm outline-none transition-all focus:ring-2 focus:ring-primary/20", state.errors.beneficiary ? "border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.1)]" : "border-white/10 hover:border-white/20 focus:border-primary/50")}
+                  className={cn("w-full bg-muted border p-5 rounded-2xl font-mono text-sm outline-none transition-all focus:ring-2 focus:ring-primary/20", state.errors.beneficiary ? "border-red-500/50 shadow-sm" : "border-border hover:border-primary/20 focus:border-primary/50")}
                   placeholder="03..."
                 />
-                {state.errors.beneficiary && <p className="text-xs text-red-400 font-bold">{state.errors.beneficiary}</p>}
+                {state.errors.beneficiary && <p className="text-xs text-red-500 font-bold">{state.errors.beneficiary}</p>}
               </div>
             </div>
 
@@ -268,12 +308,12 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
                   type="range" min="1" max="52560" step="144"
                   value={state.input.locktime_blocks}
                   onChange={(e) => dispatch({ type: 'UPDATE_INPUT', payload: { locktime_blocks: parseInt(e.target.value) }})}
-                  className="w-full h-3 bg-white/5 rounded-full appearance-none cursor-pointer accent-primary"
+                  className="w-full h-3 bg-muted rounded-full appearance-none cursor-pointer accent-primary"
                 />
               </div>
             </div>
 
-            <div className="p-6 bg-orange-500/5 border border-orange-500/10 rounded-2xl text-xs text-orange-200/60 space-y-3 font-medium leading-relaxed">
+            <div className="p-6 bg-orange-500/5 border border-orange-500/10 rounded-2xl text-xs text-orange-600/70 space-y-3 font-medium leading-relaxed">
               <p>• The timer resets every time you move the funds.</p>
               <p>• The delay starts <strong>only after</strong> the funding transaction confirms on-chain.</p>
             </div>
@@ -293,21 +333,21 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
                 <span className="opacity-40 font-bold uppercase tracking-widest">Network</span>
                 <span className="font-black uppercase text-primary bg-primary/10 px-3 py-1 rounded-lg">{network}</span>
               </div>
-              <div className="pt-6 border-t border-white/5 space-y-2">
+              <div className="pt-6 border-t border-border space-y-2">
                 <p className="text-xs font-bold opacity-40 uppercase tracking-widest">Delay Settings</p>
                 <p className="text-2xl font-black">{state.input.locktime_blocks} Blocks (~{calculateTime(state.input.locktime_blocks)})</p>
               </div>
             </div>
 
             {network === 'mainnet' && (
-              <div className="p-6 bg-red-600/10 border border-red-600/20 rounded-2xl flex gap-4 text-red-400 text-sm font-medium">
+              <div className="p-6 bg-red-500/5 border border-red-500/10 rounded-2xl flex gap-4 text-red-600 text-sm font-medium">
                 <AlertTriangle className="w-6 h-6 flex-shrink-0" />
                 <p><strong>CAUTION:</strong> You are creating a plan on Mainnet. This involves real Bitcoin. Verify all keys carefully.</p>
               </div>
             )}
 
             {state.errors.global && (
-              <div className="p-6 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 text-sm font-bold">
+              <div className="p-6 bg-red-500/5 border border-red-500/10 rounded-2xl text-red-500 text-sm font-bold">
                 <p>Error: {state.errors.global}</p>
               </div>
             )}
@@ -323,7 +363,7 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
           <div className="space-y-12 animate-in zoom-in-95 duration-1000">
             <div className="text-center space-y-4">
               <div className="relative inline-block">
-                <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full" />
+                <div className="absolute inset-0 bg-primary/10 blur-2xl rounded-full" />
                 <CheckCircle2 className="text-primary w-20 h-20 relative drop-shadow-lg" />
               </div>
               <h2 className="text-5xl font-black tracking-tight">Plan Secured</h2>
@@ -335,10 +375,10 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
                 <div className="glass p-8 space-y-5">
                   <h4 className="font-black text-[10px] uppercase tracking-[0.2em] opacity-30">Vault Address ({network})</h4>
                   <div className="flex gap-3">
-                    <div className="flex-1 p-5 bg-black/40 border border-white/5 rounded-2xl font-mono text-xs break-all leading-relaxed shadow-inner">
+                    <div className="flex-1 p-5 bg-muted border border-border rounded-2xl font-mono text-xs break-all leading-relaxed shadow-inner">
                       {state.result.address}
                     </div>
-                    <button onClick={() => copyToClipboard(state.result!.address, 'Address')} className="p-4 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/10 transition-colors group">
+                    <button onClick={() => copyToClipboard(state.result!.address, 'Address')} className="p-4 bg-white border border-border rounded-2xl hover:bg-muted transition-colors group shadow-sm">
                       <Copy className="w-5 h-5 opacity-40 group-hover:opacity-100 transition-opacity" />
                     </button>
                   </div>
@@ -347,10 +387,10 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
                 <div className="glass p-8 space-y-4">
                   <h4 className="font-black text-[10px] uppercase tracking-[0.2em] opacity-30">Witness Script</h4>
                   <div className="flex gap-3">
-                    <pre className="flex-1 p-5 bg-black/40 border border-white/5 rounded-2xl text-[10px] font-mono overflow-x-auto opacity-60 leading-relaxed shadow-inner">
+                    <pre className="flex-1 p-5 bg-muted border border-border rounded-2xl text-[10px] font-mono overflow-x-auto opacity-70 leading-relaxed shadow-inner">
                       {state.result.script_asm}
                     </pre>
-                    <button onClick={() => copyToClipboard(state.result!.script_hex, 'Script')} className="p-4 bg-white/5 border border-white/5 rounded-2xl h-fit hover:bg-white/10 transition-colors group">
+                    <button onClick={() => copyToClipboard(state.result!.script_hex, 'Script')} className="p-4 bg-white border border-border rounded-2xl h-fit hover:bg-muted transition-colors group shadow-sm">
                       <Copy className="w-5 h-5 opacity-40 group-hover:opacity-100 transition-opacity" />
                     </button>
                   </div>
@@ -358,10 +398,29 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
               </div>
 
               <div className="lg:col-span-2 space-y-4 pt-4">
-                <button onClick={handleDownload} className="w-full btn-primary !bg-white !text-black flex items-center justify-center gap-3">
+                <div className="glass p-6 space-y-4">
+                  <h4 className="font-black text-[10px] uppercase tracking-[0.2em] opacity-30 flex items-center gap-2">
+                    <QrCode className="w-3 h-3" /> Scan to Fund
+                  </h4>
+                  <div className="bg-white p-4 rounded-xl inline-block">
+                    <QRCodeSVG
+                      value={state.result.address}
+                      size={160}
+                      bgColor="#ffffff"
+                      fgColor="#000000"
+                      level="M"
+                      includeMargin={false}
+                    />
+                  </div>
+                  <p className="text-[10px] text-foreground/40 text-center">
+                    Scan with your mobile wallet
+                  </p>
+                </div>
+
+                <button onClick={handleDownload} className="w-full btn-primary !bg-foreground !text-background flex items-center justify-center gap-3">
                   <Download className="w-6 h-6" /> Download Recovery Kit
                 </button>
-                <button onClick={() => onViewInstructions({ plan: state.input, result: state.result, created_at: new Date().toISOString() })} className="w-full btn-secondary flex items-center justify-center gap-3">
+                <button onClick={() => onViewInstructions({ plan: state.input, result: state.result, created_at: new Date().toISOString() })} className="w-full btn-secondary flex items-center justify-center gap-3 shadow-sm">
                   <FileText className="w-6 h-6 text-primary" /> View Instructions
                 </button>
               </div>

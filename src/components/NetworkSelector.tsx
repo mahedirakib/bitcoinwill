@@ -33,10 +33,10 @@ export const NetworkSelector = () => {
       <select 
         value={network}
         onChange={handleSelect}
-        className={`bg-white/5 text-[10px] font-black uppercase tracking-[0.15em] py-2 px-4 rounded-full border outline-none appearance-none cursor-pointer pr-10 transition-all ${
+        className={`bg-muted text-[10px] font-black uppercase tracking-[0.15em] py-2 px-4 rounded-full border outline-none appearance-none cursor-pointer pr-10 transition-all ${
           network === 'mainnet' 
-            ? 'text-red-500 border-red-500/30 bg-red-500/5' 
-            : 'text-primary border-white/10 hover:border-primary/30'
+            ? 'text-red-500 border-red-500/30 bg-red-50' 
+            : 'text-primary border-border hover:border-primary/30'
         }`}
       >
         <option value="testnet">Testnet</option>
@@ -48,16 +48,16 @@ export const NetworkSelector = () => {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-background/60 backdrop-blur-md animate-in fade-in duration-300">
-          <div className="glass max-w-lg w-full p-10 space-y-8 border-red-500/20 shadow-2xl shadow-red-500/5 animate-in zoom-in-95 duration-300">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-background/80 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="glass max-w-lg w-full p-10 space-y-8 border-red-500/10 shadow-2xl shadow-red-500/10 animate-in zoom-in-95 duration-300">
             <div className="flex flex-col items-center text-center space-y-6">
-              <div className="bg-red-500/10 p-5 rounded-[2rem] shadow-inner shadow-red-500/10">
-                <AlertTriangle className="text-red-500 w-12 h-12 drop-shadow-[0_0_10px_rgba(239,68,68,0.3)]" />
+              <div className="bg-red-50 p-5 rounded-[2rem]">
+                <AlertTriangle className="text-red-500 w-12 h-12 drop-shadow-sm" />
               </div>
               <div className="space-y-2">
                 <h2 className="text-3xl font-black tracking-tight">Serious Risk Ahead</h2>
-                <div className="space-y-4 text-base text-foreground/50 font-medium leading-relaxed">
-                  <p>Mainnet uses <span className="text-red-400">real Bitcoin</span>. A single mistake could result in the permanent loss of your funds.</p>
+                <div className="space-y-4 text-base text-foreground/60 font-medium leading-relaxed">
+                  <p>Mainnet uses <span className="text-red-600 font-bold">real Bitcoin</span>. A single mistake could result in the permanent loss of your funds.</p>
                   <p>By proceeding, you acknowledge this tool is currently in its beta phase and you accept all technical risks.</p>
                 </div>
               </div>
@@ -68,7 +68,7 @@ export const NetworkSelector = () => {
                 <label className="text-[10px] font-black uppercase tracking-[0.2em] opacity-30">
                   Verification Phrase
                 </label>
-                <div className="p-4 bg-black/40 rounded-2xl border border-white/5 select-none text-center">
+                <div className="p-4 bg-muted rounded-2xl border border-border select-none text-center">
                   <p className="text-xs font-mono text-primary font-bold">
                     {CONFIRMATION_PHRASE}
                   </p>
@@ -77,7 +77,7 @@ export const NetworkSelector = () => {
                   type="text" 
                   value={phrase}
                   onChange={(e) => setPhrase(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 p-5 rounded-2xl font-mono text-sm outline-none focus:border-red-500/50 focus:ring-4 focus:ring-red-500/5 transition-all"
+                  className="w-full bg-muted border border-border p-5 rounded-2xl font-mono text-sm outline-none focus:border-red-500/50 focus:ring-4 focus:ring-red-500/5 transition-all"
                   placeholder="Type carefully..."
                 />
               </div>

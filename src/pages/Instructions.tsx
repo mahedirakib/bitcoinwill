@@ -60,14 +60,14 @@ const Instructions = ({ initialData, onBack }: InstructionsProps) => {
           <p className="text-foreground/60">Paste your Recovery Kit JSON below to view the claim instructions.</p>
         </div>
         <textarea 
-          className="w-full h-48 bg-zinc-900 border border-white/10 rounded-xl p-4 font-mono text-xs"
+          className="w-full h-48 bg-muted border border-border rounded-xl p-4 font-mono text-xs focus:ring-2 focus:ring-primary/20 transition-all"
           placeholder='{"version": "0.1.0", "plan": {...}, "result": {...}}'
           value={jsonInput}
           onChange={(e) => setJsonInput(e.target.value)}
         />
         <button 
           onClick={handleJsonUpload}
-          className="w-full bg-primary text-primary-foreground py-4 rounded-xl font-bold"
+          className="btn-primary w-full"
         >
           Load Instructions
         </button>
@@ -79,40 +79,40 @@ const Instructions = ({ initialData, onBack }: InstructionsProps) => {
     <div className="max-w-4xl mx-auto py-12 px-6 space-y-12">
       {/* Header - Hidden on Print */}
       <div className="flex justify-between items-center print:hidden">
-        <button onClick={onBack} className="flex items-center gap-2 text-foreground/60 hover:text-primary">
+        <button onClick={onBack} className="flex items-center gap-2 text-foreground/50 hover:text-primary transition-colors font-semibold">
           <ChevronLeft className="w-4 h-4" /> Back to App
         </button>
         <div className="flex gap-3">
           <button 
             onClick={() => downloadTxt('beneficiary-instructions.txt', generateInstructionTxt(model))}
-            className="flex items-center gap-2 bg-zinc-900 border border-white/10 px-4 py-2 rounded-lg text-sm font-bold hover:bg-zinc-800"
+            className="flex items-center gap-2 bg-white border border-border px-4 py-2 rounded-lg text-sm font-bold hover:bg-muted transition-colors"
           >
             <Download className="w-4 h-4" /> Download TXT
           </button>
           <button 
             onClick={() => window.print()}
-            className="flex items-center gap-2 bg-white text-black px-4 py-2 rounded-lg text-sm font-bold hover:bg-zinc-200"
+            className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-bold hover:shadow-lg hover:shadow-primary/20 transition-all"
           >
             <Printer className="w-4 h-4" /> Print PDF
           </button>
         </div>
       </div>
 
-      <article className="space-y-12 print:text-black print:space-y-8">
+      <article className="space-y-12 print:text-black print:space-y-8 bg-white p-8 md:p-12 rounded-3xl border border-border shadow-sm print:border-none print:shadow-none print:p-0">
         <header className="space-y-4 text-center flex flex-col items-center">
-          <img src="/logo.png" alt="Bitcoin Will Logo" className="w-16 h-16 object-contain mb-2 print:invert print:brightness-0" />
-          <h1 className="text-4xl font-extrabold tracking-tight">Beneficiary Instructions</h1>
-          <p className="text-foreground/60 print:text-gray-500 uppercase tracking-widest text-xs font-bold">
+          <img src="/logo.png" alt="Bitcoin Will Logo" className="w-20 h-20 object-contain mb-2" />
+          <h1 className="text-4xl font-black tracking-tight">Beneficiary Instructions</h1>
+          <p className="text-foreground/50 print:text-gray-500 uppercase tracking-widest text-[10px] font-bold">
             Bitcoin Will • Non-Custodial Inheritance Vault
           </p>
         </header>
 
         {/* Section: What this is */}
         <section className="space-y-4">
-          <h2 className="text-xl font-bold border-b border-white/10 pb-2 flex items-center gap-2 print:border-gray-300">
+          <h2 className="text-xl font-bold border-b border-border pb-2 flex items-center gap-2 print:border-gray-300">
             <Info className="w-5 h-5 text-primary" /> What this is
           </h2>
-          <p className="text-foreground/70 print:text-gray-700">
+          <p className="text-foreground/70 print:text-gray-700 leading-relaxed">
             This document provides the technical instructions required to claim Bitcoin from a "Dead Man's Switch" vault. 
             These funds were intended for you (the Beneficiary) if the Owner becomes inactive for a defined period.
           </p>
@@ -120,11 +120,11 @@ const Instructions = ({ initialData, onBack }: InstructionsProps) => {
 
         {/* Section: When to claim */}
         <section className="space-y-4">
-          <h2 className="text-xl font-bold border-b border-white/10 pb-2 flex items-center gap-2 print:border-gray-300">
+          <h2 className="text-xl font-bold border-b border-border pb-2 flex items-center gap-2 print:border-gray-300">
              <History className="w-5 h-5 text-primary" /> When you can claim
           </h2>
-          <div className="glass p-6 bg-primary/5 border-primary/20 print:bg-gray-100 print:border-gray-300">
-            <p className="text-sm leading-relaxed">
+          <div className="p-6 bg-primary/5 border border-primary/10 rounded-2xl print:bg-gray-50 print:border-gray-300">
+            <p className="text-sm leading-relaxed text-foreground/80">
               <strong>Condition:</strong> You can claim these funds ONLY if they have remained unmoved at the vault address for at least <strong>{model.locktimeBlocks} blocks</strong> (approximately <strong>{model.locktimeApprox}</strong>) since the last funding transaction was confirmed.
             </p>
           </div>
@@ -132,7 +132,7 @@ const Instructions = ({ initialData, onBack }: InstructionsProps) => {
 
         {/* Section: Recovery Steps */}
         <section className="space-y-6">
-          <h2 className="text-xl font-bold border-b border-white/10 pb-2 print:border-gray-300">Recovery Steps</h2>
+          <h2 className="text-xl font-bold border-b border-border pb-2 print:border-gray-300">Recovery Steps</h2>
           <ol className="space-y-4">
             {[
               {
@@ -157,7 +157,7 @@ const Instructions = ({ initialData, onBack }: InstructionsProps) => {
               }
             ].map((step, i) => (
               <li key={i} className="flex gap-4">
-                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-xs print:bg-gray-200 print:text-black">
+                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs print:bg-gray-100 print:text-black print:border print:border-gray-200">
                   {i + 1}
                 </span>
                 <div>
@@ -171,7 +171,7 @@ const Instructions = ({ initialData, onBack }: InstructionsProps) => {
 
         {/* Section: Technical Data */}
         <section className="space-y-6">
-          <h2 className="text-xl font-bold border-b border-white/10 pb-2 print:border-gray-300">Technical Details</h2>
+          <h2 className="text-xl font-bold border-b border-border pb-2 print:border-gray-300">Technical Details</h2>
           
           <div className="grid gap-6">
             <DataRow label="Network" value={model.network} />
@@ -184,7 +184,7 @@ const Instructions = ({ initialData, onBack }: InstructionsProps) => {
 
         {/* Section: Warnings */}
         <section className="p-6 border border-yellow-500/20 bg-yellow-500/5 rounded-2xl space-y-3 print:bg-gray-50 print:border-gray-200">
-          <div className="flex items-center gap-2 text-yellow-500 font-bold text-sm uppercase">
+          <div className="flex items-center gap-2 text-yellow-600 font-bold text-[10px] uppercase tracking-wider">
             <AlertTriangle className="w-4 h-4" /> Strong Warnings
           </div>
           <ul className="text-xs text-foreground/60 space-y-2 print:text-gray-600">
@@ -195,7 +195,7 @@ const Instructions = ({ initialData, onBack }: InstructionsProps) => {
         </section>
       </article>
 
-      <footer className="text-center pt-8 border-t border-white/5 print:hidden">
+      <footer className="text-center pt-8 border-t border-border print:hidden">
         <p className="text-xs text-foreground/30">Generated by Bitcoin Will • Decentralized Inheritance</p>
       </footer>
     </div>
@@ -215,13 +215,13 @@ const DataRow = ({ label, value, copyable, mono }: { label: string, value: strin
     <div className="space-y-2">
       <p className="text-[10px] font-bold uppercase tracking-wider text-foreground/40 print:text-gray-500">{label}</p>
       <div className="flex gap-2">
-        <div className={`flex-1 p-3 bg-zinc-900 border border-white/5 rounded-lg text-sm break-all print:bg-transparent print:border-none print:p-0 ${mono ? 'font-mono text-xs' : ''}`}>
+        <div className={`flex-1 p-3 bg-muted border border-border rounded-lg text-sm break-all print:bg-transparent print:border-none print:p-0 ${mono ? 'font-mono text-[11px]' : ''}`}>
           {value}
         </div>
         {copyable && (
           <button 
             onClick={handleCopy}
-            className="p-3 bg-zinc-900 border border-white/5 rounded-lg hover:bg-zinc-800 print:hidden"
+            className="p-3 bg-white border border-border rounded-lg hover:bg-muted transition-colors print:hidden"
           >
             {copied ? <Check className="w-4 h-4 text-primary" /> : <Copy className="w-4 h-4 opacity-40" />}
           </button>

@@ -7,7 +7,7 @@ const DevPlayground = () => {
     network: 'testnet',
     inheritance_type: 'timelock_recovery',
     owner_pubkey: '02e9634f19b165239105436a5c17e3371901c5651581452a329978747474747474',
-    beneficiary_pubkey: '03a634f19b165239105436a5c17e3371901c5651581452a329978747474747474',
+    beneficiary_pubkey: '03e9634f19b165239105436a5c17e3371901c5651581452a329978747474747474',
     locktime_blocks: 144, // ~1 day
   });
 

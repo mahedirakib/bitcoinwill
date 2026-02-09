@@ -17,6 +17,13 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        border: "hsl(var(--border))",
+        input: "hsl(var(--border))",
+        ring: "hsl(var(--ring))",
+        muted: {
+          DEFAULT: "hsl(var(--muted))",
+          foreground: "hsl(var(--muted-foreground))",
+        },
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],

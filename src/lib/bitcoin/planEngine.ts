@@ -4,20 +4,61 @@ import { getNetworkParams } from './network';
 import { validatePlanInput } from './validation';
 
 /**
- * Bitcoin Construction (MVP):
+ * Bitcoin Script Construction Module
  * 
- * Script Logic:
+ * This module implements the Time-lock Inheritance Protocol (TIP) using native
+ * Bitcoin Script opcodes. It creates a P2WSH (Pay-to-Witness-Script-Hash) vault
+ * with two spending paths:
+ * 
+ * **Script Logic:**
+ * ```
  * OP_IF
- *   <owner_pubkey> OP_CHECKSIG
+ *   <owner_pubkey> OP_CHECKSIG          // Path 1: Owner immediate spend
  * OP_ELSE
- *   <locktime_blocks> OP_CHECKSEQUENCEVERIFY OP_DROP
- *   <beneficiary_pubkey> OP_CHECKSIG
+ *   <locktime_blocks> OP_CHECKSEQUENCEVERIFY OP_DROP  // Path 2: CSV time-lock
+ *   <beneficiary_pubkey> OP_CHECKSIG    //        Beneficiary claim after delay
  * OP_ENDIF
+ * ```
  * 
- * To spend as Owner: [signature, 1]
- * To spend as Beneficiary: [signature, 0] (after CSV time)
+ * **Spending Methods:**
+ * - Owner Path: [signature, 1] - Can spend immediately at any time
+ * - Beneficiary Path: [signature, 0] - Can spend only after CSV delay expires
+ * 
+ * @module planEngine
+ * @see {@link https://github.com/bitcoin/bips/blob/master/bip-0112.mediawiki|BIP-112 CSV}
+ * @see {@link https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki|BIP-141 SegWit}
  */
 
+/**
+ * Builds a complete Bitcoin Will plan from user input.
+ * 
+ * This is the core function that creates the inheritance vault. It:
+ * 1. Validates all input parameters
+ * 2. Constructs the witness script with dual spending paths
+ * 3. Generates the P2WSH SegWit address
+ * 4. Creates a descriptor for wallet import
+ * 5. Generates human-readable explanations
+ * 
+ * The resulting vault allows the owner to spend at any time, while enabling
+ * the beneficiary to claim funds only after the specified delay period.
+ * 
+ * @param {PlanInput} input - The plan configuration with network, keys, and delay
+ * @returns {PlanOutput} Complete plan with address, scripts, and instructions
+ * @throws {Error} If validation fails or address generation fails
+ * 
+ * @example
+ * const plan = buildPlan({
+ *   network: 'testnet',
+ *   inheritance_type: 'timelock_recovery',
+ *   owner_pubkey: '02e9634f19b165239105436a5c17e3371901c5651581452a329978747474747474',
+ *   beneficiary_pubkey: '03e9634f19b165239105436a5c17e3371901c5651581452a329978747474747474',
+ *   locktime_blocks: 144 // ~1 day
+ * });
+ * 
+ * console.log(plan.address);     // tb1q... (vault address)
+ * console.log(plan.descriptor);  // wsh(bitcoincore_script(...))
+ * console.log(plan.script_asm);  // Human-readable script
+ */
 export const buildPlan = (input: PlanInput): PlanOutput => {
   validatePlanInput(input);
   
@@ -37,7 +78,7 @@ export const buildPlan = (input: PlanInput): PlanOutput => {
       beneficiaryPub,
       script.OPS.OP_CHECKSIG,
     script.OPS.OP_ENDIF,
-  ]) as Buffer;
+  ]);
 
   const p2wsh = payments.p2wsh({
     redeem: { output: witnessScript, network },
@@ -48,7 +89,7 @@ export const buildPlan = (input: PlanInput): PlanOutput => {
     throw new Error('Failed to generate SegWit address');
   }
 
-  const scriptHex = witnessScript.toString('hex');
+  const scriptHex = Buffer.from(witnessScript).toString('hex');
 
   return {
     descriptor: `wsh(bitcoincore_script(${scriptHex}))`,
@@ -61,6 +102,21 @@ export const buildPlan = (input: PlanInput): PlanOutput => {
   };
 };
 
+/**
+ * Generates human-readable explanations of the plan's spending conditions.
+ * 
+ * Creates an array of strings that explain in plain English:
+ * - The vault address
+ * - Owner's immediate spending rights
+ * - Beneficiary's conditional spending rights after CSV delay
+ * - Timer reset behavior on owner activity
+ * 
+ * @param {PlanInput} input - The plan input containing keys and locktime
+ * @param {string} address - The generated vault address
+ * @returns {string[]} Array of explanation strings for UI display
+ * 
+ * @private This is an internal helper function, not exported
+ */
 const generateExplanation = (input: PlanInput, address: string): string[] => {
   return [
     `Vault Address: ${address}`,
