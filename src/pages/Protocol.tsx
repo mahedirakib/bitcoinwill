@@ -1,4 +1,3 @@
-import React from 'react';
 import { ChevronLeft, FileCode, Shield, Zap, AlertCircle } from 'lucide-react';
 import diagram from '@/assets/diagram.svg';
 
@@ -70,8 +69,16 @@ OP_ENDIF`}
         </div>
       </section>
 
-      <footer className="pt-8 border-t border-white/5 text-center">
+      <footer className="pt-8 border-t border-white/5 text-center flex flex-col items-center gap-2">
         <p className="text-xs text-foreground/30">Protocol v1.0.0 • Last Updated Feb 2026</p>
+        <a 
+          href="https://github.com/mahedirakib/bitcoinwill/blob/main/whitepaper.md" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="text-xs text-foreground/40 hover:text-primary transition-colors underline underline-offset-4 decoration-white/10"
+        >
+          Protocol Whitepaper
+        </a>
       </footer>
     </div>
   );

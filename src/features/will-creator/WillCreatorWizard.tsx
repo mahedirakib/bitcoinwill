@@ -1,19 +1,16 @@
-import React, { useReducer, useState, useEffect } from 'react';
+import { useReducer, useState, useEffect } from 'react';
 import { 
-  Shield, 
   ChevronRight, 
-  ChevronLeft, 
   CheckCircle2, 
   Download, 
   AlertTriangle,
   Clock,
   HelpCircle,
   FileText,
-  Copy,
-  Check
+  Copy
 } from 'lucide-react';
 import { buildPlan } from '@/lib/bitcoin/planEngine';
-import { PlanInput, PlanOutput } from '@/lib/bitcoin/types';
+import { PlanInput, PlanOutput, type BitcoinNetwork } from '@/lib/bitcoin/types';
 import { validatePubkey } from '@/lib/bitcoin/validation';
 import { downloadJson } from '@/lib/utils/download';
 import { useSettings } from '@/state/settings';
@@ -42,7 +39,7 @@ type WizardAction =
   | { type: 'SET_RESULT'; payload: PlanOutput }
   | { type: 'SET_ERRORS'; payload: Record<string, string> };
 
-const createInitialState = (network: any): WizardState => ({
+const createInitialState = (network: BitcoinNetwork | 'mainnet'): WizardState => ({
   step: 'TYPE',
   input: {
     network: network,
@@ -74,7 +71,7 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
 
 // --- Components ---
 
-export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: () => void, onViewInstructions: (data: any) => void }) => {
+export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: () => void, onViewInstructions: (data: unknown) => void }) => {
   const { network } = useSettings();
   const { showToast } = useToast();
   const [state, dispatch] = useReducer(wizardReducer, createInitialState(network));
@@ -82,9 +79,9 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
 
   useEffect(() => {
     if (state.step !== 'RESULT') {
-      dispatch({ type: 'UPDATE_INPUT', payload: { network: network as any } });
+      dispatch({ type: 'UPDATE_INPUT', payload: { network: network as BitcoinNetwork } });
     }
-  }, [network]);
+  }, [network, state.step]);
 
   const nextStep = () => {
     if (state.step === 'TYPE') dispatch({ type: 'SET_STEP', payload: 'KEYS' });
@@ -111,8 +108,8 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
       const result = buildPlan(state.input);
       dispatch({ type: 'SET_RESULT', payload: result });
       dispatch({ type: 'SET_STEP', payload: 'RESULT' });
-    } catch (e: any) {
-      dispatch({ type: 'SET_ERRORS', payload: { global: e.message } });
+    } catch (e) {
+      dispatch({ type: 'SET_ERRORS', payload: { global: (e as Error).message } });
     }
   };
 
@@ -296,6 +293,12 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
               <div className="p-4 bg-red-600/10 border border-red-600/30 rounded-xl flex gap-3 text-red-400 text-sm">
                 <AlertTriangle className="w-5 h-5 flex-shrink-0" />
                 <p><strong>CAUTION:</strong> You are creating a plan on Mainnet. This involves real Bitcoin.</p>
+              </div>
+            )}
+
+            {state.errors.global && (
+              <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm">
+                <p><strong>Error:</strong> {state.errors.global}</p>
               </div>
             )}
 

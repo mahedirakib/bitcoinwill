@@ -1,4 +1,4 @@
-export type BitcoinNetwork = 'testnet' | 'regtest';
+export type BitcoinNetwork = 'testnet' | 'regtest' | 'mainnet';
 
 export interface PlanInput {
   network: BitcoinNetwork;

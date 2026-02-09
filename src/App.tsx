@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react'
-import { Lock, Download, PlusCircle, BookOpen, AlertCircle, FileText, ShieldAlert, Cpu } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { BookOpen, AlertCircle, FileText, ShieldAlert, Cpu } from 'lucide-react'
 import DevPlayground from './components/DevPlayground'
 import { WillCreatorWizard } from './features/will-creator/WillCreatorWizard'
 import Learn from './pages/Learn'
@@ -9,10 +9,15 @@ import { SettingsProvider, useSettings } from './state/settings'
 import { NetworkSelector } from './components/NetworkSelector'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { ToastProvider } from './components/Toast'
+import type { PlanInput, PlanOutput } from './lib/bitcoin/types'
 
 const AppContent = () => {
   const [activeView, setActiveView] = useState<'home' | 'create' | 'recover' | 'dev' | 'learn' | 'instructions' | 'protocol'>('home')
-  const [instructionData, setInstructionData] = useState<any>(null)
+  const [instructionData, setInstructionData] = useState<{
+    plan: PlanInput;
+    result: PlanOutput;
+    created_at?: string;
+  } | undefined>(undefined)
   const { network } = useSettings()
 
   useEffect(() => {
@@ -25,9 +30,9 @@ const AppContent = () => {
   if (activeView === 'protocol') return <Protocol onBack={() => setActiveView('home')} />;
   if (activeView === 'instructions') return (
     <Instructions 
-      initialData={instructionData} 
+      initialData={instructionData}
       onBack={() => {
-        setInstructionData(null);
+        setInstructionData(undefined);
         setActiveView('home');
       }} 
     />
@@ -41,9 +46,7 @@ const AppContent = () => {
           className="flex items-center gap-2 cursor-pointer" 
           onClick={() => setActiveView('home')}
         >
-          <div className="bg-primary p-2 rounded-lg">
-            <Lock className="text-primary-foreground w-6 h-6" />
-          </div>
+          <img src="/logo.png" alt="Bitcoin Will Logo" className="w-10 h-10 object-contain" />
           <span className="text-xl font-bold tracking-tight">Bitcoin Will</span>
           {network === 'mainnet' && (
             <span className="ml-2 px-2 py-0.5 bg-red-600 text-[10px] font-bold text-white rounded uppercase animate-pulse">
@@ -71,7 +74,8 @@ const AppContent = () => {
         {activeView === 'home' && (
           <div className="space-y-24 max-w-5xl mx-auto py-12">
             {/* Hero */}
-            <div className="text-center space-y-8">
+            <div className="text-center space-y-8 flex flex-col items-center">
+              <img src="/logo.png" alt="Bitcoin Will Logo" className="w-24 h-24 md:w-32 md:h-32 object-contain" />
               <h1 className="text-6xl md:text-7xl font-extrabold tracking-tight leading-[1.1]">
                 A Simple Bitcoin <br />
                 <span className="text-primary">Inheritance Plan</span>
@@ -146,7 +150,11 @@ const AppContent = () => {
           <WillCreatorWizard 
             onCancel={() => setActiveView('home')} 
             onViewInstructions={(data) => {
-              setInstructionData(data);
+              setInstructionData(data as {
+                plan: PlanInput;
+                result: PlanOutput;
+                created_at?: string;
+              });
               setActiveView('instructions');
             }}
           />
@@ -160,7 +168,18 @@ const AppContent = () => {
            Current Environment: <span className="uppercase font-bold text-foreground/60">{network}</span>
         </div>
         <p>Built as an educational and practical Bitcoin-native tool.</p>
-        <p>No Tracking. No Cookies. Open Source Bitcoin Native Inheritance.</p>
+        <div className="flex items-center gap-3">
+          <a 
+            href="https://github.com/mahedirakib/bitcoinwill/blob/main/whitepaper.md" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="hover:text-foreground/80 transition-colors underline underline-offset-4 decoration-white/5"
+          >
+            Protocol Whitepaper
+          </a>
+          <span className="opacity-20">•</span>
+          <p>No Tracking. No Cookies. Open Source Bitcoin Native Inheritance.</p>
+        </div>
       </footer>
     </div>
   )

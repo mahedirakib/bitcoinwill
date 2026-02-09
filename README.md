@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="public/logo.png" width="200" alt="Bitcoin Will Logo">
+</p>
+
 # Bitcoin Will 🔐
 
 A minimal, privacy-first web application for creating non-custodial Bitcoin inheritance spending plans.
@@ -6,7 +10,7 @@ A minimal, privacy-first web application for creating non-custodial Bitcoin inhe
 This project is an **initial release (v0.1.0)**. It is a functional tool for generating Bitcoin-native scripts, but it should be treated as experimental. Always verify your generated scripts and test with small amounts of Testnet Bitcoin before moving to Mainnet.
 
 ## What is this?
-Bitcoin Will is a **stateless, client-side utility** that helps you create a "Dead Man's Switch" for your Bitcoin. It generates a unique Vault Address with a built-in rule: you can spend your funds at any time, but if you remain inactive for a specified delay, a beneficiary can claim the funds using their own key.
+Bitcoin Will is a **stateless, client-side utility** that helps you create a "Dead Man's Switch" for your Bitcoin. It is built on the Time-lock Inheritance Protocol (TIP) and generates a unique Vault Address with a built-in rule: you can spend your funds at any time, but if you remain inactive for a specified delay, a beneficiary can claim the funds using their own key.
 
 ## Why this exists
 Inheritance in the Bitcoin space is often either too complex (multisig setups) or too centralized (custodians). We wanted to build the simplest possible implementation of a **Relative Timelock (CSV)** spending plan that is:

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { buildPlan } from '@/lib/bitcoin/planEngine';
 import { PlanInput, PlanOutput } from '@/lib/bitcoin/types';
 
@@ -19,8 +19,8 @@ const DevPlayground = () => {
       const result = buildPlan(input);
       setOutput(result);
       setError(null);
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e) {
+      setError((e as Error).message);
       setOutput(null);
     }
   }, [input]);
@@ -38,7 +38,9 @@ const DevPlayground = () => {
             onChange={(e) => {
               try {
                 setInput(JSON.parse(e.target.value));
-              } catch {}
+              } catch {
+                // Invalid JSON - don't update
+              }
             }}
           />
           {error && <div className="p-4 bg-red-500/20 text-red-400 rounded-lg">{error}</div>}

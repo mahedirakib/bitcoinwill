@@ -1,5 +1,4 @@
-import React from 'react';
-import { Shield, Lock, AlertTriangle, BookOpen, ChevronLeft, HelpCircle, Zap } from 'lucide-react';
+import { Shield, Lock, AlertTriangle, ChevronLeft, HelpCircle, Zap } from 'lucide-react';
 import diagram from '@/assets/diagram.svg';
 
 const Learn = ({ onBack }: { onBack: () => void }) => {

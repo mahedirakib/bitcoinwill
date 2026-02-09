@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Printer, 
   Download, 
@@ -12,16 +12,20 @@ import {
 } from 'lucide-react';
 import { InstructionModel, buildInstructions, generateInstructionTxt } from '@/lib/bitcoin/instructions';
 import { downloadTxt } from '@/lib/utils/download';
+import type { PlanInput, PlanOutput } from '@/lib/bitcoin/types';
 
 interface InstructionsProps {
-  initialData?: any; // Passed from nav state
+  initialData?: {
+    plan: PlanInput;
+    result: PlanOutput;
+    created_at?: string;
+  };
   onBack: () => void;
 }
 
 const Instructions = ({ initialData, onBack }: InstructionsProps) => {
   const [model, setModel] = useState<InstructionModel | null>(null);
   const [jsonInput, setJsonInput] = useState('');
-  const [copied, setCopied] = useState<string | null>(null);
 
   useEffect(() => {
     if (initialData?.plan && initialData?.result) {
@@ -39,15 +43,9 @@ const Instructions = ({ initialData, onBack }: InstructionsProps) => {
       } else {
         alert("Invalid JSON: Missing plan or result data.");
       }
-    } catch (e) {
+    } catch {
       alert("Invalid JSON: Please check the format.");
     }
-  };
-
-  const copyToClipboard = (text: string, id: string) => {
-    navigator.clipboard.writeText(text);
-    setCopied(id);
-    setTimeout(() => setCopied(null), 2000);
   };
 
   if (!model) {
@@ -101,7 +99,8 @@ const Instructions = ({ initialData, onBack }: InstructionsProps) => {
       </div>
 
       <article className="space-y-12 print:text-black print:space-y-8">
-        <header className="space-y-4 text-center">
+        <header className="space-y-4 text-center flex flex-col items-center">
+          <img src="/logo.png" alt="Bitcoin Will Logo" className="w-16 h-16 object-contain mb-2 print:invert print:brightness-0" />
           <h1 className="text-4xl font-extrabold tracking-tight">Beneficiary Instructions</h1>
           <p className="text-foreground/60 print:text-gray-500 uppercase tracking-widest text-xs font-bold">
             Bitcoin Will • Non-Custodial Inheritance Vault

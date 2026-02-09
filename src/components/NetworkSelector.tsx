@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useSettings } from '@/state/settings';
-import { AlertTriangle, ShieldCheck, Lock } from 'lucide-react';
+import { AlertTriangle, Lock } from 'lucide-react';
+import type { BitcoinNetwork } from '@/lib/bitcoin/types';
 
 const CONFIRMATION_PHRASE = "I UNDERSTAND MAINNET IS REAL MONEY";
 
@@ -10,12 +11,12 @@ export const NetworkSelector = () => {
   const [phrase, setPhrase] = useState('');
 
   const handleSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const val = e.target.value;
+    const val = e.target.value as BitcoinNetwork | 'mainnet';
     if (val === 'mainnet' && !isMainnetUnlocked) {
       setShowModal(true);
       return;
     }
-    setNetwork(val as any);
+    setNetwork(val);
   };
 
   const confirmUnlock = () => {

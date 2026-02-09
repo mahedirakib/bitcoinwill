@@ -18,7 +18,7 @@ import { validatePlanInput } from './validation';
  * To spend as Beneficiary: [signature, 0] (after CSV time)
  */
 
-export const buildPlan = (input: PlanInput | any): PlanOutput => {
+export const buildPlan = (input: PlanInput): PlanOutput => {
   validatePlanInput(input);
   
   const network = input.network === 'mainnet' ? networks.bitcoin : getNetworkParams(input.network);
@@ -37,7 +37,7 @@ export const buildPlan = (input: PlanInput | any): PlanOutput => {
       beneficiaryPub,
       script.OPS.OP_CHECKSIG,
     script.OPS.OP_ENDIF,
-  ]);
+  ]) as Buffer;
 
   const p2wsh = payments.p2wsh({
     redeem: { output: witnessScript, network },
@@ -48,12 +48,14 @@ export const buildPlan = (input: PlanInput | any): PlanOutput => {
     throw new Error('Failed to generate SegWit address');
   }
 
+  const scriptHex = witnessScript.toString('hex');
+
   return {
-    descriptor: `wsh(bitcoincore_script(${witnessScript.toString('hex')}))`,
+    descriptor: `wsh(bitcoincore_script(${scriptHex}))`,
     script_asm: script.toASM(witnessScript),
-    script_hex: witnessScript.toString('hex'),
+    script_hex: scriptHex,
     address: p2wsh.address,
-    witness_script: witnessScript.toString('hex'),
+    witness_script: scriptHex,
     network: input.network,
     human_explanation: generateExplanation(input, p2wsh.address),
   };

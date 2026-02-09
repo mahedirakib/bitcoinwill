@@ -1,7 +1,7 @@
 /**
  * Utility to download data as a JSON file in the browser.
  */
-export const downloadJson = (filename: string, data: any) => {
+export const downloadJson = <T>(filename: string, data: T) => {
   const jsonString = JSON.stringify(data, null, 2);
   const blob = new Blob([jsonString], { type: 'application/json' });
   const url = URL.createObjectURL(blob);

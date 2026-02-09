@@ -22,8 +22,8 @@ describe('PlanEngine', () => {
   });
 
   it('throws error on invalid public key', () => {
-    const badInput = { ...sampleInput, owner_pubkey: 'invalid' };
-    expect(() => buildPlan(badInput as any)).toThrow('Invalid Owner Public Key');
+    const badInput = { ...sampleInput, owner_pubkey: 'invalid' } as unknown as PlanInput;
+    expect(() => buildPlan(badInput)).toThrow('Invalid Owner Public Key');
   });
 
   it('throws error on invalid locktime', () => {
