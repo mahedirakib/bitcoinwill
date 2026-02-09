@@ -1,3 +1,5 @@
+import animate from "tailwindcss-animate";
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [
@@ -29,7 +31,12 @@ export default {
         sans: ['Inter', 'system-ui', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],
       },
+      fontSize: {
+        'hero': ['6rem', { lineHeight: '1.05', letterSpacing: '-0.05em', fontWeight: '900' }],
+      },
     },
   },
-  plugins: [],
+  plugins: [
+    animate,
+  ],
 }
