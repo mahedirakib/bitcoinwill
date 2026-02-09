@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react'
-import { BookOpen, AlertCircle, FileText, ShieldAlert, Cpu, Menu, X, FileCode } from 'lucide-react'
+import { BookOpen, AlertCircle, FileText, ShieldAlert, Cpu, Menu, X } from 'lucide-react'
 import DevPlayground from './components/DevPlayground'
 import { WillCreatorWizard } from './features/will-creator/WillCreatorWizard'
 import Learn from './pages/Learn'
 import Instructions from './pages/Instructions'
 import Protocol from './pages/Protocol'
-import TIPProtocol from './pages/TIPProtocol'
 import { SettingsProvider, useSettings } from './state/settings'
 import { NetworkSelector } from './components/NetworkSelector'
 import { ErrorBoundary } from './components/ErrorBoundary'
@@ -13,7 +12,7 @@ import { ToastProvider } from './components/Toast'
 import type { PlanInput, PlanOutput } from './lib/bitcoin/types'
 
 const AppContent = () => {
-  const [activeView, setActiveView] = useState<'home' | 'create' | 'recover' | 'dev' | 'learn' | 'instructions' | 'protocol' | 'tipprotocol'>('home')
+  const [activeView, setActiveView] = useState<'home' | 'create' | 'recover' | 'dev' | 'learn' | 'instructions' | 'protocol'>('home')
   const [instructionData, setInstructionData] = useState<{
     plan: PlanInput;
     result: PlanOutput;
@@ -25,13 +24,11 @@ const AppContent = () => {
   useEffect(() => {
     if (window.location.pathname === '/dev') setActiveView('dev')
     if (window.location.pathname === '/protocol') setActiveView('protocol')
-    if (window.location.pathname === '/tip') setActiveView('tipprotocol')
   }, [])
 
   if (activeView === 'dev') return <DevPlayground />;
   if (activeView === 'learn') return <Learn onBack={() => setActiveView('home')} />;
   if (activeView === 'protocol') return <Protocol onBack={() => setActiveView('home')} />;
-  if (activeView === 'tipprotocol') return <TIPProtocol onBack={() => setActiveView('home')} />;
   if (activeView === 'instructions') return (
     <Instructions 
       initialData={instructionData}
@@ -45,7 +42,6 @@ const AppContent = () => {
   const navItems = [
     { label: 'Learn', view: 'learn' as const, icon: BookOpen },
     { label: 'Protocol', view: 'protocol' as const, icon: Cpu },
-    { label: 'TIP Protocol', view: 'tipprotocol' as const, icon: FileCode },
     { label: 'Instructions', view: 'instructions' as const, icon: FileText },
   ]
 
