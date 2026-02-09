@@ -47,14 +47,15 @@ describe('PlanEngine', () => {
       expect(result.address).toMatch(/^bcrt1[qpzry9x8gf2tvdw0s3jn54khce6mua7l]{39,59}$/);
     });
 
-    it('produces consistent script hash across different locktimes', () => {
+    it('produces different script hashes for different locktimes', () => {
       const input1 = { ...sampleInput, locktime_blocks: 144 };
-      const input2 = { ...sampleInput, locktime_blocks: 144 };
+      const input2 = { ...sampleInput, locktime_blocks: 1000 };
       
       const result1 = buildPlan(input1);
       const result2 = buildPlan(input2);
       
-      expect(result1.script_hex).toBe(result2.script_hex);
+      expect(result1.script_hex).not.toBe(result2.script_hex);
+      expect(result1.address).not.toBe(result2.address);
     });
 
     it('generates different addresses for different owner keys', () => {
@@ -105,7 +106,7 @@ describe('PlanEngine', () => {
     it('descriptor contains script hex', () => {
       const result = buildPlan(sampleInput);
       expect(result.descriptor).toContain(result.script_hex);
-      expect(result.descriptor).toMatch(/^wsh\(bitcoincore_script\([a-f0-9]+\)\)$/);
+      expect(result.descriptor).toMatch(/^wsh\(raw\([a-f0-9]+\)\)$/);
     });
 
     it('script_asm contains expected opcodes', () => {

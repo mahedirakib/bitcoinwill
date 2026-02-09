@@ -13,7 +13,7 @@ describe('Instructions Module', () => {
   };
 
   const mockPlanOutput: PlanOutput = {
-    descriptor: 'wsh(bitcoincore_script(6376a914...88ac))',
+    descriptor: 'wsh(raw(6376a914...88ac))',
     script_asm: 'OP_IF 02e963... OP_CHECKSIG OP_ELSE 144 ...',
     script_hex: '6376a914...88ac',
     address: 'tb1qxyz123',
@@ -146,7 +146,7 @@ describe('Instructions Module', () => {
       locktimeApprox: '~1 days',
       witnessScriptHex: '6376a914...88ac',
       witnessScriptAsm: 'OP_IF ... OP_CHECKSIG ...',
-      descriptor: 'wsh(bitcoincore_script(6376a914...88ac))',
+      descriptor: 'wsh(raw(6376a914...88ac))',
       createdAt: '2026-02-08T10:30:00.000Z',
     };
 

@@ -1,7 +1,11 @@
-import { script, payments, networks } from 'bitcoinjs-lib';
+import { script, payments, initEccLib } from 'bitcoinjs-lib';
+import * as ecc from 'tiny-secp256k1';
 import { PlanInput, PlanOutput } from './types';
 import { getNetworkParams } from './network';
 import { validatePlanInput } from './validation';
+
+// Initialize ECC library for bitcoinjs-lib
+initEccLib(ecc);
 
 /**
  * Bitcoin Script Construction Module
@@ -62,7 +66,7 @@ import { validatePlanInput } from './validation';
 export const buildPlan = (input: PlanInput): PlanOutput => {
   validatePlanInput(input);
   
-  const network = input.network === 'mainnet' ? networks.bitcoin : getNetworkParams(input.network);
+  const network = getNetworkParams(input.network);
   const ownerPub = Buffer.from(input.owner_pubkey, 'hex');
   const beneficiaryPub = Buffer.from(input.beneficiary_pubkey, 'hex');
   
@@ -92,7 +96,7 @@ export const buildPlan = (input: PlanInput): PlanOutput => {
   const scriptHex = Buffer.from(witnessScript).toString('hex');
 
   return {
-    descriptor: `wsh(bitcoincore_script(${scriptHex}))`,
+    descriptor: `wsh(raw(${scriptHex}))`,
     script_asm: script.toASM(witnessScript),
     script_hex: scriptHex,
     address: p2wsh.address,
