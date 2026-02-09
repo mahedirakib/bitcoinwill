@@ -39,6 +39,11 @@ describe('Validation Module', () => {
       expect(validatePubkey(invalidHexKey)).toBe(false);
     });
 
+    it('rejects public key that is not a valid point on the curve', () => {
+      const invalidPoint = '020000000000000000000000000000000000000000000000000000000000000000';
+      expect(validatePubkey(invalidPoint)).toBe(false);
+    });
+
     it('rejects public key with special characters', () => {
       const specialCharKey = '02e9634f19b165239105436a5c17e3371901c5651581452a3299787474747474!!';
       expect(validatePubkey(specialCharKey)).toBe(false);

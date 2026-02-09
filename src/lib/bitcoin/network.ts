@@ -23,6 +23,8 @@ import { BitcoinNetwork } from './types';
  */
 export const getNetworkParams = (network: BitcoinNetwork): Network => {
   switch (network) {
+    case 'mainnet':
+      return networks.bitcoin;
     case 'regtest':
       return networks.regtest;
     case 'testnet':

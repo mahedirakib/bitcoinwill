@@ -1,29 +1,28 @@
 import { PlanInput } from './types';
+import * as ecc from 'tiny-secp256k1';
 
 /**
- * Validates a Bitcoin public key format.
+ * Validates a Bitcoin public key format and curve validity.
  * 
  * Checks if the provided string is a valid compressed public key:
  * - Must be exactly 66 hexadecimal characters
  * - Must start with "02" or "03" (compressed key prefix)
  * - Must contain only valid hex characters (0-9, a-f, A-F)
- * 
- * Compressed public keys are 33 bytes (66 hex chars) and are the standard
- * for modern Bitcoin wallets using SegWit addresses.
+ * - MUST be a valid point on the secp256k1 curve
  * 
  * @param {string} pubkey - The public key string to validate
- * @returns {boolean} True if the key is valid, false otherwise
- * 
- * @example
- * validatePubkey('02e9634f19b165239105436a5c17e3371901c5651581452a329978747474747474')
- * // returns: true
- * 
- * validatePubkey('invalid-key')
- * // returns: false
+ * @returns {boolean} True if the key is valid and on the curve, false otherwise
  */
 export const validatePubkey = (pubkey: string): boolean => {
   const hexRegex = /^(02|03)[a-fA-F0-9]{64}$/;
-  return hexRegex.test(pubkey);
+  if (!hexRegex.test(pubkey)) return false;
+
+  try {
+    const buf = Buffer.from(pubkey, 'hex');
+    return ecc.isPoint(buf);
+  } catch {
+    return false;
+  }
 };
 
 /**
