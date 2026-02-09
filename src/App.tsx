@@ -48,7 +48,7 @@ const AppContent = () => {
   return (
     <div className="min-h-screen flex flex-col bg-mesh">
       {/* Header */}
-      <header className="p-6 md:p-8 flex justify-between items-center max-w-7xl mx-auto w-full relative z-50">
+      <header className="h-20 md:h-24 px-6 md:px-8 flex justify-between items-center max-w-7xl mx-auto w-full relative z-50">
         <div 
           className="flex items-center gap-3 cursor-pointer group" 
           onClick={() => {
@@ -97,7 +97,7 @@ const AppContent = () => {
 
         {/* Mobile Nav Overlay */}
         {isMenuOpen && (
-          <div className="fixed inset-0 top-[88px] bg-background/95 backdrop-blur-md z-40 lg:hidden animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="fixed inset-0 top-20 bg-background/95 backdrop-blur-md z-40 lg:hidden animate-in fade-in slide-in-from-top-4 duration-300">
             <nav className="flex flex-col p-8 gap-6">
               {navItems.map((item) => (
                 <button 
@@ -126,11 +126,11 @@ const AppContent = () => {
                 <div className="absolute inset-0 bg-primary/10 blur-3xl rounded-full" />
                 <img src="/logo.png" alt="Bitcoin Will Logo" className="w-24 h-24 md:w-40 md:h-40 object-contain relative drop-shadow-xl" />
               </div>
-              <h1 className="text-4xl md:text-8xl font-black tracking-tighter leading-[1.1] md:leading-[1.05]">
+              <h1 className="text-4xl md:text-hero">
                 A Simple Bitcoin <br className="hidden md:block" />
                 <span className="text-primary">Inheritance Plan</span>
               </h1>
-              <p className="text-lg md:text-2xl text-foreground/60 max-w-2xl mx-auto font-medium leading-relaxed px-4">
+              <p className="text-lg md:text-2xl text-foreground/70 max-w-2xl mx-auto font-medium leading-relaxed px-4">
                 Create a non-custodial Bitcoin spending plan that unlocks funds after a delay. 
                 <span className="text-foreground/90"> No accounts. No custody. No private keys.</span>
               </p>
@@ -160,7 +160,7 @@ const AppContent = () => {
               ].map((item, i) => (
                 <div key={i} className="glass p-6 md:p-8 space-y-4 glass-hover group">
                   <h3 className="text-lg font-bold text-primary group-hover:scale-105 transition-transform origin-left">{item.title}</h3>
-                  <p className="text-sm text-foreground/70 leading-relaxed font-medium">
+                  <p className="text-sm text-foreground/80 leading-relaxed font-medium">
                     {item.desc}
                   </p>
                 </div>
@@ -169,21 +169,21 @@ const AppContent = () => {
 
             {/* What this is NOT */}
             <div className="max-w-3xl mx-auto p-8 md:p-12 rounded-[2rem] border border-black/5 bg-muted/50 space-y-8 backdrop-blur-sm mx-4">
-              <div className="flex items-center gap-3 text-foreground/20 font-bold uppercase tracking-[0.2em] text-[10px]">
+              <div className="flex items-center gap-3 text-foreground/40 font-bold uppercase tracking-[0.2em] text-[10px]">
                 <ShieldAlert className="w-4 h-4" /> Safety Protocol
               </div>
               <div className="grid sm:grid-cols-3 gap-8 md:gap-10">
                 <div className="space-y-2">
                   <p className="font-bold text-sm tracking-tight">Not a Wallet</p>
-                  <p className="text-xs text-foreground/50 leading-relaxed font-medium">We never see, store, or manage your private keys.</p>
+                  <p className="text-xs text-foreground/60 leading-relaxed font-medium">We never see, store, or manage your private keys.</p>
                 </div>
                 <div className="space-y-2">
                   <p className="font-bold text-sm tracking-tight">Not a Legal Will</p>
-                  <p className="text-xs text-foreground/50 leading-relaxed font-medium">This is a technical recovery tool, not a legal document.</p>
+                  <p className="text-xs text-foreground/60 leading-relaxed font-medium">This is a technical recovery tool, not a legal document.</p>
                 </div>
                 <div className="space-y-2">
                   <p className="font-bold text-sm tracking-tight">Not a Custodian</p>
-                  <p className="text-xs text-foreground/50 leading-relaxed font-medium">Your Bitcoin stays on the network, under your control.</p>
+                  <p className="text-xs text-foreground/60 leading-relaxed font-medium">Your Bitcoin stays on the network, under your control.</p>
                 </div>
               </div>
             </div>
@@ -208,10 +208,10 @@ const AppContent = () => {
       </main>
 
       {/* Footer */}
-      <footer className="p-8 flex flex-col items-center gap-4 text-center text-sm text-foreground/50 border-t border-border mt-12">
+      <footer className="p-8 flex flex-col items-center gap-4 text-center text-sm text-foreground/60 border-t border-border mt-12">
         <div className="flex items-center gap-2 px-3 py-1 bg-muted rounded-full text-xs border border-border">
            <AlertCircle className="w-3 h-3 text-primary" />
-           Current Environment: <span className="uppercase font-bold text-foreground/70">{network}</span>
+           Current Environment: <span className="uppercase font-bold text-foreground/80">{network}</span>
         </div>
         <p>Built as an educational and practical Bitcoin-native tool.</p>
         <div className="flex items-center gap-3">
@@ -223,7 +223,7 @@ const AppContent = () => {
           >
             Protocol Whitepaper
           </a>
-          <span className="opacity-20">•</span>
+          <span className="opacity-40">•</span>
           <p>No Tracking. No Cookies. Open Source Bitcoin Native Inheritance.</p>
         </div>
       </footer>
