@@ -1,4 +1,5 @@
 import { PlanInput, PlanOutput } from './types';
+import { calculateTime } from './utils';
 
 /**
  * Data model for beneficiary-facing instructions.
@@ -61,32 +62,6 @@ export const buildInstructions = (plan: PlanInput, result: PlanOutput, createdAt
     createdAt: createdAt || new Date().toISOString(),
   };
 };
-
-/**
- * Converts block count to human-readable time approximation.
- *
- * Assumes average block time of 10 minutes per block.
- * Returns the most appropriate unit (hours, days, months, or years).
- *
- * @param {number} blocks - Number of Bitcoin blocks
- * @returns {string} Human-readable time approximation
- *
- * @example
- * calculateTime(144)   // "~1 days" (approx 1 day)
- * calculateTime(4320)  // "~1 months" (approx 1 month)
- * calculateTime(52560) // "~1.0 years" (approx 1 year)
- *
- * @private
- */
-function calculateTime(blocks: number): string {
-  const minutes = blocks * 10;
-  const days = minutes / 1440;
-  if (days < 1) return `${Math.round(minutes / 60)} hours`;
-  if (days < 30) return `${Math.round(days)} days`;
-  const months = days / 30.44;
-  if (Math.round(months) < 12) return `${Math.round(months)} months`;
-  return `${(days / 365.25).toFixed(1)} years`;
-}
 
 /**
  * Generates plain-text beneficiary instructions.

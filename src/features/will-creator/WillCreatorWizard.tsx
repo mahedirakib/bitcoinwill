@@ -14,6 +14,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { buildPlan } from '@/lib/bitcoin/planEngine';
 import { PlanInput, PlanOutput, type BitcoinNetwork } from '@/lib/bitcoin/types';
 import { validatePubkey } from '@/lib/bitcoin/validation';
+import { calculateTime } from '@/lib/bitcoin/utils';
 import { downloadJson } from '@/lib/utils/download';
 import { useSettings } from '@/state/settings';
 import { useToast } from '@/components/Toast';
@@ -96,6 +97,7 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
         }
       }
     } catch {
+      // Ignore errors when restoring from local storage
     }
     setHasRestored(true);
   }, [hasRestored, showToast]);
@@ -177,7 +179,7 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
           <div className="flex justify-between items-end">
             <div className="space-y-1">
               <h2 className="text-4xl font-black tracking-tight">New Spending Plan</h2>
-              <p className="text-foreground/40 font-medium">Follow the steps to secure your inheritance.</p>
+              <p className="text-foreground/60 font-medium">Follow the steps to secure your inheritance.</p>
             </div>
             <span className="text-xs font-bold tracking-widest text-primary uppercase bg-primary/10 px-3 py-1 rounded-full">
               Step {getStepNumber(state.step)} of 4
@@ -278,7 +280,7 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
             </div>
 
             <div className="flex justify-between items-center pt-6">
-              <button onClick={prevStep} className="text-foreground/40 font-bold hover:text-foreground/60 transition-colors">Back</button>
+              <button onClick={prevStep} className="text-foreground/60 font-bold hover:text-foreground/80 transition-colors">Back</button>
               <button onClick={nextStep} className="btn-primary">Continue</button>
             </div>
           </div>
@@ -288,17 +290,17 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
           <div className="space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
             <div className="space-y-3">
               <h3 className="text-2xl font-bold">Set the Delay</h3>
-              <p className="text-foreground/50 font-medium">How long should the network wait before allowing your heir to claim funds?</p>
+              <p className="text-foreground/60 font-medium">How long should the network wait before allowing your heir to claim funds?</p>
             </div>
 
             <div className="glass p-12 space-y-12">
               <div className="flex justify-between items-center">
                 <div className="space-y-1">
                   <span className="text-6xl font-black text-primary">{state.input.locktime_blocks}</span>
-                  <p className="text-xs font-bold uppercase tracking-widest text-foreground/30">Network Blocks</p>
+                  <p className="text-xs font-bold uppercase tracking-widest text-foreground/60">Network Blocks</p>
                 </div>
                 <div className="text-right space-y-1">
-                  <p className="text-xs font-bold uppercase tracking-widest text-foreground/30">Approx. Delay</p>
+                  <p className="text-xs font-bold uppercase tracking-widest text-foreground/60">Approx. Delay</p>
                   <p className="text-4xl font-black">~{calculateTime(state.input.locktime_blocks)}</p>
                 </div>
               </div>
@@ -319,7 +321,7 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
             </div>
 
             <div className="flex justify-between items-center pt-6">
-              <button onClick={prevStep} className="text-foreground/40 font-bold hover:text-foreground/60 transition-colors">Back</button>
+              <button onClick={prevStep} className="text-foreground/60 font-bold hover:text-foreground/80 transition-colors">Back</button>
               <button onClick={nextStep} className="btn-primary">Continue</button>
             </div>
           </div>
@@ -330,11 +332,11 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
             <h3 className="text-2xl font-bold">Final Review</h3>
             <div className="glass p-8 space-y-6">
               <div className="flex justify-between items-center text-sm">
-                <span className="opacity-40 font-bold uppercase tracking-widest">Network</span>
+                <span className="opacity-60 font-bold uppercase tracking-widest">Network</span>
                 <span className="font-black uppercase text-primary bg-primary/10 px-3 py-1 rounded-lg">{network}</span>
               </div>
               <div className="pt-6 border-t border-border space-y-2">
-                <p className="text-xs font-bold opacity-40 uppercase tracking-widest">Delay Settings</p>
+                <p className="text-xs font-bold opacity-60 uppercase tracking-widest">Delay Settings</p>
                 <p className="text-2xl font-black">{state.input.locktime_blocks} Blocks (~{calculateTime(state.input.locktime_blocks)})</p>
               </div>
             </div>
@@ -353,7 +355,7 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
             )}
 
             <div className="flex justify-between items-center pt-6">
-              <button onClick={prevStep} className="text-foreground/40 font-bold hover:text-foreground/60 transition-colors">Back</button>
+              <button onClick={prevStep} className="text-foreground/60 font-bold hover:text-foreground/80 transition-colors">Back</button>
               <button onClick={handleGenerate} className="btn-primary !px-16 !py-5">Generate Plan</button>
             </div>
           </div>
@@ -367,31 +369,31 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
                 <CheckCircle2 className="text-primary w-20 h-20 relative drop-shadow-lg" />
               </div>
               <h2 className="text-5xl font-black tracking-tight">Plan Secured</h2>
-              <p className="text-foreground/50 text-lg font-medium">Your Vault Address is ready for funding.</p>
+              <p className="text-foreground/70 text-lg font-medium">Your Vault Address is ready for funding.</p>
             </div>
 
             <div className="grid lg:grid-cols-5 gap-8 items-start">
               <div className="lg:col-span-3 space-y-6">
                 <div className="glass p-8 space-y-5">
-                  <h4 className="font-black text-[10px] uppercase tracking-[0.2em] opacity-30">Vault Address ({network})</h4>
+                  <h4 className="font-black text-[10px] uppercase tracking-[0.2em] opacity-60">Vault Address ({network})</h4>
                   <div className="flex gap-3">
                     <div className="flex-1 p-5 bg-muted border border-border rounded-2xl font-mono text-xs break-all leading-relaxed shadow-inner">
                       {state.result.address}
                     </div>
                     <button onClick={() => copyToClipboard(state.result!.address, 'Address')} className="p-4 bg-white border border-border rounded-2xl hover:bg-muted transition-colors group shadow-sm">
-                      <Copy className="w-5 h-5 opacity-40 group-hover:opacity-100 transition-opacity" />
+                      <Copy className="w-5 h-5 opacity-60 group-hover:opacity-100 transition-opacity" />
                     </button>
                   </div>
                 </div>
 
                 <div className="glass p-8 space-y-4">
-                  <h4 className="font-black text-[10px] uppercase tracking-[0.2em] opacity-30">Witness Script</h4>
+                  <h4 className="font-black text-[10px] uppercase tracking-[0.2em] opacity-60">Witness Script</h4>
                   <div className="flex gap-3">
-                    <pre className="flex-1 p-5 bg-muted border border-border rounded-2xl text-[10px] font-mono overflow-x-auto opacity-70 leading-relaxed shadow-inner">
+                    <pre className="flex-1 p-5 bg-muted border border-border rounded-2xl text-[10px] font-mono overflow-x-auto opacity-80 leading-relaxed shadow-inner">
                       {state.result.script_asm}
                     </pre>
                     <button onClick={() => copyToClipboard(state.result!.script_hex, 'Script')} className="p-4 bg-white border border-border rounded-2xl h-fit hover:bg-muted transition-colors group shadow-sm">
-                      <Copy className="w-5 h-5 opacity-40 group-hover:opacity-100 transition-opacity" />
+                      <Copy className="w-5 h-5 opacity-60 group-hover:opacity-100 transition-opacity" />
                     </button>
                   </div>
                 </div>
@@ -399,7 +401,7 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
 
               <div className="lg:col-span-2 space-y-4 pt-4">
                 <div className="glass p-6 space-y-4">
-                  <h4 className="font-black text-[10px] uppercase tracking-[0.2em] opacity-30 flex items-center gap-2">
+                  <h4 className="font-black text-[10px] uppercase tracking-[0.2em] opacity-60 flex items-center gap-2">
                     <QrCode className="w-3 h-3" /> Scan to Fund
                   </h4>
                   <div className="bg-white p-4 rounded-xl inline-block">
@@ -412,7 +414,7 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
                       includeMargin={false}
                     />
                   </div>
-                  <p className="text-[10px] text-foreground/40 text-center">
+                  <p className="text-[10px] text-foreground/60 text-center">
                     Scan with your mobile wallet
                   </p>
                 </div>
@@ -440,14 +442,4 @@ function getStepNumber(step: Step): number {
     case 'REVIEW': return 4;
     default: return 4;
   }
-}
-
-function calculateTime(blocks: number): string {
-  const minutes = blocks * 10;
-  const days = minutes / 1440;
-  if (days < 1) return `${Math.round(minutes / 60)} hours`;
-  if (days < 30) return `${Math.round(days)} days`;
-  const months = days / 30.44;
-  if (months < 12) return `${Math.round(months)} months`;
-  return `${(days / 365.25).toFixed(1)} years`;
 }
