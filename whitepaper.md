@@ -4,7 +4,7 @@
 The secure inheritance of Bitcoin remains one of the most significant challenges for self-custody. Traditional solutions often require a trade-off between privacy, security, and complexity. Bitcoin Will is a stateless, client-side tool designed to help users create standardized inheritance instructions using native Bitcoin scripts. By leveraging time-locked spending conditions, the tool enables a "dead man's switch" mechanism that allows heirs to recover funds after a predefined period in which vault funds remain unmoved, without ever requiring the user to surrender control of their private keys to a third party.
 
 ## Problem Statement
-The primary strength of Bitcoin—absolute ownership through self-custody—is also its greatest weakness in the context of inheritance. If a Bitcoin owner dies or becomes permanently incapacitated without a clear recovery path, their assets are effectively lost forever. Existing solutions generally fall into three categories, each with significant drawbacks:
+The primary strength of Bitcoin, absolute ownership through self-custody, is also its greatest weakness in the context of inheritance. If a Bitcoin owner dies or becomes permanently incapacitated without a clear recovery path, their assets are effectively lost forever. Existing solutions generally fall into three categories, each with significant drawbacks:
 1. **Custodial Services:** Require trusting a third party with keys, introducing counterparty risk.
 2. **Key Sharing:** Sharing seeds or shards with heirs or lawyers increases the risk of theft during the owner's lifetime.
 3. **Complex Multi-sig:** Often too difficult for non-technical heirs to execute correctly, leading to permanent loss.
