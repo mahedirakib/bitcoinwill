@@ -74,7 +74,6 @@ OP_ENDIF
 ## Dependencies
 
 - `bitcoinjs-lib` - Bitcoin operations
-- `ecpair` - Key pair handling
 - `tiny-secp256k1` - Cryptographic functions
 
 ## Testing
