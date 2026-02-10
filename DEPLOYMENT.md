@@ -19,6 +19,15 @@ npm run build
 ```
 This will generate a `dist/` directory containing all necessary files (`index.html`, `assets/`, etc.).
 
+## GitHub Pages (Important)
+If you see errors like `main.tsx 404` or `logo.png 404`, GitHub Pages is likely serving the raw source `index.html` instead of the built `dist` output.
+
+Use this setup:
+1. Go to **Settings -> Pages** in your GitHub repository.
+2. Set **Source** to **GitHub Actions** (not "Deploy from a branch").
+3. Push to `main` and wait for the **Deploy to GitHub Pages** workflow to finish.
+4. Open the Pages URL again and hard-refresh the browser cache.
+
 ## Environment Variables
 By default, the app uses **Testnet**. If you wish to change the default behavior for your deployment:
 - `VITE_BITCOIN_NETWORK`: Set to `testnet`, `mainnet`, or `regtest`. (Optional, defaults to `testnet`).

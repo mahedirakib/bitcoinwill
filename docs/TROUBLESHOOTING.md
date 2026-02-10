@@ -122,6 +122,18 @@ Common issues and their solutions when using Bitcoin Will.
 - Disable browser extensions (especially ad blockers)
 - Use modern browser (Chrome, Firefox, Safari, Edge)
 
+### GitHub Pages Shows `main.tsx` or `logo.png` 404
+
+**Problem:** The site loads a source `index.html` that references `/src/main.tsx`, which only works in Vite dev mode.
+
+**Solution:**
+1. In GitHub repo settings, open **Settings -> Pages**
+2. Set **Source** to **GitHub Actions**
+3. Re-run or push to trigger the **Deploy to GitHub Pages** workflow
+4. Wait for deploy success, then hard refresh the site (`Ctrl+Shift+R` or `Cmd+Shift+R`)
+
+**Note:** `lockdown-install.js: SES Removing unpermitted intrinsics` is typically from a browser extension and is usually unrelated to this deployment issue.
+
 ### Download Not Working
 
 **Solution:**
