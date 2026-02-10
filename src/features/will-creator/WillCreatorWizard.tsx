@@ -20,6 +20,7 @@ import { useSettings } from '@/state/settings';
 import { useToast } from '@/components/Toast';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { SAMPLE_KEYS, normalizePubkeyHex, usesDisallowedSampleKey } from './safety';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -55,13 +56,7 @@ const createInitialState = (network: BitcoinNetwork | 'mainnet'): WizardState =>
   errors: {},
 });
 
-const SAMPLE_KEYS = {
-  owner: '02e9634f19b165239105436a5c17e3371901c5651581452a329978747474747474',
-  beneficiary: '03e9634f19b165239105436a5c17e3371901c5651581452a329978747474747474',
-};
-
 const STORAGE_KEY = 'bitcoinwill_wizard_state';
-const normalizePubkeyHex = (value: string): string => value.trim().toLowerCase();
 
 // --- Reducer ---
 
@@ -147,13 +142,10 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
   };
 
   const handleGenerate = () => {
-    const ownerPubkey = normalizePubkeyHex(state.input.owner_pubkey);
-    const beneficiaryPubkey = normalizePubkeyHex(state.input.beneficiary_pubkey);
-    const usesSampleKey =
-      ownerPubkey === SAMPLE_KEYS.owner ||
-      beneficiaryPubkey === SAMPLE_KEYS.beneficiary;
-
-    if (state.input.network === 'mainnet' && usesSampleKey) {
+    if (
+      state.input.network === 'mainnet' &&
+      usesDisallowedSampleKey(state.input.owner_pubkey, state.input.beneficiary_pubkey)
+    ) {
       dispatch({
         type: 'SET_ERRORS',
         payload: {
