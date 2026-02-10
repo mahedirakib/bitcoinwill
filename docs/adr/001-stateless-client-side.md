@@ -5,7 +5,7 @@ Accepted
 
 ## Context
 
-Bitcoin Will handles sensitive financial information and Bitcoin key material. We needed to decide on the fundamental architecture of the application.
+Bitcoin Will, as a TIP reference implementation, handles sensitive financial information and Bitcoin key material. We needed to decide on the fundamental architecture of the application.
 
 **Key concerns:**
 - Users' public keys must not be leaked

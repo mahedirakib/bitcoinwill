@@ -4,16 +4,16 @@
 
 # Bitcoin Will 🔐
 
-A minimal, privacy-first web application for creating non-custodial Bitcoin inheritance spending plans.
+A minimal, privacy-first reference implementation of the TimeLock Inheritance Protocol (TIP) for non-custodial Bitcoin inheritance spending plans.
 
 ## Status: MVP / Educational & Practical Tool
 This project is an **initial release (v0.1.0)**. It is a functional tool for generating Bitcoin-native scripts, but it should be treated as experimental. Always verify your generated scripts and test with small amounts of Testnet Bitcoin before moving to Mainnet.
 
 ## What is this?
-Bitcoin Will is a **stateless, client-side utility** that helps you create a "Dead Man's Switch" for your Bitcoin. It is built on the TimeLock Inheritance Protocol (TIP) and generates a unique Vault Address with a built-in rule: you can spend your funds at any time, but if you remain inactive for a specified delay, a beneficiary can claim the funds using their own key.
+Bitcoin Will is a **stateless, client-side utility** that implements the TimeLock Inheritance Protocol (TIP). It helps you create a Bitcoin "Dead Man's Switch" by generating a unique Vault Address with a built-in rule: you can spend funds at any time, but if funds remain unmoved for a specified delay, a beneficiary can claim them using their own key.
 
 ## Why this exists
-Inheritance in the Bitcoin space is often either too complex (multisig setups) or too centralized (custodians). We wanted to build the simplest possible implementation of a **Relative Timelock (CSV)** spending plan that is:
+Inheritance in the Bitcoin space is often either too complex (multisig setups) or too centralized (custodians). TIP defines a Bitcoin-native protocol pattern, and Bitcoin Will provides a practical implementation that is:
 1. **Easy to understand:** No complex smart contract logic.
 2. **Easy to backup:** A single JSON file (the Recovery Kit) contains everything needed.
 3. **Sovereign:** No accounts, no servers, no middleman.
@@ -36,7 +36,8 @@ Inheritance in the Bitcoin space is often either too complex (multisig setups) o
 
 ## Documentation
 - [Learning Center](./docs/LEARNING.md) - Concepts for beginners.
-- [Protocol Specification](./PROTOCOL.md) - Technical deep-dive into the script logic.
+- [TIP Whitepaper](./whitepaper.md) - Protocol scope, threat model, and assumptions.
+- [Protocol Specification](./PROTOCOL.md) - TIP script and implementation details.
 - [Security Policy](./SECURITY.md) - Threat model and safety tips.
 - [API Reference](./src/lib/bitcoin/README.md) - Bitcoin module documentation.
 - [Testing Guide](./TESTING.md) - How to run and write tests.

@@ -124,7 +124,7 @@ const AppContent = () => {
   const navItems = [
     { label: 'Learn', view: 'learn' as const, icon: BookOpen },
     { label: 'Protocol', view: 'protocol' as const, icon: Cpu },
-    { label: 'Whitepaper', view: 'whitepaper' as const, icon: ScrollText },
+    { label: 'TIP Whitepaper', view: 'whitepaper' as const, icon: ScrollText },
     { label: 'Instructions', view: 'instructions' as const, icon: FileText },
   ]
 
@@ -340,7 +340,7 @@ const AppContent = () => {
             onClick={() => openWhitepaper('home')}
             className="hover:text-foreground/80 transition-colors underline underline-offset-4 decoration-black/5"
           >
-            Protocol Whitepaper
+            TIP Whitepaper
           </button>
           <span className="opacity-40">•</span>
           <p>No Tracking. No Cookies. Open Source Bitcoin Native Inheritance.</p>

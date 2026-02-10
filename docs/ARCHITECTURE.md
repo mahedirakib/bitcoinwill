@@ -1,10 +1,10 @@
 # Architecture Overview
 
-This document describes the high-level architecture of the Bitcoin Will application.
+This document describes the high-level architecture of Bitcoin Will, a reference implementation of the TimeLock Inheritance Protocol (TIP).
 
 ## System Architecture
 
-Bitcoin Will is a 100% client-side, stateless React application with no backend.
+Bitcoin Will is a 100% client-side, stateless React application with no backend that implements TIP spending-plan construction and recovery artifacts.
 
 ```
 User
@@ -30,7 +30,7 @@ bitcoinjs-lib (external dependency)
 
 ## Data Flow
 
-### Creating a Will
+### Creating a TIP Plan
 
 1. **User Input** → React state captures network, keys, locktime
 2. **Validation** → validatePlanInput() checks all parameters

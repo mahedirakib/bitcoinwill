@@ -1,6 +1,6 @@
 # Bitcoin Glossary
 
-Essential Bitcoin terminology for understanding Bitcoin Will.
+Essential Bitcoin terminology for understanding TIP and Bitcoin Will.
 
 ## Address Types
 
@@ -97,7 +97,7 @@ A transaction that moves Bitcoin out of the vault. Requires satisfying the scrip
 ## Protocol Terms
 
 ### TIP (TimeLock Inheritance Protocol)
-The technical design pattern Bitcoin Will implements. Uses CSV timelocks for inheritance without custodians.
+A Bitcoin-native inheritance protocol pattern that uses CSV timelocks without custodians. Bitcoin Will is a reference implementation of TIP.
 
 ### Dead Man's Switch
 A mechanism that triggers if someone becomes inactive. In Bitcoin Will, if the owner doesn't move funds, the beneficiary can claim them after the delay.

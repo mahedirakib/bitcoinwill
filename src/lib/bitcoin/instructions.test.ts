@@ -287,5 +287,18 @@ describe('Instructions Module', () => {
 
       expect(() => validateAndNormalizeRecoveryKit(tampered)).toThrow('failed integrity check');
     });
+
+    it('rejects recovery kit with unsupported runtime network payload', () => {
+      const badPlan = {
+        ...canonicalPlanInput,
+        network: 'signet' as unknown as PlanInput['network'],
+      };
+      const badKit = {
+        plan: badPlan,
+        result: buildPlan(canonicalPlanInput),
+      };
+
+      expect(() => validateAndNormalizeRecoveryKit(badKit)).toThrow('Invalid network');
+    });
   });
 });

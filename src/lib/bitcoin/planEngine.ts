@@ -3,6 +3,7 @@ import * as ecc from 'tiny-secp256k1';
 import { PlanInput, PlanOutput } from './types';
 import { getNetworkParams } from './network';
 import { validatePlanInput } from './validation';
+import { calculateTime } from './utils';
 
 // Initialize ECC library for bitcoinjs-lib
 initEccLib(ecc);
@@ -125,7 +126,7 @@ const generateExplanation = (input: PlanInput, address: string): string[] => {
   return [
     `Vault Address: ${address}`,
     `1. The Owner (${input.owner_pubkey.substring(0, 8)}...) can spend these funds at any time.`,
-    `2. The Beneficiary (${input.beneficiary_pubkey.substring(0, 8)}...) can claim the funds ONLY if they have remained unmoved for at least ${input.locktime_blocks} blocks (approx. ${Math.round(input.locktime_blocks / 144)} days).`,
+    `2. The Beneficiary (${input.beneficiary_pubkey.substring(0, 8)}...) can claim the funds ONLY if they have remained unmoved for at least ${input.locktime_blocks} blocks (approx. ${calculateTime(input.locktime_blocks)}).`,
     `3. Every time the Owner moves the funds to a new vault, the timer resets.`
   ];
 };

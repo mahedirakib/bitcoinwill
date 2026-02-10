@@ -213,6 +213,22 @@ describe('Validation Module', () => {
       expect(() => validatePlanInput(regtestInput)).not.toThrow();
     });
 
+    it('throws error for unsupported runtime network payload', () => {
+      const invalidInput = {
+        ...validInput,
+        network: 'signet' as unknown as PlanInput['network'],
+      };
+      expect(() => validatePlanInput(invalidInput)).toThrow('Invalid network');
+    });
+
+    it('throws error for unsupported inheritance type runtime payload', () => {
+      const invalidInput = {
+        ...validInput,
+        inheritance_type: 'legacy_recovery' as unknown as PlanInput['inheritance_type'],
+      };
+      expect(() => validatePlanInput(invalidInput)).toThrow('Invalid inheritance type');
+    });
+
     it('accepts input with optional plan_label', () => {
       const inputWithLabel = {
         ...validInput,

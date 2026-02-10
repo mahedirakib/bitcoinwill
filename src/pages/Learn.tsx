@@ -14,7 +14,7 @@ const Learn = ({ onBack }: { onBack: () => void }) => {
       <section className="space-y-4">
         <h1 className="text-4xl font-extrabold tracking-tight">Understanding Bitcoin Will</h1>
         <p className="text-xl text-foreground/60 leading-relaxed">
-          Bitcoin Will is a non-custodial tool that helps you create a decentralized inheritance plan using Bitcoin's native smart contract language.
+          TIP (TimeLock Inheritance Protocol) defines the inheritance pattern, and Bitcoin Will provides a non-custodial implementation you can use in practice.
         </p>
       </section>
 

@@ -244,6 +244,22 @@ describe('PlanEngine', () => {
       expect(() => buildPlan(badInput)).toThrow('Delay must be between 1 and 52,560 blocks');
     });
 
+    it('throws error on unsupported runtime network payload', () => {
+      const badInput = {
+        ...sampleInput,
+        network: 'signet' as unknown as PlanInput['network'],
+      };
+      expect(() => buildPlan(badInput)).toThrow('Invalid network');
+    });
+
+    it('throws error on unsupported inheritance type runtime payload', () => {
+      const badInput = {
+        ...sampleInput,
+        inheritance_type: 'legacy_recovery' as unknown as PlanInput['inheritance_type'],
+      };
+      expect(() => buildPlan(badInput)).toThrow('Invalid inheritance type');
+    });
+
     it('throws error on locktime at exact maximum boundary', () => {
       // 52560 should be the max (inclusive)
       const maxInput = { ...sampleInput, locktime_blocks: 52560 };
@@ -262,6 +278,7 @@ describe('PlanEngine', () => {
       const result = buildPlan(input);
       expect(result.address).toBeDefined();
       expect(result.human_explanation[2]).toContain('1 blocks');
+      expect(result.human_explanation[2]).not.toContain('0 days');
     });
 
     it('handles maximum locktime (52560 blocks ~ 1 year)', () => {

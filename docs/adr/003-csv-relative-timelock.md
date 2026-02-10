@@ -5,7 +5,7 @@ Accepted
 
 ## Context
 
-Time-locked inheritance requires choosing between two Bitcoin timelock mechanisms:
+The TIP inheritance pattern requires choosing between two Bitcoin timelock mechanisms:
 
 1. **CLTV (OP_CHECKLOCKTIMEVERIFY)** - Absolute timelock to specific block height/time
 2. **CSV (OP_CHECKSEQUENCEVERIFY)** - Relative timelock from confirmation

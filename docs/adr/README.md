@@ -1,6 +1,6 @@
 # Architecture Decision Records (ADRs)
 
-This directory contains records of significant architectural decisions made during the development of Bitcoin Will.
+This directory contains records of significant architectural decisions made for Bitcoin Will, the reference implementation of the TimeLock Inheritance Protocol (TIP).
 
 ## What is an ADR?
 

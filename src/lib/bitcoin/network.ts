@@ -28,7 +28,8 @@ export const getNetworkParams = (network: BitcoinNetwork): Network => {
     case 'regtest':
       return networks.regtest;
     case 'testnet':
-    default:
       return networks.testnet;
+    default:
+      throw new Error(`Unsupported Bitcoin network: ${String(network)}`);
   }
 };

@@ -5,7 +5,7 @@ Accepted
 
 ## Context
 
-As a client-side application, we needed to decide if any server components were necessary.
+As the client-side reference implementation of TIP, we needed to decide if any server components were necessary.
 
 **Considerations:**
 - User data sensitivity (public keys, inheritance plans)

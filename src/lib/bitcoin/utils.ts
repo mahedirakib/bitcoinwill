@@ -12,7 +12,7 @@ export function calculateTime(blocks: number): string {
   const days = minutes / 1440;
   
   if (days < 1) {
-    const hours = Math.round(minutes / 60);
+    const hours = Math.max(1, Math.round(minutes / 60));
     return `${hours} ${hours === 1 ? 'hour' : 'hours'}`;
   }
   

@@ -1,4 +1,4 @@
-import { PlanInput } from './types';
+import { PlanInput, isBitcoinNetwork, INHERITANCE_TYPE } from './types';
 import * as ecc from 'tiny-secp256k1';
 
 /**
@@ -54,6 +54,14 @@ export const validatePubkey = (pubkey: string): boolean => {
  * }
  */
 export const validatePlanInput = (input: PlanInput): void => {
+  if (!isBitcoinNetwork(input.network)) {
+    throw new Error('Invalid network. Supported values: testnet, regtest, mainnet.');
+  }
+
+  if (input.inheritance_type !== INHERITANCE_TYPE) {
+    throw new Error(`Invalid inheritance type. Supported value: "${INHERITANCE_TYPE}".`);
+  }
+
   if (!validatePubkey(input.owner_pubkey)) {
     throw new Error(
       'Invalid Owner Public Key.\n\n' +

@@ -1,7 +1,7 @@
-# Bitcoin Will: Protocol v1
+# TimeLock Inheritance Protocol (TIP): Protocol v1
 
 ## 1. Overview
-Bitcoin Will solves the problem of "non-custodial inheritance" without requiring a trusted third party, a complex legal structure, or a specialized smart contract blockchain. It uses Bitcoin's native script primitives to create a "Dead Man's Switch."
+The TimeLock Inheritance Protocol (TIP) solves "non-custodial inheritance" without requiring a trusted third party, a complex legal structure, or a specialized smart contract chain. It uses Bitcoin's native script primitives to create a delayed recovery path. Bitcoin Will is a reference implementation of this protocol.
 
 ## 2. Technical Construction
 The application generates a **P2WSH (Pay-to-Witness-Script-Hash)** SegWit address based on the following Miniscript-compatible logic:

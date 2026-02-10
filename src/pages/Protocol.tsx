@@ -14,7 +14,7 @@ const Protocol = ({ onBack, onOpenWhitepaper }: { onBack: () => void; onOpenWhit
       <header className="space-y-4">
         <h1 className="text-4xl font-extrabold tracking-tight">Protocol Specification</h1>
         <p className="text-xl text-foreground/60">
-          A transparent look at how Bitcoin Will works under the hood.
+          A transparent look at TIP and how Bitcoin Will implements it.
         </p>
       </header>
 
@@ -248,7 +248,7 @@ OP_ENDIF`}
           onClick={onOpenWhitepaper}
           className="text-xs text-foreground/40 hover:text-primary transition-colors underline underline-offset-4 decoration-white/10"
         >
-          Protocol Whitepaper
+          TIP Whitepaper
         </button>
       </footer>
     </div>

@@ -14,6 +14,9 @@
  * - 'regtest': Local regression test network (for development)
  */
 export type BitcoinNetwork = 'testnet' | 'regtest' | 'mainnet';
+export const BITCOIN_NETWORKS: readonly BitcoinNetwork[] = ['testnet', 'regtest', 'mainnet'];
+export const isBitcoinNetwork = (value: unknown): value is BitcoinNetwork =>
+  typeof value === 'string' && BITCOIN_NETWORKS.includes(value as BitcoinNetwork);
 
 /**
  * Input parameters for creating a Bitcoin Will plan.
@@ -48,6 +51,8 @@ export interface PlanInput {
   /** Optional label for identifying this plan */
   plan_label?: string;
 }
+
+export const INHERITANCE_TYPE = 'timelock_recovery' as const;
 
 /**
  * Output data generated from a Bitcoin Will plan.

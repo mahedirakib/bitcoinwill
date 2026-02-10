@@ -1,6 +1,6 @@
 # Learning Center
 
-Understanding Bitcoin inheritance and how Bitcoin Will works.
+Understanding Bitcoin inheritance, TIP, and how Bitcoin Will works.
 
 ## What is Bitcoin Inheritance?
 
@@ -44,9 +44,9 @@ Bitcoin's strength (self-custody) is also its weakness for inheritance:
 - Coordination required
 - Easy to make mistakes
 
-## The Bitcoin Will Solution
+## The TIP + Bitcoin Will Solution
 
-Bitcoin Will uses **time-locked scripts** to create a "Dead Man's Switch":
+TIP defines the **time-locked script pattern**, and Bitcoin Will implements it as a practical "Dead Man's Switch":
 
 ### How It Works
 
@@ -184,13 +184,15 @@ You never give your keys to anyone. The Bitcoin stays in your control until eith
 
 ## Next Steps
 
-1. **Read the Protocol** - Technical details of how scripts work
-2. **Try on Testnet** - Practice with fake Bitcoin
-3. **Educate Your Heirs** - Make sure they understand
-4. **Start Small** - Don't put all your Bitcoin in at once
+1. **Read the TIP Whitepaper** - Protocol scope, assumptions, and security model
+2. **Read the Protocol Spec** - Technical details of how scripts work
+3. **Try on Testnet** - Practice with fake Bitcoin
+4. **Educate Your Heirs** - Make sure they understand
+5. **Start Small** - Don't put all your Bitcoin in at once
 
 ## Questions?
 
 - See [Troubleshooting Guide](./TROUBLESHOOTING.md)
 - Check [Glossary](./GLOSSARY.md) for terminology
 - Review [Recovery Guide](./RECOVERY_GUIDE.md) for heirs
+- Review [TIP Whitepaper](../whitepaper.md) for protocol-level context

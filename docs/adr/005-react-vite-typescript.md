@@ -5,7 +5,7 @@ Accepted
 
 ## Context
 
-We needed to choose a frontend stack that balances:
+We needed to choose a frontend stack for the Bitcoin Will TIP implementation that balances:
 - Developer productivity
 - Performance
 - Type safety (critical for Bitcoin logic)

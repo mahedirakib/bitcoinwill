@@ -5,7 +5,7 @@ Accepted
 
 ## Context
 
-The Bitcoin script needs to be hashed into an address. There are two standard options:
+The TIP spending script used by Bitcoin Will needs to be hashed into an address. There are two standard options:
 
 1. **P2SH (Pay-to-Script-Hash)** - Legacy, uses base58 addresses
 2. **P2WSH (Pay-to-Witness-Script-Hash)** - SegWit, uses bech32 addresses

@@ -142,10 +142,10 @@ const Whitepaper = ({ onBack }: { onBack: () => void }) => {
       </button>
 
       <header className="space-y-3">
-        <p className="text-[11px] uppercase tracking-[0.2em] text-foreground/50 font-semibold">Protocol Reference</p>
-        <h1 className="text-4xl font-extrabold tracking-tight">Whitepaper</h1>
+        <p className="text-[11px] uppercase tracking-[0.2em] text-foreground/50 font-semibold">TIP Protocol Reference</p>
+        <h1 className="text-4xl font-extrabold tracking-tight">TIP Whitepaper</h1>
         <p className="text-foreground/60">
-          Canonical technical overview of the Bitcoin Will design, threat model, and operational assumptions.
+          Canonical technical overview of TIP design goals, threat model, and operational assumptions.
         </p>
       </header>
 

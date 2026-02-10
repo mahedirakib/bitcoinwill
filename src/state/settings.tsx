@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState } from 'react';
-import { BitcoinNetwork } from '@/lib/bitcoin/types';
+import { BitcoinNetwork, isBitcoinNetwork } from '@/lib/bitcoin/types';
 
 interface SettingsContextType {
   network: BitcoinNetwork;
@@ -13,9 +13,10 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [network, setNetworkState] = useState<BitcoinNetwork>(() => {
     const saved = localStorage.getItem('bitcoinwill_network');
+    if (!isBitcoinNetwork(saved)) return 'testnet';
     // We never persist mainnet
     if (saved === 'mainnet') return 'testnet';
-    return (saved as BitcoinNetwork) || 'testnet';
+    return saved;
   });
 
   const [isMainnetUnlocked, setIsMainnetUnlocked] = useState(false);
