@@ -9,6 +9,7 @@
     "test": "vitest",
     "test:run": "vitest run",
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
+    "ready-check": "npm run lint && npm run test:run && npm run build",
     "preview": "vite preview"
   },
   "dependencies": {
