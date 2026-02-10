@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { BookOpen, AlertCircle, FileText, ShieldAlert, Cpu, Menu, X } from 'lucide-react'
+import { BookOpen, AlertCircle, FileText, ShieldAlert, Cpu, Menu, X, Users, Zap, History } from 'lucide-react'
 import DevPlayground from './components/DevPlayground'
 import { WillCreatorWizard } from './features/will-creator/WillCreatorWizard'
 import Learn from './pages/Learn'
@@ -191,14 +191,14 @@ const AppContent = () => {
           <div className="space-y-20 md:space-y-32 max-w-5xl mx-auto py-12 md:py-20">
             {/* Hero */}
             <div className="text-center space-y-8 md:space-y-10 flex flex-col items-center animate-in fade-in slide-in-from-bottom-8 duration-1000">
-            <div className="relative">
-              <div className="absolute inset-0 bg-primary/10 blur-3xl rounded-full" />
-              <img src={logo} alt="Bitcoin Will Logo" className="w-24 h-24 md:w-40 md:h-40 object-contain relative drop-shadow-xl" />
-            </div>
-            <h1 className="text-4xl md:text-hero">
-              A Simple Bitcoin <br className="hidden md:block" />
-              <span className="text-primary">Inheritance Plan</span>
-            </h1>
+              <div className="relative">
+                <div className="absolute inset-0 bg-primary/10 blur-3xl rounded-full" />
+                <img src={logo} alt="Bitcoin Will Logo" className="w-24 h-24 md:w-40 md:h-40 object-contain relative drop-shadow-xl" />
+              </div>
+              <h1 className="text-4xl md:text-hero">
+                A Simple Bitcoin <br className="hidden md:block" />
+                <span className="text-primary">Inheritance Plan</span>
+              </h1>
               <p className="text-lg md:text-2xl text-foreground/70 max-w-2xl mx-auto font-medium leading-relaxed px-4">
                 Create a non-custodial Bitcoin spending plan that unlocks funds after a delay. 
                 <span className="text-foreground/90"> No accounts. No custody. No private keys.</span>
@@ -223,15 +223,32 @@ const AppContent = () => {
             {/* Who is it for? */}
             <div className="grid md:grid-cols-3 gap-6 px-4">
               {[
-                { title: 'For Holders', desc: 'Ensure your Bitcoin remains accessible to heirs without middlemen or legal red tape.' },
-                { title: 'Purely Native', desc: 'A deterministic plan that relies on Bitcoin-native scripts rather than company survival.' },
-                { title: 'Simple Recovery', desc: 'Easy-to-follow instructions for beneficiaries to claim funds when the time is right.' }
+                { 
+                  title: 'For Holders', 
+                  desc: 'Ensure your Bitcoin remains accessible to heirs without middlemen or legal red tape.',
+                  icon: Users 
+                },
+                { 
+                  title: 'Purely Native', 
+                  desc: 'A deterministic plan that relies on Bitcoin-native scripts rather than company survival.',
+                  icon: Zap 
+                },
+                { 
+                  title: 'Simple Recovery', 
+                  desc: 'Easy-to-follow instructions for beneficiaries to claim funds when the time is right.',
+                  icon: History 
+                }
               ].map((item, i) => (
-                <div key={i} className="glass p-6 md:p-8 space-y-4 glass-hover group">
-                  <h3 className="text-lg font-bold text-primary group-hover:scale-105 transition-transform origin-left">{item.title}</h3>
-                  <p className="text-sm text-foreground/80 leading-relaxed font-medium">
-                    {item.desc}
-                  </p>
+                <div key={i} className="glass p-6 md:p-8 space-y-6 glass-hover group">
+                  <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center group-hover:scale-110 group-hover:bg-primary/20 transition-all duration-300">
+                    <item.icon className="w-6 h-6 text-primary" />
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="text-lg font-bold text-primary group-hover:translate-x-1 transition-transform duration-300">{item.title}</h3>
+                    <p className="text-sm text-foreground/80 leading-relaxed font-medium">
+                      {item.desc}
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>
