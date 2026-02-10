@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react'
-import { BookOpen, AlertCircle, FileText, ShieldAlert, Cpu, Menu, X, Users, Zap, History } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { BookOpen, AlertCircle, FileText, ShieldAlert, Cpu, Menu, X, Users, Zap, History, ScrollText } from 'lucide-react'
 import DevPlayground from './components/DevPlayground'
 import { WillCreatorWizard } from './features/will-creator/WillCreatorWizard'
 import Learn from './pages/Learn'
 import Instructions from './pages/Instructions'
 import Protocol from './pages/Protocol'
+import Whitepaper from './pages/Whitepaper'
 import { SettingsProvider, useSettings } from './state/settings'
 import { NetworkSelector } from './components/NetworkSelector'
 import { ErrorBoundary } from './components/ErrorBoundary'
@@ -12,7 +13,7 @@ import { ToastProvider } from './components/Toast'
 import type { PlanInput, PlanOutput } from './lib/bitcoin/types'
 import logo from './assets/logo.png'
 
-type AppView = 'home' | 'create' | 'recover' | 'dev' | 'learn' | 'instructions' | 'protocol'
+type AppView = 'home' | 'create' | 'recover' | 'dev' | 'learn' | 'instructions' | 'protocol' | 'whitepaper'
 
 const normalizeAppPath = (pathname: string): string => {
   const base = import.meta.env.BASE_URL || '/'
@@ -42,6 +43,7 @@ const viewFromPath = (pathname: string): AppView => {
   const path = normalizeAppPath(pathname)
   if (path === '/dev') return 'dev'
   if (path === '/protocol') return 'protocol'
+  if (path === '/whitepaper') return 'whitepaper'
   if (path === '/learn') return 'learn'
   if (path === '/instructions') return 'instructions'
   if (path === '/create') return 'create'
@@ -51,6 +53,7 @@ const viewFromPath = (pathname: string): AppView => {
 const pathFromView = (view: AppView): string => {
   if (view === 'dev') return '/dev'
   if (view === 'protocol') return '/protocol'
+  if (view === 'whitepaper') return '/whitepaper'
   if (view === 'learn') return '/learn'
   if (view === 'instructions') return '/instructions'
   if (view === 'create') return '/create'
@@ -59,7 +62,9 @@ const pathFromView = (view: AppView): string => {
 
 const AppContent = () => {
   const [activeView, setActiveView] = useState<AppView>(() => viewFromPath(window.location.pathname))
+  const [whitepaperBackView, setWhitepaperBackView] = useState<AppView>('home')
   const currentView: AppView = activeView
+  const historyActionRef = useRef<'push' | 'replace'>('replace')
   const [instructionData, setInstructionData] = useState<{
     plan: PlanInput;
     result: PlanOutput;
@@ -67,6 +72,16 @@ const AppContent = () => {
   } | undefined>(undefined)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const { network } = useSettings()
+
+  const navigateTo = (view: AppView, action: 'push' | 'replace' = 'push') => {
+    historyActionRef.current = action
+    setActiveView(view)
+  }
+
+  const openWhitepaper = (fromView: AppView = 'home') => {
+    setWhitepaperBackView(fromView)
+    navigateTo('whitepaper')
+  }
 
   useEffect(() => {
     const handlePopstate = () => setActiveView(viewFromPath(window.location.pathname))
@@ -77,9 +92,15 @@ const AppContent = () => {
   useEffect(() => {
     const currentPath = normalizeAppPath(window.location.pathname)
     const nextPath = pathFromView(activeView)
+    const historyAction = historyActionRef.current
     if (currentPath !== nextPath) {
-      window.history.pushState(null, '', withBase(nextPath))
+      if (historyAction === 'replace') {
+        window.history.replaceState(null, '', withBase(nextPath))
+      } else {
+        window.history.pushState(null, '', withBase(nextPath))
+      }
     }
+    historyActionRef.current = 'push'
   }, [activeView])
 
   useEffect(() => {
@@ -87,14 +108,15 @@ const AppContent = () => {
   }, [activeView])
 
   if (activeView === 'dev') return <DevPlayground />;
-  if (activeView === 'learn') return <Learn onBack={() => setActiveView('home')} />;
-  if (activeView === 'protocol') return <Protocol onBack={() => setActiveView('home')} />;
+  if (activeView === 'learn') return <Learn onBack={() => navigateTo('home', 'replace')} />;
+  if (activeView === 'protocol') return <Protocol onBack={() => navigateTo('home', 'replace')} onOpenWhitepaper={() => openWhitepaper('protocol')} />;
+  if (activeView === 'whitepaper') return <Whitepaper onBack={() => navigateTo(whitepaperBackView, 'replace')} />;
   if (activeView === 'instructions') return (
     <Instructions 
       initialData={instructionData}
       onBack={() => {
         setInstructionData(undefined);
-        setActiveView('home');
+        navigateTo('home', 'replace');
       }} 
     />
   );
@@ -102,6 +124,7 @@ const AppContent = () => {
   const navItems = [
     { label: 'Learn', view: 'learn' as const, icon: BookOpen },
     { label: 'Protocol', view: 'protocol' as const, icon: Cpu },
+    { label: 'Whitepaper', view: 'whitepaper' as const, icon: ScrollText },
     { label: 'Instructions', view: 'instructions' as const, icon: FileText },
   ]
 
@@ -114,7 +137,7 @@ const AppContent = () => {
           className="flex items-center gap-3 cursor-pointer group bg-transparent border-0 p-0 text-left" 
           aria-label="Go to home"
           onClick={() => {
-            setActiveView('home');
+            navigateTo('home', 'replace');
             setIsMenuOpen(false);
           }}
         >
@@ -136,7 +159,13 @@ const AppContent = () => {
             <button 
               type="button"
               key={item.view}
-              onClick={() => setActiveView(item.view)} 
+              onClick={() => {
+                if (item.view === 'whitepaper') {
+                  openWhitepaper('home');
+                  return;
+                }
+                navigateTo(item.view);
+              }} 
               aria-current={currentView === item.view ? 'page' : undefined}
               className="text-sm font-semibold text-foreground/70 hover:text-primary transition-colors flex items-center gap-2"
             >
@@ -172,7 +201,12 @@ const AppContent = () => {
                   type="button"
                   key={item.view}
                   onClick={() => {
-                    setActiveView(item.view);
+                    if (item.view === 'whitepaper') {
+                      openWhitepaper('home');
+                      setIsMenuOpen(false);
+                      return;
+                    }
+                    navigateTo(item.view);
                     setIsMenuOpen(false);
                   }} 
                   className="text-xl font-bold text-foreground/80 hover:text-primary transition-colors flex items-center gap-4 py-4 border-b border-border/50 text-left"
@@ -206,13 +240,13 @@ const AppContent = () => {
               
               <div className="flex flex-col sm:flex-row gap-4 md:gap-6 justify-center pt-4 md:pt-8 w-full md:w-auto px-6">
                 <button 
-                  onClick={() => setActiveView('create')}
+                  onClick={() => navigateTo('create')}
                   className="btn-primary w-full sm:w-auto"
                 >
                   Create Spending Plan
                 </button>
                 <button 
-                  onClick={() => setActiveView('learn')}
+                  onClick={() => navigateTo('learn')}
                   className="btn-secondary w-full sm:w-auto"
                 >
                   How It Works
@@ -279,14 +313,14 @@ const AppContent = () => {
         {activeView === 'create' && (
           <div className="w-full px-4">
             <WillCreatorWizard 
-              onCancel={() => setActiveView('home')} 
+              onCancel={() => navigateTo('home', 'replace')} 
               onViewInstructions={(data) => {
                 setInstructionData(data as {
                   plan: PlanInput;
                   result: PlanOutput;
                   created_at?: string;
                 });
-                setActiveView('instructions');
+                navigateTo('instructions');
               }}
             />
           </div>
@@ -301,14 +335,13 @@ const AppContent = () => {
         </div>
         <p>Built as an educational and practical Bitcoin-native tool.</p>
         <div className="flex items-center gap-3">
-          <a 
-            href="https://github.com/mahedirakib/bitcoinwill/blob/main/whitepaper.md" 
-            target="_blank" 
-            rel="noopener noreferrer"
+          <button
+            type="button"
+            onClick={() => openWhitepaper('home')}
             className="hover:text-foreground/80 transition-colors underline underline-offset-4 decoration-black/5"
           >
             Protocol Whitepaper
-          </a>
+          </button>
           <span className="opacity-40">•</span>
           <p>No Tracking. No Cookies. Open Source Bitcoin Native Inheritance.</p>
         </div>

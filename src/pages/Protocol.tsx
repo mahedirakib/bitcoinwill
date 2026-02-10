@@ -1,7 +1,7 @@
 import { ChevronLeft, FileCode, Shield, Zap, AlertCircle, HelpCircle, Clock, CheckCircle, XCircle, Lock } from 'lucide-react';
 import diagram from '@/assets/diagram.svg';
 
-const Protocol = ({ onBack }: { onBack: () => void }) => {
+const Protocol = ({ onBack, onOpenWhitepaper }: { onBack: () => void; onOpenWhitepaper: () => void }) => {
   return (
     <div className="max-w-4xl mx-auto py-12 px-6 space-y-16 animate-in fade-in slide-in-from-bottom-4">
       <button 
@@ -243,14 +243,13 @@ OP_ENDIF`}
 
       <footer className="pt-8 border-t border-white/5 text-center flex flex-col items-center gap-2">
         <p className="text-xs text-foreground/30">TIP Protocol v1.0.0 • Last Updated Feb 2026</p>
-        <a 
-          href="https://github.com/mahedirakib/bitcoinwill/blob/main/whitepaper.md" 
-          target="_blank" 
-          rel="noopener noreferrer"
+        <button
+          type="button"
+          onClick={onOpenWhitepaper}
           className="text-xs text-foreground/40 hover:text-primary transition-colors underline underline-offset-4 decoration-white/10"
         >
           Protocol Whitepaper
-        </a>
+        </button>
       </footer>
     </div>
   );
