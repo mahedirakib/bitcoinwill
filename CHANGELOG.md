@@ -27,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **MVP Release** - Initial functional version of Bitcoin Will.
 - Core Bitcoin script generation using P2WSH (Pay-to-Witness-Script-Hash).
-- Time-lock inheritance protocol with CSV (CheckSequenceVerify) opcode.
+- TimeLock Inheritance Protocol (TIP) with CSV (CheckSequenceVerify) opcode.
 - 4-step wizard for creating spending plans:
   - Type selection (Timelock Recovery)
   - Public key input (Owner & Beneficiary)

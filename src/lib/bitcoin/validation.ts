@@ -77,7 +77,10 @@ export const validatePlanInput = (input: PlanInput): void => {
       'The beneficiary must provide their compressed public key (not private key).'
     );
   }
-  if (input.owner_pubkey === input.beneficiary_pubkey) {
+  if (
+    input.owner_pubkey.trim().toLowerCase() ===
+    input.beneficiary_pubkey.trim().toLowerCase()
+  ) {
     throw new Error(
       'Owner and Beneficiary public keys must be different.\n\n' +
       'You cannot use the same key for both owner and beneficiary.\n' +
@@ -89,7 +92,7 @@ export const validatePlanInput = (input: PlanInput): void => {
     );
   }
   
-  if (input.locktime_blocks < 1 || input.locktime_blocks > 52560) {
+  if (!Number.isSafeInteger(input.locktime_blocks) || input.locktime_blocks < 1 || input.locktime_blocks > 52560) {
     throw new Error(
       'Invalid delay period.\n\n' +
       'Delay must be between 1 and 52,560 blocks (approximately 1 year).\n\n' +

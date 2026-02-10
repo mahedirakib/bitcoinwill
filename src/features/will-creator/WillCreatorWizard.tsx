@@ -61,6 +61,7 @@ const SAMPLE_KEYS = {
 };
 
 const STORAGE_KEY = 'bitcoinwill_wizard_state';
+const normalizePubkeyHex = (value: string): string => value.trim().toLowerCase();
 
 // --- Reducer ---
 
@@ -87,7 +88,10 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
     if (hasRestored) return;
     
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
+      // Session-only draft storage avoids persisting plan details across browser restarts.
+      const saved = sessionStorage.getItem(STORAGE_KEY);
+      // Clean up any stale legacy draft persisted by older versions.
+      localStorage.removeItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed.input && parsed.step && parsed.step !== 'RESULT') {
@@ -97,7 +101,7 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
         }
       }
     } catch {
-      // Ignore errors when restoring from local storage
+      // Ignore errors when restoring draft state
     }
     setHasRestored(true);
   }, [hasRestored, showToast]);
@@ -110,7 +114,7 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
       input: state.input,
       timestamp: new Date().toISOString(),
     };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
   }, [state.step, state.input, hasRestored]);
 
   useEffect(() => {
@@ -123,9 +127,12 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
     if (state.step === 'TYPE') dispatch({ type: 'SET_STEP', payload: 'KEYS' });
     else if (state.step === 'KEYS') {
       const errors: Record<string, string> = {};
-      if (!validatePubkey(state.input.owner_pubkey)) errors.owner = 'Invalid public key format (must be 66 hex characters).';
-      if (!validatePubkey(state.input.beneficiary_pubkey)) errors.beneficiary = 'Invalid public key format.';
-      if (state.input.owner_pubkey === state.input.beneficiary_pubkey) errors.beneficiary = 'Keys must be different.';
+      const ownerPubkey = normalizePubkeyHex(state.input.owner_pubkey);
+      const beneficiaryPubkey = normalizePubkeyHex(state.input.beneficiary_pubkey);
+
+      if (!validatePubkey(ownerPubkey)) errors.owner = 'Invalid public key format (must be 66 hex characters).';
+      if (!validatePubkey(beneficiaryPubkey)) errors.beneficiary = 'Invalid public key format.';
+      if (ownerPubkey === beneficiaryPubkey) errors.beneficiary = 'Keys must be different.';
       
       if (Object.keys(errors).length > 0) dispatch({ type: 'SET_ERRORS', payload: errors });
       else dispatch({ type: 'SET_STEP', payload: 'TIMELOCK' });
@@ -140,18 +147,34 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
   };
 
   const handleGenerate = () => {
+    const ownerPubkey = normalizePubkeyHex(state.input.owner_pubkey);
+    const beneficiaryPubkey = normalizePubkeyHex(state.input.beneficiary_pubkey);
+    const usesSampleKey =
+      ownerPubkey === SAMPLE_KEYS.owner ||
+      beneficiaryPubkey === SAMPLE_KEYS.beneficiary;
+
+    if (state.input.network === 'mainnet' && usesSampleKey) {
+      dispatch({
+        type: 'SET_ERRORS',
+        payload: {
+          global: 'Sample keys are not allowed on Mainnet. Use real owner and beneficiary public keys.',
+        },
+      });
+      return;
+    }
+
     try {
       const result = buildPlan(state.input);
       dispatch({ type: 'SET_RESULT', payload: result });
       dispatch({ type: 'SET_STEP', payload: 'RESULT' });
-      localStorage.removeItem(STORAGE_KEY);
+      sessionStorage.removeItem(STORAGE_KEY);
     } catch (e) {
       dispatch({ type: 'SET_ERRORS', payload: { global: (e as Error).message } });
     }
   };
 
   const handleCancel = () => {
-    localStorage.removeItem(STORAGE_KEY);
+    sessionStorage.removeItem(STORAGE_KEY);
     onCancel();
   };
 
@@ -168,8 +191,10 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
   };
 
   const copyToClipboard = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
-    showToast(`${label} Copied`);
+    navigator.clipboard
+      .writeText(text)
+      .then(() => showToast(`${label} Copied`))
+      .catch(() => showToast('Clipboard unavailable in this browser context'));
   };
 
   return (
@@ -219,8 +244,8 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
               </div>
             </div>
             <div className="flex justify-between items-center pt-6">
-              <button onClick={handleCancel} className="text-foreground/40 font-bold hover:text-foreground/60 transition-colors">Cancel</button>
-              <button onClick={nextStep} className="btn-primary flex items-center gap-2">
+              <button type="button" onClick={handleCancel} className="text-foreground/40 font-bold hover:text-foreground/60 transition-colors">Cancel</button>
+              <button type="button" onClick={nextStep} className="btn-primary flex items-center gap-2">
                 Continue <ChevronRight className="w-5 h-5" />
               </button>
             </div>
@@ -235,53 +260,88 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
             </div>
 
             <button 
+              type="button"
               onClick={() => setShowKeyHelp(!showKeyHelp)}
+              aria-expanded={showKeyHelp}
+              aria-controls="public-key-help"
               className="flex items-center gap-2 text-primary text-sm font-bold hover:opacity-80 transition-opacity"
             >
               <HelpCircle className="w-4 h-4" /> What is a Public Key?
             </button>
 
             {showKeyHelp && (
-              <div className="p-6 bg-muted rounded-2xl text-sm text-foreground/60 border border-border space-y-3 font-medium leading-relaxed animate-in fade-in zoom-in-95">
+              <div id="public-key-help" className="p-6 bg-muted rounded-2xl text-sm text-foreground/60 border border-border space-y-3 font-medium leading-relaxed animate-in fade-in zoom-in-95">
                 <p>A <strong>Public Key</strong> allows you to receive funds and create scripts. It is <strong>NOT</strong> a private key and cannot be used alone to spend your money.</p>
               </div>
             )}
 
             <div className="space-y-10">
               <div className="space-y-3">
-                <label className="text-sm font-bold tracking-tight flex justify-between">
+                <label htmlFor="owner-pubkey" className="text-sm font-bold tracking-tight flex justify-between">
                   Owner Public Key
-                  <button onClick={() => dispatch({ type: 'UPDATE_INPUT', payload: { owner_pubkey: SAMPLE_KEYS.owner }})} className="text-[10px] text-primary hover:underline uppercase tracking-widest font-black">Use Sample</button>
+                  {state.input.network !== 'mainnet' ? (
+                    <button
+                      type="button"
+                      onClick={() => dispatch({ type: 'UPDATE_INPUT', payload: { owner_pubkey: SAMPLE_KEYS.owner }})}
+                      className="text-[10px] text-primary hover:underline uppercase tracking-widest font-black"
+                    >
+                      Use Sample
+                    </button>
+                  ) : (
+                    <span className="text-[10px] uppercase tracking-widest font-black text-red-500/70">Sample Disabled</span>
+                  )}
                 </label>
                 <input 
+                  id="owner-pubkey"
                   type="text" 
                   value={state.input.owner_pubkey}
-                  onChange={(e) => dispatch({ type: 'UPDATE_INPUT', payload: { owner_pubkey: e.target.value.trim() }})}
+                  onChange={(e) => dispatch({ type: 'UPDATE_INPUT', payload: { owner_pubkey: normalizePubkeyHex(e.target.value) }})}
+                  aria-invalid={Boolean(state.errors.owner)}
+                  aria-describedby={state.errors.owner ? 'owner-pubkey-error' : undefined}
                   className={cn("w-full bg-muted border p-5 rounded-2xl font-mono text-sm outline-none transition-all focus:ring-2 focus:ring-primary/20", state.errors.owner ? "border-red-500/50 shadow-sm" : "border-border hover:border-primary/20 focus:border-primary/50")}
                   placeholder="02..."
                 />
-                {state.errors.owner && <p className="text-xs text-red-500 font-bold">{state.errors.owner}</p>}
+                {state.errors.owner && <p id="owner-pubkey-error" className="text-xs text-red-500 font-bold">{state.errors.owner}</p>}
               </div>
 
               <div className="space-y-3">
-                <label className="text-sm font-bold tracking-tight flex justify-between">
+                <label htmlFor="beneficiary-pubkey" className="text-sm font-bold tracking-tight flex justify-between">
                   Beneficiary Public Key
-                  <button onClick={() => dispatch({ type: 'UPDATE_INPUT', payload: { beneficiary_pubkey: SAMPLE_KEYS.beneficiary }})} className="text-[10px] text-primary hover:underline uppercase tracking-widest font-black">Use Sample</button>
+                  {state.input.network !== 'mainnet' ? (
+                    <button
+                      type="button"
+                      onClick={() => dispatch({ type: 'UPDATE_INPUT', payload: { beneficiary_pubkey: SAMPLE_KEYS.beneficiary }})}
+                      className="text-[10px] text-primary hover:underline uppercase tracking-widest font-black"
+                    >
+                      Use Sample
+                    </button>
+                  ) : (
+                    <span className="text-[10px] uppercase tracking-widest font-black text-red-500/70">Sample Disabled</span>
+                  )}
                 </label>
                 <input 
+                  id="beneficiary-pubkey"
                   type="text" 
                   value={state.input.beneficiary_pubkey}
-                  onChange={(e) => dispatch({ type: 'UPDATE_INPUT', payload: { beneficiary_pubkey: e.target.value.trim() }})}
+                  onChange={(e) => dispatch({ type: 'UPDATE_INPUT', payload: { beneficiary_pubkey: normalizePubkeyHex(e.target.value) }})}
+                  aria-invalid={Boolean(state.errors.beneficiary)}
+                  aria-describedby={state.errors.beneficiary ? 'beneficiary-pubkey-error' : undefined}
                   className={cn("w-full bg-muted border p-5 rounded-2xl font-mono text-sm outline-none transition-all focus:ring-2 focus:ring-primary/20", state.errors.beneficiary ? "border-red-500/50 shadow-sm" : "border-border hover:border-primary/20 focus:border-primary/50")}
                   placeholder="03..."
                 />
-                {state.errors.beneficiary && <p className="text-xs text-red-500 font-bold">{state.errors.beneficiary}</p>}
+                {state.errors.beneficiary && <p id="beneficiary-pubkey-error" className="text-xs text-red-500 font-bold">{state.errors.beneficiary}</p>}
               </div>
             </div>
 
+            {state.input.network === 'mainnet' && (
+              <div className="p-4 bg-red-500/5 border border-red-500/10 rounded-2xl text-xs text-red-600/80 font-semibold">
+                Sample keys are disabled on Mainnet for safety.
+              </div>
+            )}
+
             <div className="flex justify-between items-center pt-6">
-              <button onClick={prevStep} className="text-foreground/60 font-bold hover:text-foreground/80 transition-colors">Back</button>
-              <button onClick={nextStep} className="btn-primary">Continue</button>
+              <button type="button" onClick={prevStep} className="text-foreground/60 font-bold hover:text-foreground/80 transition-colors">Back</button>
+              <button type="button" onClick={nextStep} className="btn-primary">Continue</button>
             </div>
           </div>
         )}
@@ -306,8 +366,13 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
               </div>
 
               <div className="relative py-4">
+                <label htmlFor="timelock-range" className="sr-only">
+                  Timelock blocks
+                </label>
                 <input 
-                  type="range" min="1" max="52560" step="144"
+                  id="timelock-range"
+                  aria-label="Timelock blocks"
+                  type="range" min="1" max="52560" step="1"
                   value={state.input.locktime_blocks}
                   onChange={(e) => dispatch({ type: 'UPDATE_INPUT', payload: { locktime_blocks: parseInt(e.target.value) }})}
                   className="w-full h-3 bg-muted rounded-full appearance-none cursor-pointer accent-primary"
@@ -321,8 +386,8 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
             </div>
 
             <div className="flex justify-between items-center pt-6">
-              <button onClick={prevStep} className="text-foreground/60 font-bold hover:text-foreground/80 transition-colors">Back</button>
-              <button onClick={nextStep} className="btn-primary">Continue</button>
+              <button type="button" onClick={prevStep} className="text-foreground/60 font-bold hover:text-foreground/80 transition-colors">Back</button>
+              <button type="button" onClick={nextStep} className="btn-primary">Continue</button>
             </div>
           </div>
         )}
@@ -349,14 +414,14 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
             )}
 
             {state.errors.global && (
-              <div className="p-6 bg-red-500/5 border border-red-500/10 rounded-2xl text-red-500 text-sm font-bold">
+              <div role="alert" className="p-6 bg-red-500/5 border border-red-500/10 rounded-2xl text-red-500 text-sm font-bold">
                 <p>Error: {state.errors.global}</p>
               </div>
             )}
 
             <div className="flex justify-between items-center pt-6">
-              <button onClick={prevStep} className="text-foreground/60 font-bold hover:text-foreground/80 transition-colors">Back</button>
-              <button onClick={handleGenerate} className="btn-primary !px-16 !py-5">Generate Plan</button>
+              <button type="button" onClick={prevStep} className="text-foreground/60 font-bold hover:text-foreground/80 transition-colors">Back</button>
+              <button type="button" onClick={handleGenerate} className="btn-primary !px-16 !py-5">Generate Plan</button>
             </div>
           </div>
         )}
@@ -375,12 +440,17 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
             <div className="grid lg:grid-cols-5 gap-8 items-start">
               <div className="lg:col-span-3 space-y-6">
                 <div className="glass p-8 space-y-5">
-                  <h4 className="font-black text-[10px] uppercase tracking-[0.2em] opacity-60">Vault Address ({network})</h4>
+                  <h4 className="font-black text-[10px] uppercase tracking-[0.2em] opacity-60">Vault Address ({state.result.network})</h4>
                   <div className="flex gap-3">
                     <div className="flex-1 p-5 bg-muted border border-border rounded-2xl font-mono text-xs break-all leading-relaxed shadow-inner">
                       {state.result.address}
                     </div>
-                    <button onClick={() => copyToClipboard(state.result!.address, 'Address')} className="p-4 bg-white border border-border rounded-2xl hover:bg-muted transition-colors group shadow-sm">
+                    <button
+                      type="button"
+                      aria-label="Copy vault address"
+                      onClick={() => copyToClipboard(state.result!.address, 'Address')}
+                      className="p-4 bg-white border border-border rounded-2xl hover:bg-muted transition-colors group shadow-sm"
+                    >
                       <Copy className="w-5 h-5 opacity-60 group-hover:opacity-100 transition-opacity" />
                     </button>
                   </div>
@@ -392,7 +462,12 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
                     <pre className="flex-1 p-5 bg-muted border border-border rounded-2xl text-[10px] font-mono overflow-x-auto opacity-80 leading-relaxed shadow-inner">
                       {state.result.script_asm}
                     </pre>
-                    <button onClick={() => copyToClipboard(state.result!.script_hex, 'Script')} className="p-4 bg-white border border-border rounded-2xl h-fit hover:bg-muted transition-colors group shadow-sm">
+                    <button
+                      type="button"
+                      aria-label="Copy witness script hex"
+                      onClick={() => copyToClipboard(state.result!.script_hex, 'Script')}
+                      className="p-4 bg-white border border-border rounded-2xl h-fit hover:bg-muted transition-colors group shadow-sm"
+                    >
                       <Copy className="w-5 h-5 opacity-60 group-hover:opacity-100 transition-opacity" />
                     </button>
                   </div>
@@ -419,10 +494,10 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
                   </p>
                 </div>
 
-                <button onClick={handleDownload} className="w-full btn-primary !bg-foreground !text-background flex items-center justify-center gap-3">
+                <button type="button" onClick={handleDownload} className="w-full btn-primary !bg-foreground !text-background flex items-center justify-center gap-3">
                   <Download className="w-6 h-6" /> Download Recovery Kit
                 </button>
-                <button onClick={() => onViewInstructions({ plan: state.input, result: state.result, created_at: new Date().toISOString() })} className="w-full btn-secondary flex items-center justify-center gap-3 shadow-sm">
+                <button type="button" onClick={() => onViewInstructions({ plan: state.input, result: state.result, created_at: new Date().toISOString() })} className="w-full btn-secondary flex items-center justify-center gap-3 shadow-sm">
                   <FileText className="w-6 h-6 text-primary" /> View Instructions
                 </button>
               </div>

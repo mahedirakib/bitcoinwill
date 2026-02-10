@@ -121,6 +121,15 @@ describe('Validation Module', () => {
       expect(() => validatePlanInput(invalidInput)).toThrow('Owner and Beneficiary public keys must be different');
     });
 
+    it('throws error when owner and beneficiary keys differ only by hex casing', () => {
+      const invalidInput = {
+        ...validInput,
+        owner_pubkey: validInput.owner_pubkey.toUpperCase(),
+        beneficiary_pubkey: validInput.owner_pubkey.toLowerCase(),
+      };
+      expect(() => validatePlanInput(invalidInput)).toThrow('Owner and Beneficiary public keys must be different');
+    });
+
     it('throws error for locktime of 0', () => {
       const invalidInput = {
         ...validInput,
@@ -141,6 +150,38 @@ describe('Validation Module', () => {
       const invalidInput = {
         ...validInput,
         locktime_blocks: 52561,
+      };
+      expect(() => validatePlanInput(invalidInput)).toThrow('Delay must be between 1 and 52,560 blocks');
+    });
+
+    it('throws error for non-integer locktime', () => {
+      const invalidInput = {
+        ...validInput,
+        locktime_blocks: 1.5,
+      };
+      expect(() => validatePlanInput(invalidInput)).toThrow('Delay must be between 1 and 52,560 blocks');
+    });
+
+    it('throws error for NaN locktime', () => {
+      const invalidInput = {
+        ...validInput,
+        locktime_blocks: Number.NaN,
+      };
+      expect(() => validatePlanInput(invalidInput)).toThrow('Delay must be between 1 and 52,560 blocks');
+    });
+
+    it('throws error for runtime string locktime payload', () => {
+      const invalidInput = {
+        ...validInput,
+        locktime_blocks: '144' as unknown as number,
+      };
+      expect(() => validatePlanInput(invalidInput)).toThrow('Delay must be between 1 and 52,560 blocks');
+    });
+
+    it('throws error for runtime undefined locktime payload', () => {
+      const invalidInput = {
+        ...validInput,
+        locktime_blocks: undefined as unknown as number,
       };
       expect(() => validatePlanInput(invalidInput)).toThrow('Delay must be between 1 and 52,560 blocks');
     });

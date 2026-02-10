@@ -12,8 +12,54 @@ import { ToastProvider } from './components/Toast'
 import type { PlanInput, PlanOutput } from './lib/bitcoin/types'
 import logo from './assets/logo.png'
 
+type AppView = 'home' | 'create' | 'recover' | 'dev' | 'learn' | 'instructions' | 'protocol'
+
+const normalizeAppPath = (pathname: string): string => {
+  const base = import.meta.env.BASE_URL || '/'
+  const normalizedBase = base.endsWith('/') ? base.slice(0, -1) : base
+  let path = pathname
+
+  if (normalizedBase && normalizedBase !== '/' && pathname.startsWith(normalizedBase)) {
+    path = pathname.slice(normalizedBase.length) || '/'
+  }
+
+  if (path.length > 1 && path.endsWith('/')) {
+    path = path.slice(0, -1)
+  }
+
+  return path || '/'
+}
+
+const withBase = (path: string): string => {
+  const base = import.meta.env.BASE_URL || '/'
+  const normalizedBase = base.endsWith('/') ? base.slice(0, -1) : base
+  const normalizedPath = path === '/' ? '' : path
+  const fullPath = `${normalizedBase}${normalizedPath}`
+  return fullPath || '/'
+}
+
+const viewFromPath = (pathname: string): AppView => {
+  const path = normalizeAppPath(pathname)
+  if (path === '/dev') return 'dev'
+  if (path === '/protocol') return 'protocol'
+  if (path === '/learn') return 'learn'
+  if (path === '/instructions') return 'instructions'
+  if (path === '/create') return 'create'
+  return 'home'
+}
+
+const pathFromView = (view: AppView): string => {
+  if (view === 'dev') return '/dev'
+  if (view === 'protocol') return '/protocol'
+  if (view === 'learn') return '/learn'
+  if (view === 'instructions') return '/instructions'
+  if (view === 'create') return '/create'
+  return '/'
+}
+
 const AppContent = () => {
-  const [activeView, setActiveView] = useState<'home' | 'create' | 'recover' | 'dev' | 'learn' | 'instructions' | 'protocol'>('home')
+  const [activeView, setActiveView] = useState<AppView>(() => viewFromPath(window.location.pathname))
+  const currentView: AppView = activeView
   const [instructionData, setInstructionData] = useState<{
     plan: PlanInput;
     result: PlanOutput;
@@ -23,9 +69,22 @@ const AppContent = () => {
   const { network } = useSettings()
 
   useEffect(() => {
-    if (window.location.pathname === '/dev') setActiveView('dev')
-    if (window.location.pathname === '/protocol') setActiveView('protocol')
+    const handlePopstate = () => setActiveView(viewFromPath(window.location.pathname))
+    window.addEventListener('popstate', handlePopstate)
+    return () => window.removeEventListener('popstate', handlePopstate)
   }, [])
+
+  useEffect(() => {
+    const currentPath = normalizeAppPath(window.location.pathname)
+    const nextPath = pathFromView(activeView)
+    if (currentPath !== nextPath) {
+      window.history.pushState(null, '', withBase(nextPath))
+    }
+  }, [activeView])
+
+  useEffect(() => {
+    setIsMenuOpen(false)
+  }, [activeView])
 
   if (activeView === 'dev') return <DevPlayground />;
   if (activeView === 'learn') return <Learn onBack={() => setActiveView('home')} />;
@@ -50,8 +109,10 @@ const AppContent = () => {
     <div className="min-h-screen flex flex-col bg-mesh">
       {/* Header */}
       <header className="h-20 md:h-24 px-6 md:px-8 flex justify-between items-center max-w-7xl mx-auto w-full relative z-50">
-        <div 
-          className="flex items-center gap-3 cursor-pointer group" 
+        <button
+          type="button"
+          className="flex items-center gap-3 cursor-pointer group bg-transparent border-0 p-0 text-left" 
+          aria-label="Go to home"
           onClick={() => {
             setActiveView('home');
             setIsMenuOpen(false);
@@ -67,14 +128,16 @@ const AppContent = () => {
               Mainnet
             </span>
           )}
-        </div>
+        </button>
         
         {/* Desktop Nav */}
         <nav className="hidden lg:flex items-center gap-8">
           {navItems.map((item) => (
             <button 
+              type="button"
               key={item.view}
               onClick={() => setActiveView(item.view)} 
+              aria-current={currentView === item.view ? 'page' : undefined}
               className="text-sm font-semibold text-foreground/70 hover:text-primary transition-colors flex items-center gap-2"
             >
               <item.icon className="w-4 h-4" /> {item.label}
@@ -89,7 +152,11 @@ const AppContent = () => {
         <div className="flex items-center gap-4 lg:hidden">
           <NetworkSelector />
           <button 
+            type="button"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
+            aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={isMenuOpen}
+            aria-controls="mobile-main-nav"
             className="p-2 text-foreground/70 hover:text-primary transition-colors"
           >
             {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -99,9 +166,10 @@ const AppContent = () => {
         {/* Mobile Nav Overlay */}
         {isMenuOpen && (
           <div className="fixed inset-0 top-20 bg-background/95 backdrop-blur-md z-40 lg:hidden animate-in fade-in slide-in-from-top-4 duration-300">
-            <nav className="flex flex-col p-8 gap-6">
+            <nav id="mobile-main-nav" className="flex flex-col p-8 gap-6">
               {navItems.map((item) => (
                 <button 
+                  type="button"
                   key={item.view}
                   onClick={() => {
                     setActiveView(item.view);

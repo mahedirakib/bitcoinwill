@@ -96,7 +96,7 @@ A transaction that moves Bitcoin out of the vault. Requires satisfying the scrip
 
 ## Protocol Terms
 
-### TIP (Time-lock Inheritance Protocol)
+### TIP (TimeLock Inheritance Protocol)
 The technical design pattern Bitcoin Will implements. Uses CSV timelocks for inheritance without custodians.
 
 ### Dead Man's Switch

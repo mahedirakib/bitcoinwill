@@ -10,7 +10,12 @@ import {
   Check,
   History
 } from 'lucide-react';
-import { InstructionModel, buildInstructions, generateInstructionTxt } from '@/lib/bitcoin/instructions';
+import {
+  InstructionModel,
+  buildInstructions,
+  generateInstructionTxt,
+  validateAndNormalizeRecoveryKit,
+} from '@/lib/bitcoin/instructions';
 import { downloadTxt } from '@/lib/utils/download';
 import type { PlanInput, PlanOutput } from '@/lib/bitcoin/types';
 import logo from '@/assets/logo.png';
@@ -32,30 +37,33 @@ const Instructions = ({ initialData, onBack }: InstructionsProps) => {
 
   useEffect(() => {
     if (initialData?.plan && initialData?.result) {
-      const m = buildInstructions(initialData.plan, initialData.result, initialData.created_at);
-      setModel(m);
+      try {
+        const normalized = validateAndNormalizeRecoveryKit(initialData);
+        const m = buildInstructions(normalized.plan, normalized.result, normalized.created_at);
+        setModel(m);
+      } catch (error) {
+        showToast((error as Error).message || 'Invalid Recovery Kit');
+      }
     }
-  }, [initialData]);
+  }, [initialData, showToast]);
 
   const handleJsonUpload = () => {
     try {
-      const data = JSON.parse(jsonInput);
-      if (data.plan && data.result) {
-        const m = buildInstructions(data.plan, data.result, data.created_at);
-        setModel(m);
-        showToast("Instructions Loaded Successfully");
-      } else {
-        showToast("Invalid Recovery Kit: Missing data");
-      }
-    } catch {
-      showToast("Error parsing JSON");
+      const parsed = JSON.parse(jsonInput);
+      const normalized = validateAndNormalizeRecoveryKit(parsed);
+      const m = buildInstructions(normalized.plan, normalized.result, normalized.created_at);
+      setModel(m);
+      showToast("Instructions Loaded Successfully");
+    } catch (error) {
+      const message = (error as Error).message;
+      showToast(message || "Error parsing JSON");
     }
   };
 
   if (!model) {
     return (
       <div className="max-w-2xl mx-auto py-20 px-6 space-y-8 animate-in fade-in">
-        <button onClick={onBack} className="flex items-center gap-2 text-foreground/60 hover:text-primary">
+        <button type="button" onClick={onBack} className="flex items-center gap-2 text-foreground/60 hover:text-primary">
           <ChevronLeft className="w-4 h-4" /> Back
         </button>
         <div className="text-center space-y-4">
@@ -63,13 +71,16 @@ const Instructions = ({ initialData, onBack }: InstructionsProps) => {
           <h1 className="text-3xl font-bold">View Beneficiary Instructions</h1>
           <p className="text-foreground/70">Paste your Recovery Kit JSON below to view the claim instructions.</p>
         </div>
-        <textarea 
+        <label htmlFor="recovery-kit-json" className="sr-only">Recovery kit JSON</label>
+        <textarea
+          id="recovery-kit-json"
           className="w-full h-48 bg-muted border border-border rounded-xl p-4 font-mono text-xs focus:ring-2 focus:ring-primary/20 transition-all"
           placeholder='{"version": "0.1.0", "plan": {...}, "result": {...}}'
           value={jsonInput}
           onChange={(e) => setJsonInput(e.target.value)}
         />
         <button 
+          type="button"
           onClick={handleJsonUpload}
           className="btn-primary w-full"
         >
@@ -82,18 +93,20 @@ const Instructions = ({ initialData, onBack }: InstructionsProps) => {
   return (
     <div className="max-w-4xl mx-auto py-12 px-6 space-y-12">
       {/* Header - Hidden on Print */}
-      <div className="flex justify-between items-center print:hidden">
-        <button onClick={onBack} className="flex items-center gap-2 text-foreground/70 hover:text-primary transition-colors font-semibold">
+      <div className="flex flex-col gap-4 items-start sm:flex-row sm:justify-between sm:items-center print:hidden">
+        <button type="button" onClick={onBack} className="flex items-center gap-2 text-foreground/70 hover:text-primary transition-colors font-semibold">
           <ChevronLeft className="w-4 h-4" /> Back to App
         </button>
-        <div className="flex gap-3">
+        <div className="flex w-full sm:w-auto flex-col sm:flex-row gap-3">
           <button 
+            type="button"
             onClick={() => downloadTxt('beneficiary-instructions.txt', generateInstructionTxt(model))}
             className="flex items-center gap-2 bg-white border border-border px-4 py-2 rounded-lg text-sm font-bold hover:bg-muted transition-colors"
           >
             <Download className="w-4 h-4" /> Download TXT
           </button>
           <button 
+            type="button"
             onClick={() => window.print()}
             className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-bold hover:shadow-lg hover:shadow-primary/20 transition-all"
           >
@@ -210,9 +223,13 @@ const DataRow = ({ label, value, copyable, mono }: { label: string, value: strin
   const [copied, setCopied] = useState(false);
   
   const handleCopy = () => {
-    navigator.clipboard.writeText(value);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    navigator.clipboard
+      .writeText(value)
+      .then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      })
+      .catch(() => setCopied(false));
   };
 
   return (
@@ -224,6 +241,8 @@ const DataRow = ({ label, value, copyable, mono }: { label: string, value: strin
         </div>
         {copyable && (
           <button 
+            type="button"
+            aria-label={`Copy ${label}`}
             onClick={handleCopy}
             className="p-3 bg-white border border-border rounded-lg hover:bg-muted transition-colors print:hidden"
           >

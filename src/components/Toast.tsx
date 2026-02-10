@@ -19,7 +19,12 @@ export const ToastProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     <ToastContext.Provider value={{ showToast }}>
       {children}
       {message && (
-        <div className="fixed bottom-12 left-1/2 -translate-x-1/2 z-[200] animate-in slide-in-from-bottom-4 fade-in duration-500">
+        <div
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          className="fixed bottom-12 left-1/2 -translate-x-1/2 z-[200] animate-in slide-in-from-bottom-4 fade-in duration-500"
+        >
           <div className="glass px-6 py-3 border-primary/20 flex items-center gap-3 text-sm font-black uppercase tracking-widest shadow-xl shadow-primary/5">
             <div className="bg-primary/10 p-1 rounded-full">
               <Check className="text-primary w-4 h-4" />

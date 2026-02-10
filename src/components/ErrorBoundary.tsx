@@ -1,6 +1,12 @@
 import { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCcw, Home } from 'lucide-react';
 
+const withBase = (path = ''): string => {
+  const base = import.meta.env.BASE_URL || '/';
+  const normalizedBase = base.endsWith('/') ? base : `${base}/`;
+  return `${normalizedBase}${path.replace(/^\/+/, '')}`;
+};
+
 interface Props {
   children: ReactNode;
 }
@@ -39,7 +45,7 @@ export class ErrorBoundary extends Component<Props, State> {
             
             <div className="flex gap-4">
               <button 
-                onClick={() => window.location.href = '/'}
+                onClick={() => window.location.assign(withBase())}
                 className="flex-1 bg-primary text-primary-foreground py-3 rounded-xl font-bold flex items-center justify-center gap-2"
               >
                 <Home className="w-4 h-4" /> Home
@@ -53,7 +59,7 @@ export class ErrorBoundary extends Component<Props, State> {
             </div>
             
             <p className="text-[10px] text-foreground/40">
-              Need help? Check the <a href="/learn" className="underline">Learning Center</a>.
+              Need help? Check the <a href={withBase('learn')} className="underline">Learning Center</a>.
             </p>
           </div>
         </div>

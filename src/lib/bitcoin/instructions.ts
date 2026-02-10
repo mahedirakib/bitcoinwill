@@ -1,5 +1,6 @@
 import { PlanInput, PlanOutput } from './types';
 import { calculateTime } from './utils';
+import { buildPlan } from './planEngine';
 
 /**
  * Data model for beneficiary-facing instructions.
@@ -31,6 +32,59 @@ export interface InstructionModel {
   /** ISO 8601 timestamp of when instructions were generated */
   createdAt?: string;
 }
+
+/**
+ * Recovery Kit JSON export schema.
+ */
+export interface RecoveryKitData {
+  version?: string;
+  created_at?: string;
+  plan: PlanInput;
+  result: PlanOutput;
+}
+
+const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+/**
+ * Validates Recovery Kit JSON and normalizes the result using canonical script generation.
+ *
+ * This protects against tampered or malformed JSON by rebuilding the plan and requiring
+ * core result fields to match exactly.
+ */
+export const validateAndNormalizeRecoveryKit = (raw: unknown): RecoveryKitData => {
+  if (!isObjectRecord(raw)) {
+    throw new Error('Invalid Recovery Kit: expected a JSON object.');
+  }
+
+  const plan = raw.plan as PlanInput | undefined;
+  const result = raw.result as PlanOutput | undefined;
+
+  if (!plan || !result) {
+    throw new Error('Invalid Recovery Kit: missing plan or result.');
+  }
+
+  // buildPlan validates all input fields and yields canonical result values.
+  const canonicalResult = buildPlan(plan);
+
+  const matchesCanonical =
+    result.address === canonicalResult.address &&
+    result.script_hex === canonicalResult.script_hex &&
+    result.witness_script === canonicalResult.witness_script &&
+    result.descriptor === canonicalResult.descriptor &&
+    result.network === canonicalResult.network;
+
+  if (!matchesCanonical) {
+    throw new Error('Recovery Kit failed integrity check. The plan does not match the included result.');
+  }
+
+  return {
+    version: typeof raw.version === 'string' ? raw.version : undefined,
+    created_at: typeof raw.created_at === 'string' ? raw.created_at : undefined,
+    plan,
+    result: canonicalResult,
+  };
+};
 
 /**
  * Builds an instruction model from a completed plan.

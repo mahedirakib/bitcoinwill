@@ -20,7 +20,7 @@ OP_ENDIF
 - **Path B (Beneficiary):** Requires a signature from the Beneficiary and the boolean `0`. This path is only spendable once the `relative locktime` (CSV) has passed since the funding transaction was confirmed.
 
 ## 3. Security Model
-- **Stateless:** The application does not store keys, scripts, or personal data.
+- **Stateless (Server-Side):** The application does not store keys, scripts, or personal data on any server. Session-only browser draft data may be cached locally by the client.
 - **Client-Side:** All math and address derivation happen in the user's browser.
 - **Deterministic:** The same inputs (keys + locktime) will always produce the same Vault Address and Script.
 - **Non-Custodial:** The user never provides a private key to the application.

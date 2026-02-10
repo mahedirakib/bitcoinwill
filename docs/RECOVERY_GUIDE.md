@@ -7,7 +7,7 @@ This guide helps beneficiaries recover funds from a Bitcoin Will vault after the
 ### What You Need
 
 1. **Your Private Key**
-   - You should have received this securely from the owner
+   - This should be your own key (generated and controlled by you)
    - Never share it with anyone
    - It corresponds to the public key in the Recovery Kit
 
@@ -40,7 +40,7 @@ This guide helps beneficiaries recover funds from a Bitcoin Will vault after the
 
 **Check the balance:**
 1. Open the Recovery Kit JSON file
-2. Copy the `address` field value
+2. Copy `result.address`
 3. Go to a block explorer (mempool.space)
 4. Paste the address and search
 5. Verify there is a balance
@@ -49,12 +49,12 @@ This guide helps beneficiaries recover funds from a Bitcoin Will vault after the
 
 ### Step 2: Confirm CSV Expiration
 
-The Recovery Kit specifies a `locktimeBlocks` value (e.g., 144 blocks = ~1 day).
+The Recovery Kit specifies `plan.locktime_blocks` (e.g., 144 blocks = ~1 day).
 
 **To check if you can claim:**
 1. Find the last transaction to the vault address
 2. Note the block height when it confirmed
-3. Add the `locktimeBlocks` value
+3. Add `plan.locktime_blocks`
 4. Check if current block height exceeds that number
 
 **Example:**
@@ -92,7 +92,7 @@ The Recovery Kit specifies a `locktimeBlocks` value (e.g., 144 blocks = ~1 day).
 
 **You must provide the witness script:**
 
-1. When prompted, provide the `witnessScript` from Recovery Kit
+1. When prompted, provide `result.witness_script` from Recovery Kit
 2. This proves you know the spending conditions
 
 ### Step 5: Sign the Transaction
@@ -103,7 +103,7 @@ The Recovery Kit specifies a `locktimeBlocks` value (e.g., 144 blocks = ~1 day).
 2. Sign using your wallet
 3. The wallet will automatically use the beneficiary path (OP_ELSE branch)
 
-**Important:** Make sure you're using the correct private key that matches the `beneficiaryPubkey` in the Recovery Kit.
+**Important:** Make sure you're using the correct private key that matches `plan.beneficiary_pubkey` in the Recovery Kit.
 
 ### Step 6: Broadcast
 
@@ -133,7 +133,7 @@ The Recovery Kit specifies a `locktimeBlocks` value (e.g., 144 blocks = ~1 day).
 
 **Cause:** Wrong witness script provided.
 
-**Solution:** Copy the exact `witnessScriptHex` from Recovery Kit without any modifications.
+**Solution:** Copy the exact `result.witness_script` from Recovery Kit without any modifications.
 
 ### Wallet Doesn't Recognize Address
 

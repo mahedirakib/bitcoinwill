@@ -56,7 +56,7 @@ const Protocol = ({ onBack }: { onBack: () => void }) => {
         </div>
         <div className="space-y-6">
           <p className="text-foreground/70 leading-relaxed">
-            TIP uses timelocks to create a spending path that is not valid until a specific date or block height.
+            TIP uses relative timelocks (CSV) to create a spending path that is not valid until a chosen number of blocks has elapsed since funding confirmation.
           </p>
           
           <div className="glass p-8 space-y-0">
@@ -166,7 +166,7 @@ OP_ENDIF`}
               'Helps users choose time parameters and understand tradeoffs',
               'Runs locally in the browser',
               'Does not require an account',
-              'Does not store user data',
+              'Does not store user data on any server',
               'Does not see private keys',
             ].map((item, i) => (
               <li key={i} className="flex items-start gap-3">
@@ -215,7 +215,7 @@ OP_ENDIF`}
           <div className="font-semibold text-foreground/90">Core properties:</div>
           <ul className="space-y-2">
             {[
-              'Stateless, with no stored user plans',
+              'No server-side plan storage (session drafts may be cached locally in your browser)',
               'Client-side only',
               'Outputs are inspectable and verifiable',
               'Open-source and reviewable',

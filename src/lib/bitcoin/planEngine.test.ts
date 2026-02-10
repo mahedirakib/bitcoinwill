@@ -239,6 +239,11 @@ describe('PlanEngine', () => {
       expect(() => buildPlan(badInput)).toThrow('Delay must be between 1 and 52,560 blocks');
     });
 
+    it('throws error on non-integer locktime', () => {
+      const badInput = { ...sampleInput, locktime_blocks: 1.5 };
+      expect(() => buildPlan(badInput)).toThrow('Delay must be between 1 and 52,560 blocks');
+    });
+
     it('throws error on locktime at exact maximum boundary', () => {
       // 52560 should be the max (inclusive)
       const maxInput = { ...sampleInput, locktime_blocks: 52560 };

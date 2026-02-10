@@ -4,7 +4,7 @@ This directory contains the core Bitcoin logic for the Bitcoin Will application.
 
 ## Overview
 
-The Bitcoin module implements the **Time-lock Inheritance Protocol (TIP)** using native Bitcoin Script opcodes. It creates P2WSH (Pay-to-Witness-Script-Hash) vault addresses with dual spending paths.
+The Bitcoin module implements the **TimeLock Inheritance Protocol (TIP)** using native Bitcoin Script opcodes. It creates P2WSH (Pay-to-Witness-Script-Hash) vault addresses with dual spending paths.
 
 ## Modules
 

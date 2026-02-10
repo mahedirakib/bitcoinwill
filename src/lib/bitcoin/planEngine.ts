@@ -10,7 +10,7 @@ initEccLib(ecc);
 /**
  * Bitcoin Script Construction Module
  * 
- * This module implements the Time-lock Inheritance Protocol (TIP) using native
+ * This module implements the TimeLock Inheritance Protocol (TIP) using native
  * Bitcoin Script opcodes. It creates a P2WSH (Pay-to-Witness-Script-Hash) vault
  * with two spending paths:
  * 

@@ -1,6 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { buildInstructions, generateInstructionTxt, InstructionModel } from './instructions';
+import {
+  buildInstructions,
+  generateInstructionTxt,
+  InstructionModel,
+  validateAndNormalizeRecoveryKit,
+} from './instructions';
 import { PlanInput, PlanOutput } from './types';
+import { buildPlan } from './planEngine';
 
 describe('Instructions Module', () => {
   const mockPlanInput: PlanInput = {
@@ -24,6 +30,14 @@ describe('Instructions Module', () => {
       'Owner can spend at any time',
       'Beneficiary can spend after 144 blocks',
     ],
+  };
+
+  const canonicalPlanInput: PlanInput = {
+    network: 'testnet',
+    inheritance_type: 'timelock_recovery',
+    owner_pubkey: '02e9634f19b165239105436a5c17e3371901c5651581452a329978747474747474',
+    beneficiary_pubkey: '03e9634f19b165239105436a5c17e3371901c5651581452a329978747474747474',
+    locktime_blocks: 144,
   };
 
   describe('buildInstructions', () => {
@@ -237,6 +251,41 @@ describe('Instructions Module', () => {
       const result = generateInstructionTxt(mockInstructionModel);
       expect(result).toContain('Sparrow Wallet');
       expect(result).toContain('blockchain explorer');
+    });
+  });
+
+  describe('validateAndNormalizeRecoveryKit', () => {
+    it('accepts a valid recovery kit and returns canonical result', () => {
+      const result = buildPlan(canonicalPlanInput);
+      const kit = {
+        version: '0.1.0',
+        created_at: '2026-02-08T10:30:00.000Z',
+        plan: canonicalPlanInput,
+        result,
+      };
+
+      const normalized = validateAndNormalizeRecoveryKit(kit);
+
+      expect(normalized.plan).toEqual(canonicalPlanInput);
+      expect(normalized.result.address).toBe(result.address);
+      expect(normalized.result.descriptor).toBe(result.descriptor);
+    });
+
+    it('rejects kit missing required fields', () => {
+      expect(() => validateAndNormalizeRecoveryKit({})).toThrow('missing plan or result');
+    });
+
+    it('rejects tampered result payload', () => {
+      const result = buildPlan(canonicalPlanInput);
+      const tampered = {
+        plan: canonicalPlanInput,
+        result: {
+          ...result,
+          address: 'tb1qnottherealvaultaddressxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+        },
+      };
+
+      expect(() => validateAndNormalizeRecoveryKit(tampered)).toThrow('failed integrity check');
     });
   });
 });
