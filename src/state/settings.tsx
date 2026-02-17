@@ -12,11 +12,15 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 
 export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [network, setNetworkState] = useState<BitcoinNetwork>(() => {
-    const saved = localStorage.getItem('bitcoinwill_network');
-    if (!isBitcoinNetwork(saved)) return 'testnet';
-    // We never persist mainnet
-    if (saved === 'mainnet') return 'testnet';
-    return saved;
+    try {
+      const saved = localStorage.getItem('bitcoinwill_network');
+      if (!isBitcoinNetwork(saved)) return 'testnet';
+      // We never persist mainnet
+      if (saved === 'mainnet') return 'testnet';
+      return saved;
+    } catch {
+      return 'testnet';
+    }
   });
 
   const [isMainnetUnlocked, setIsMainnetUnlocked] = useState(false);
@@ -25,7 +29,11 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (n === 'mainnet' && !isMainnetUnlocked) return;
     setNetworkState(n);
     if (n !== 'mainnet') {
-      localStorage.setItem('bitcoinwill_network', n);
+      try {
+        localStorage.setItem('bitcoinwill_network', n);
+      } catch {
+        // Ignore storage errors in restricted browser contexts.
+      }
     }
   };
 

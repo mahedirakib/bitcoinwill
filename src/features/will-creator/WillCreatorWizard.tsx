@@ -116,6 +116,13 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
   const [downloadChecklist, setDownloadChecklist] = useState<Record<ChecklistItemId, boolean>>(createChecklistState);
   const checklistModalRef = useRef<HTMLDivElement | null>(null);
   const checklistLastFocusedRef = useRef<HTMLElement | null>(null);
+  const clearDraftState = () => {
+    try {
+      sessionStorage.removeItem(STORAGE_KEY);
+    } catch {
+      // Ignore storage errors in restricted browser contexts.
+    }
+  };
 
   useEffect(() => {
     if (hasRestored) return;
@@ -147,7 +154,11 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
       input: state.input,
       timestamp: new Date().toISOString(),
     };
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+    try {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+    } catch {
+      // Ignore storage errors in restricted browser contexts.
+    }
   }, [state.step, state.input, hasRestored]);
 
   useEffect(() => {
@@ -244,14 +255,14 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
       const result = buildPlan(state.input);
       dispatch({ type: 'SET_RESULT', payload: result });
       dispatch({ type: 'SET_STEP', payload: 'RESULT' });
-      sessionStorage.removeItem(STORAGE_KEY);
+      clearDraftState();
     } catch (e) {
       dispatch({ type: 'SET_ERRORS', payload: { global: (e as Error).message } });
     }
   };
 
   const handleCancel = () => {
-    sessionStorage.removeItem(STORAGE_KEY);
+    clearDraftState();
     onCancel();
   };
 

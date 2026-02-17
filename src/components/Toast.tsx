@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode } from 'react';
 import { Check } from 'lucide-react';
 
 interface ToastContextType {
@@ -9,10 +9,25 @@ const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
 export const ToastProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [message, setMessage] = useState<string | null>(null);
+  const dismissTimerRef = useRef<number | null>(null);
 
   const showToast = useCallback((msg: string) => {
+    if (dismissTimerRef.current !== null) {
+      window.clearTimeout(dismissTimerRef.current);
+    }
     setMessage(msg);
-    setTimeout(() => setMessage(null), 2000);
+    dismissTimerRef.current = window.setTimeout(() => {
+      setMessage(null);
+      dismissTimerRef.current = null;
+    }, 2000);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (dismissTimerRef.current !== null) {
+        window.clearTimeout(dismissTimerRef.current);
+      }
+    };
   }, []);
 
   return (

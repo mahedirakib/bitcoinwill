@@ -14,6 +14,7 @@ import type { PlanInput, PlanOutput } from './lib/bitcoin/types'
 import logo from './assets/logo.png'
 
 type AppView = 'home' | 'create' | 'recover' | 'dev' | 'learn' | 'instructions' | 'protocol' | 'whitepaper'
+const DEV_VIEW_ENABLED = import.meta.env.DEV
 
 const normalizeAppPath = (pathname: string): string => {
   const base = import.meta.env.BASE_URL || '/'
@@ -41,7 +42,7 @@ const withBase = (path: string): string => {
 
 const viewFromPath = (pathname: string): AppView => {
   const path = normalizeAppPath(pathname)
-  if (path === '/dev') return 'dev'
+  if (path === '/dev') return DEV_VIEW_ENABLED ? 'dev' : 'home'
   if (path === '/protocol') return 'protocol'
   if (path === '/whitepaper') return 'whitepaper'
   if (path === '/learn') return 'learn'
@@ -51,7 +52,7 @@ const viewFromPath = (pathname: string): AppView => {
 }
 
 const pathFromView = (view: AppView): string => {
-  if (view === 'dev') return '/dev'
+  if (view === 'dev') return DEV_VIEW_ENABLED ? '/dev' : '/'
   if (view === 'protocol') return '/protocol'
   if (view === 'whitepaper') return '/whitepaper'
   if (view === 'learn') return '/learn'
@@ -112,7 +113,7 @@ const AppContent = () => {
     setIsMenuOpen(false)
   }, [activeView])
 
-  if (activeView === 'dev') return <DevPlayground />;
+  if (activeView === 'dev' && DEV_VIEW_ENABLED) return <DevPlayground />;
   if (activeView === 'learn') return <Learn onBack={() => navigateTo('home', 'replace')} />;
   if (activeView === 'protocol') return <Protocol onBack={() => navigateTo('home', 'replace')} onOpenWhitepaper={() => openWhitepaper('protocol')} />;
   if (activeView === 'whitepaper') return <Whitepaper onBack={() => navigateTo(whitepaperBackView, 'replace')} />;
