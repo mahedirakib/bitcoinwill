@@ -1,5 +1,6 @@
 import { PlanInput, isBitcoinNetwork, INHERITANCE_TYPE } from './types';
 import * as ecc from 'tiny-secp256k1';
+import { hexToBytes } from './hex';
 
 /**
  * Validates a Bitcoin public key format and curve validity.
@@ -18,8 +19,8 @@ export const validatePubkey = (pubkey: string): boolean => {
   if (!hexRegex.test(pubkey)) return false;
 
   try {
-    const buf = Buffer.from(pubkey, 'hex');
-    return ecc.isPoint(buf);
+    const keyBytes = hexToBytes(pubkey);
+    return ecc.isPoint(keyBytes);
   } catch {
     return false;
   }

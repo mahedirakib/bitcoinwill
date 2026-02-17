@@ -63,6 +63,7 @@ const pathFromView = (view: AppView): string => {
 const AppContent = () => {
   const [activeView, setActiveView] = useState<AppView>(() => viewFromPath(window.location.pathname))
   const [whitepaperBackView, setWhitepaperBackView] = useState<AppView>('home')
+  const [forceQaCrash, setForceQaCrash] = useState(false)
   const currentView: AppView = activeView
   const historyActionRef = useRef<'push' | 'replace'>('replace')
   const [instructionData, setInstructionData] = useState<{
@@ -72,6 +73,10 @@ const AppContent = () => {
   } | undefined>(undefined)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const { network } = useSettings()
+
+  if (forceQaCrash) {
+    throw new Error('Forced QA crash to validate ErrorBoundary fallback UI.')
+  }
 
   const navigateTo = (view: AppView, action: 'push' | 'replace' = 'push') => {
     historyActionRef.current = action
@@ -333,6 +338,15 @@ const AppContent = () => {
            <AlertCircle className="w-3 h-3 text-primary" />
            Current Environment: <span className="uppercase font-bold text-foreground/80">{network}</span>
         </div>
+        {import.meta.env.DEV && (
+          <button
+            type="button"
+            onClick={() => setForceQaCrash(true)}
+            className="text-[11px] px-3 py-1 border border-red-500/20 rounded-full text-red-600 hover:bg-red-500/5 transition-colors"
+          >
+            Force ErrorBoundary (Dev QA)
+          </button>
+        )}
         <p>Built as an educational and practical Bitcoin-native tool.</p>
         <div className="flex items-center gap-3">
           <button

@@ -6,8 +6,8 @@
 
 A minimal, privacy-first reference implementation of the TimeLock Inheritance Protocol (TIP) for non-custodial Bitcoin inheritance spending plans.
 
-## Status: MVP / Educational & Practical Tool
-This project is an **initial release (v0.1.0)**. It is a functional tool for generating Bitcoin-native scripts, but it should be treated as experimental. Always verify your generated scripts and test with small amounts of Testnet Bitcoin before moving to Mainnet.
+## Status: Stable Release (v1.0.0)
+This project is now a **production-ready static release** for TIP planning and recovery operations. It includes live explorer balance checks, transaction broadcast helpers, Mainnet safety locks, and comprehensive validation tests. Always verify scripts and practice with small amounts before high-value Mainnet usage.
 
 ## What is this?
 Bitcoin Will is a **stateless, client-side utility** that implements the TimeLock Inheritance Protocol (TIP). It helps you create a Bitcoin "Dead Man's Switch" by generating a unique Vault Address with a built-in rule: you can spend funds at any time, but if funds remain unmoved for a specified delay, a beneficiary can claim them using their own key.
@@ -25,7 +25,7 @@ Inheritance in the Bitcoin space is often either too complex (multisig setups) o
 
 ## Who is this NOT for?
 - **Legal Advice:** This is not a legal will. It does not replace estate laws in your jurisdiction.
-- **Active Monitoring:** The app does not watch the blockchain for you. Your beneficiary must be proactive.
+- **Active Monitoring:** The app provides manual explorer checks, but it does not auto-monitor or alert your beneficiary.
 - **Key Loss Protection:** If you lose both your private keys AND your Recovery Kit, funds are gone.
 
 ## How to try it safely
@@ -39,6 +39,7 @@ Inheritance in the Bitcoin space is often either too complex (multisig setups) o
 - [TIP Whitepaper](./whitepaper.md) - Protocol scope, threat model, and assumptions.
 - [Protocol Specification](./PROTOCOL.md) - TIP script and implementation details.
 - [Security Policy](./SECURITY.md) - Threat model and safety tips.
+- [Security Audit Report](./docs/SECURITY_AUDIT_2026-02-17.md) - Third-party tooling and hardening results.
 - [API Reference](./src/lib/bitcoin/README.md) - Bitcoin module documentation.
 - [Testing Guide](./TESTING.md) - How to run and write tests.
 - [Troubleshooting](./docs/TROUBLESHOOTING.md) - Common issues and solutions.

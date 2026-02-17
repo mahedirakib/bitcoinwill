@@ -33,6 +33,6 @@ OP_ENDIF
 
 ## 5. Future Scope (v2+)
 - **Taproot (MAST):** To hide the spending conditions until the moment of claim.
-- **Check-in Transactions:** Tools to help the owner "reset" the timer easily.
+- **Automated Check-in Transactions:** Wallet-assisted construction/signing beyond today's manual helper flow.
 - **Multi-sig Paths:** Requiring M-of-N signatures for the recovery path.
 - **Social Recovery:** Splitting the recovery key into fragments.
