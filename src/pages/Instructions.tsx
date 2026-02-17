@@ -394,7 +394,12 @@ const Instructions = ({ initialData, onBack }: InstructionsProps) => {
                       <p className="text-xs font-bold uppercase tracking-widest text-foreground/60">Latest Confirmed Funding Tx</p>
                       <p className="font-mono text-[11px] break-all">{vaultStatus.lastConfirmedFundingTx.txid}</p>
                       <p className="text-xs text-foreground/70">
-                        Confirmations: <strong>{vaultStatus.lastConfirmedFundingTx.confirmations ?? 0}</strong>
+                        Confirmations:{' '}
+                        <strong>
+                          {typeof vaultStatus.lastConfirmedFundingTx.confirmations === 'number'
+                            ? vaultStatus.lastConfirmedFundingTx.confirmations
+                            : 'unknown'}
+                        </strong>
                       </p>
                       <a
                         href={buildExplorerTxUrl(recoveryNetwork, vaultStatus.providerUsed, vaultStatus.lastConfirmedFundingTx.txid)}

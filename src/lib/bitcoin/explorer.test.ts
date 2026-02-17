@@ -19,6 +19,8 @@ describe('explorer helpers', () => {
   const address = 'tb1qexampleaddressexampleaddressexampleaddressexample0';
   const txidA = 'a'.repeat(64);
   const txidB = 'b'.repeat(64);
+  const txidC = 'c'.repeat(64);
+  const txidD = 'd'.repeat(64);
 
   it('builds explorer URLs for supported networks', () => {
     expect(buildExplorerAddressUrl('testnet', 'mempool', address)).toContain(
@@ -113,6 +115,99 @@ describe('explorer helpers', () => {
 
     expect(summary.providerUsed).toBe('blockstream');
     expect(summary.usedFallbackProvider).toBe(true);
+  });
+
+  it('scans older chain pages when initial tx page has no funding event', async () => {
+    const fetcher = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.endsWith('/address/tb1qexampleaddressexampleaddressexampleaddressexample0')) {
+        return makeJsonResponse({
+          chain_stats: { funded_txo_sum: 10_000, spent_txo_sum: 4_000, tx_count: 40 },
+          mempool_stats: { funded_txo_sum: 0, spent_txo_sum: 0, tx_count: 0 },
+        });
+      }
+      if (url.endsWith('/address/tb1qexampleaddressexampleaddressexampleaddressexample0/txs')) {
+        return makeJsonResponse([
+          {
+            txid: txidA,
+            status: { confirmed: true, block_height: 140 },
+            vout: [{ scriptpubkey_address: 'tb1qnotouraddressxxxxxxxxxxxxxxxxxxxxxxxxxxxx', value: 2_000 }],
+          },
+          {
+            txid: txidB,
+            status: { confirmed: true, block_height: 130 },
+            vout: [{ scriptpubkey_address: 'tb1qnotouraddressxxxxxxxxxxxxxxxxxxxxxxxxxxxx', value: 2_000 }],
+          },
+        ]);
+      }
+      if (url.endsWith(`/address/tb1qexampleaddressexampleaddressexampleaddressexample0/txs/chain/${txidB}`)) {
+        return makeJsonResponse([
+          {
+            txid: txidC,
+            status: { confirmed: true, block_height: 120, block_time: 1_700_000_100 },
+            vout: [{ scriptpubkey_address: address, value: 6_000 }],
+          },
+          {
+            txid: txidD,
+            status: { confirmed: true, block_height: 110 },
+            vout: [{ scriptpubkey_address: 'tb1qnotouraddressxxxxxxxxxxxxxxxxxxxxxxxxxxxx', value: 1_000 }],
+          },
+        ]);
+      }
+      if (url.endsWith('/blocks/tip/height')) {
+        return new Response('140', { status: 200 });
+      }
+      return new Response('not found', { status: 404 });
+    }) as unknown as typeof fetch;
+
+    const summary = await fetchAddressSummary({
+      network: 'testnet',
+      address,
+      provider: 'mempool',
+      fallbackToOtherProvider: false,
+      fetcher,
+    });
+
+    expect(summary.lastFundingTx?.txid).toBe(txidC);
+    expect(summary.lastConfirmedFundingTx?.txid).toBe(txidC);
+    expect(summary.lastConfirmedFundingTx?.confirmations).toBe(21);
+  });
+
+  it('leaves confirmations undefined when tip height is unavailable', async () => {
+    const fetcher = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.endsWith('/address/tb1qexampleaddressexampleaddressexampleaddressexample0')) {
+        return makeJsonResponse({
+          chain_stats: { funded_txo_sum: 8_000, spent_txo_sum: 0, tx_count: 1 },
+          mempool_stats: { funded_txo_sum: 0, spent_txo_sum: 0, tx_count: 0 },
+        });
+      }
+      if (url.endsWith('/address/tb1qexampleaddressexampleaddressexampleaddressexample0/txs')) {
+        return makeJsonResponse([
+          {
+            txid: txidA,
+            status: { confirmed: true, block_height: 100, block_time: 1_700_000_000 },
+            vout: [{ scriptpubkey_address: address, value: 8_000 }],
+          },
+        ]);
+      }
+      if (url.endsWith('/blocks/tip/height')) {
+        return new Response('not-a-height', { status: 200 });
+      }
+      return new Response('not found', { status: 404 });
+    }) as unknown as typeof fetch;
+
+    const summary = await fetchAddressSummary({
+      network: 'testnet',
+      address,
+      provider: 'mempool',
+      fallbackToOtherProvider: false,
+      fetcher,
+    });
+
+    expect(summary.tipHeight).toBeUndefined();
+    expect(summary.lastConfirmedFundingTx?.txid).toBe(txidA);
+    expect(summary.lastConfirmedFundingTx?.confirmations).toBeUndefined();
   });
 
   it('broadcasts transactions and falls back on provider error', async () => {

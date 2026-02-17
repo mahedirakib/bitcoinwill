@@ -21,6 +21,7 @@ import { useToast } from '@/components/Toast';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { SAMPLE_KEYS, normalizePubkeyHex, usesDisallowedSampleKey } from './safety';
+import { parseWizardDraft } from './draftState';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -127,24 +128,29 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
   useEffect(() => {
     if (hasRestored) return;
     
+    let savedDraft: string | null = null;
     try {
       // Session-only draft storage avoids persisting plan details across browser restarts.
-      const saved = sessionStorage.getItem(STORAGE_KEY);
+      savedDraft = sessionStorage.getItem(STORAGE_KEY);
+    } catch {
+      // Ignore storage errors in restricted browser contexts.
+    }
+
+    try {
       // Clean up any stale legacy draft persisted by older versions.
       localStorage.removeItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed.input && parsed.step && parsed.step !== 'RESULT') {
-          dispatch({ type: 'UPDATE_INPUT', payload: parsed.input });
-          dispatch({ type: 'SET_STEP', payload: parsed.step });
-          showToast('Previous progress restored');
-        }
-      }
     } catch {
-      // Ignore errors when restoring draft state
+      // Ignore storage errors in restricted browser contexts.
+    }
+
+    const restored = parseWizardDraft(savedDraft, network as BitcoinNetwork);
+    if (restored) {
+      dispatch({ type: 'UPDATE_INPUT', payload: restored.input });
+      dispatch({ type: 'SET_STEP', payload: restored.step });
+      showToast('Previous progress restored');
     }
     setHasRestored(true);
-  }, [hasRestored, showToast]);
+  }, [hasRestored, network, showToast]);
 
   useEffect(() => {
     if (!hasRestored || state.step === 'RESULT') return;

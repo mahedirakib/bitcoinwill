@@ -4,6 +4,8 @@ export const EXPLORER_PROVIDERS = ['mempool', 'blockstream'] as const;
 export type ExplorerProvider = (typeof EXPLORER_PROVIDERS)[number];
 
 const DEFAULT_TIMEOUT_MS = 10_000;
+const ESPLORA_CHAIN_PAGE_SIZE = 25;
+const ESPLORA_CHAIN_SCAN_PAGE_LIMIT = 20;
 
 interface ExplorerConfig {
   apiBaseUrl: string;
@@ -246,7 +248,7 @@ const toFundingEvent = (
   const blockTime = toSafeInteger(tx.status?.block_time);
 
   const confirmations =
-    confirmed && tipHeight && blockHeight > 0 ? Math.max(0, tipHeight - blockHeight + 1) : confirmed ? 0 : undefined;
+    confirmed && tipHeight !== undefined && blockHeight > 0 ? Math.max(0, tipHeight - blockHeight + 1) : undefined;
 
   return {
     txid: txid.toLowerCase(),
@@ -258,13 +260,33 @@ const toFundingEvent = (
   };
 };
 
+const getFundingEvents = (
+  txs: EsploraTx[],
+  address: string,
+  tipHeight?: number,
+): FundingEvent[] =>
+  txs
+    .map((tx) => toFundingEvent(tx, address, tipHeight))
+    .filter((event): event is FundingEvent => event !== null);
+
+const getOldestConfirmedTxid = (txs: EsploraTx[]): string | null => {
+  for (let index = txs.length - 1; index >= 0; index -= 1) {
+    const tx = txs[index];
+    if (!tx.status?.confirmed) continue;
+    if (typeof tx.txid !== 'string') continue;
+    if (!/^[a-f0-9]{64}$/i.test(tx.txid)) continue;
+    return tx.txid.toLowerCase();
+  }
+  return null;
+};
+
 const fetchAddressSummaryWithProvider = async (
   request: Required<Pick<AddressSummaryRequest, 'network' | 'address' | 'provider' | 'timeoutMs' | 'fetcher'>>,
 ): Promise<AddressSummary> => {
   const config = getExplorerConfig(request.network, request.provider);
   const encodedAddress = encodeURIComponent(request.address);
 
-  const [addressData, txs, tipHeightRaw] = await Promise.all([
+  const [addressData, txsRaw, tipHeightRaw] = await Promise.all([
     fetchJsonWithTimeout<EsploraAddressResponse>(
       `${config.apiBaseUrl}/address/${encodedAddress}`,
       request.fetcher,
@@ -288,13 +310,49 @@ const fetchAddressSummaryWithProvider = async (
   const mempoolSpent = toSafeInteger(addressData.mempool_stats?.spent_txo_sum);
   const txCount = toSafeInteger(addressData.chain_stats?.tx_count) + toSafeInteger(addressData.mempool_stats?.tx_count);
   const tipHeight = parseTipHeight(tipHeightRaw);
+  const txs = Array.isArray(txsRaw) ? txsRaw : [];
 
-  const fundingEvents = (Array.isArray(txs) ? txs : [])
-    .map((tx) => toFundingEvent(tx, request.address, tipHeight))
-    .filter((event): event is FundingEvent => event !== null);
+  const fundingEvents = getFundingEvents(txs, request.address, tipHeight);
+  let lastFundingTx = fundingEvents[0];
+  let lastConfirmedFundingTx = fundingEvents.find((event) => event.confirmed);
 
-  const lastFundingTx = fundingEvents[0];
-  const lastConfirmedFundingTx = fundingEvents.find((event) => event.confirmed);
+  if (!lastFundingTx || !lastConfirmedFundingTx) {
+    let pagesScanned = 0;
+    let lastSeenTxid = getOldestConfirmedTxid(txs);
+
+    while (
+      lastSeenTxid &&
+      pagesScanned < ESPLORA_CHAIN_SCAN_PAGE_LIMIT &&
+      (!lastFundingTx || !lastConfirmedFundingTx)
+    ) {
+      const olderTxsRaw = await fetchJsonWithTimeout<EsploraTx[]>(
+        `${config.apiBaseUrl}/address/${encodedAddress}/txs/chain/${lastSeenTxid}`,
+        request.fetcher,
+        request.timeoutMs,
+      );
+      const olderTxs = Array.isArray(olderTxsRaw) ? olderTxsRaw : [];
+      if (olderTxs.length === 0) break;
+
+      const olderFundingEvents = getFundingEvents(olderTxs, request.address, tipHeight);
+      if (!lastFundingTx && olderFundingEvents[0]) {
+        lastFundingTx = olderFundingEvents[0];
+      }
+      if (!lastConfirmedFundingTx) {
+        lastConfirmedFundingTx = olderFundingEvents.find((event) => event.confirmed);
+      }
+
+      pagesScanned += 1;
+      const nextLastSeenTxid = getOldestConfirmedTxid(olderTxs);
+      if (
+        !nextLastSeenTxid ||
+        nextLastSeenTxid === lastSeenTxid ||
+        olderTxs.length < ESPLORA_CHAIN_PAGE_SIZE
+      ) {
+        break;
+      }
+      lastSeenTxid = nextLastSeenTxid;
+    }
+  }
 
   return {
     network: request.network,
