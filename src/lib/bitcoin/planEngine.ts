@@ -4,6 +4,7 @@ import { PlanInput, PlanOutput } from './types';
 import { getNetworkParams } from './network';
 import { validatePlanInput } from './validation';
 import { calculateTime } from './utils';
+import { bytesToHex, hexToBytes } from './hex';
 
 // Initialize ECC library for bitcoinjs-lib
 initEccLib(ecc);
@@ -68,8 +69,8 @@ export const buildPlan = (input: PlanInput): PlanOutput => {
   validatePlanInput(input);
   
   const network = getNetworkParams(input.network);
-  const ownerPub = Buffer.from(input.owner_pubkey, 'hex');
-  const beneficiaryPub = Buffer.from(input.beneficiary_pubkey, 'hex');
+  const ownerPub = hexToBytes(input.owner_pubkey);
+  const beneficiaryPub = hexToBytes(input.beneficiary_pubkey);
   
   // Build the script
   const witnessScript = script.compile([
@@ -94,7 +95,7 @@ export const buildPlan = (input: PlanInput): PlanOutput => {
     throw new Error('Failed to generate SegWit address');
   }
 
-  const scriptHex = Buffer.from(witnessScript).toString('hex');
+  const scriptHex = bytesToHex(witnessScript);
 
   return {
     descriptor: `wsh(raw(${scriptHex}))`,

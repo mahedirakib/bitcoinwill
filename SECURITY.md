@@ -33,3 +33,6 @@ Bitcoin Will is designed as a **stateless, client-side utility**.
 
 ## 🚩 Reporting a Security Issue
 If you find a vulnerability, please report it to: `security@bitcoinwill.app`
+
+## 📋 Recent Audit
+- See [`docs/SECURITY_AUDIT_2026-02-17.md`](./docs/SECURITY_AUDIT_2026-02-17.md) for the latest third-party tooling results and release hardening summary.

@@ -1,4 +1,4 @@
-import { useReducer, useState, useEffect } from 'react';
+import { useReducer, useState, useEffect, useRef } from 'react';
 import {
   ChevronRight,
   CheckCircle2,
@@ -29,6 +29,11 @@ function cn(...inputs: ClassValue[]) {
 // --- Types & Constants ---
 
 type Step = 'TYPE' | 'KEYS' | 'TIMELOCK' | 'REVIEW' | 'RESULT';
+type ChecklistItemId =
+  | 'verify_keys'
+  | 'store_offline'
+  | 'heir_plan'
+  | 'test_small_amount';
 
 interface WizardState {
   step: Step;
@@ -57,6 +62,35 @@ const createInitialState = (network: BitcoinNetwork | 'mainnet'): WizardState =>
 });
 
 const STORAGE_KEY = 'bitcoinwill_wizard_state';
+const CHECKLIST_ITEMS: Array<{ id: ChecklistItemId; title: string; detail: string }> = [
+  {
+    id: 'verify_keys',
+    title: 'I verified both public keys belong to the correct people.',
+    detail: 'A wrong key means the wrong person can spend funds.',
+  },
+  {
+    id: 'store_offline',
+    title: 'I will store the Recovery Kit in at least two safe locations.',
+    detail: 'Keep backups offline (for example encrypted USB + printed copy).',
+  },
+  {
+    id: 'heir_plan',
+    title: 'My beneficiary knows where to find the kit and instructions.',
+    detail: 'The beneficiary needs the kit and their own private key.',
+  },
+  {
+    id: 'test_small_amount',
+    title: 'I will test with a small amount before using larger funds.',
+    detail: 'Run a full rehearsal on Testnet or with a small Mainnet amount first.',
+  },
+];
+
+const createChecklistState = (): Record<ChecklistItemId, boolean> => ({
+  verify_keys: false,
+  store_offline: false,
+  heir_plan: false,
+  test_small_amount: false,
+});
 
 // --- Reducer ---
 
@@ -78,6 +112,10 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
   const [state, dispatch] = useReducer(wizardReducer, createInitialState(network));
   const [showKeyHelp, setShowKeyHelp] = useState(false);
   const [hasRestored, setHasRestored] = useState(false);
+  const [showDownloadChecklist, setShowDownloadChecklist] = useState(false);
+  const [downloadChecklist, setDownloadChecklist] = useState<Record<ChecklistItemId, boolean>>(createChecklistState);
+  const checklistModalRef = useRef<HTMLDivElement | null>(null);
+  const checklistLastFocusedRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     if (hasRestored) return;
@@ -117,6 +155,53 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
       dispatch({ type: 'UPDATE_INPUT', payload: { network: network as BitcoinNetwork } });
     }
   }, [network, state.step]);
+
+  useEffect(() => {
+    if (!showDownloadChecklist) return;
+
+    checklistLastFocusedRef.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+
+    const previousBodyOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const focusTimer = window.setTimeout(() => {
+      const firstCheckbox = checklistModalRef.current?.querySelector<HTMLInputElement>('input[type="checkbox"]');
+      firstCheckbox?.focus();
+    }, 0);
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setShowDownloadChecklist(false);
+        setDownloadChecklist(createChecklistState());
+        return;
+      }
+
+      if (event.key !== 'Tab' || !checklistModalRef.current) return;
+      const focusableElements = checklistModalRef.current.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      );
+
+      if (focusableElements.length === 0) return;
+      const first = focusableElements[0];
+      const last = focusableElements[focusableElements.length - 1];
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.clearTimeout(focusTimer);
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = previousBodyOverflow;
+      checklistLastFocusedRef.current?.focus();
+    };
+  }, [showDownloadChecklist]);
 
   const nextStep = () => {
     if (state.step === 'TYPE') dispatch({ type: 'SET_STEP', payload: 'KEYS' });
@@ -180,6 +265,31 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
     };
     downloadJson(`recovery-kit-${state.result.address.slice(0, 8)}.json`, exportData);
     showToast("Recovery Kit Downloaded");
+  };
+
+  const openDownloadChecklist = () => {
+    setDownloadChecklist(createChecklistState());
+    setShowDownloadChecklist(true);
+  };
+
+  const closeDownloadChecklist = () => {
+    setShowDownloadChecklist(false);
+    setDownloadChecklist(createChecklistState());
+  };
+
+  const updateChecklist = (item: ChecklistItemId) => {
+    setDownloadChecklist((current) => ({ ...current, [item]: !current[item] }));
+  };
+
+  const confirmChecklistAndDownload = () => {
+    const allChecked = Object.values(downloadChecklist).every(Boolean);
+    if (!allChecked) {
+      showToast('Confirm every safety item before downloading the Recovery Kit');
+      return;
+    }
+
+    handleDownload();
+    closeDownloadChecklist();
   };
 
   const copyToClipboard = (text: string, label: string) => {
@@ -427,6 +537,11 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
               </div>
               <h2 className="text-5xl font-black tracking-tight">Plan Secured</h2>
               <p className="text-foreground/70 text-lg font-medium">Your Vault Address is ready for funding.</p>
+              {state.result.network === 'mainnet' && (
+                <p className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-600 text-xs font-black uppercase tracking-widest">
+                  <AlertTriangle className="w-3 h-3" /> Mainnet Address
+                </p>
+              )}
             </div>
 
             <div className="grid lg:grid-cols-5 gap-8 items-start">
@@ -486,7 +601,7 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
                   </p>
                 </div>
 
-                <button type="button" onClick={handleDownload} className="w-full btn-primary !bg-foreground !text-background flex items-center justify-center gap-3">
+                <button type="button" onClick={openDownloadChecklist} className="w-full btn-primary !bg-foreground !text-background flex items-center justify-center gap-3">
                   <Download className="w-6 h-6" /> Download Recovery Kit
                 </button>
                 <button type="button" onClick={() => onViewInstructions({ plan: state.input, result: state.result, created_at: new Date().toISOString() })} className="w-full btn-secondary flex items-center justify-center gap-3 shadow-sm">
@@ -497,6 +612,68 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
           </div>
         )}
       </div>
+
+      {showDownloadChecklist && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-6 bg-background/85 backdrop-blur-sm animate-in fade-in duration-300">
+          <div
+            ref={checklistModalRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="download-checklist-title"
+            aria-describedby="download-checklist-description"
+            className="glass max-w-2xl w-full p-8 space-y-8 border-primary/20 shadow-2xl animate-in zoom-in-95 duration-300"
+          >
+            <div className="space-y-3">
+              <h3 id="download-checklist-title" className="text-3xl font-black tracking-tight">
+                Checklist for Success
+              </h3>
+              <p id="download-checklist-description" className="text-sm text-foreground/70 font-medium">
+                Confirm each safety item before downloading your Recovery Kit.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              {CHECKLIST_ITEMS.map((item) => (
+                <label
+                  key={item.id}
+                  htmlFor={`checklist-${item.id}`}
+                  className="flex items-start gap-3 p-4 rounded-2xl border border-border bg-muted/50 hover:border-primary/20 transition-colors cursor-pointer"
+                >
+                  <input
+                    id={`checklist-${item.id}`}
+                    type="checkbox"
+                    checked={downloadChecklist[item.id]}
+                    onChange={() => updateChecklist(item.id)}
+                    className="mt-1 h-4 w-4 accent-primary"
+                  />
+                  <span className="space-y-1">
+                    <span className="block text-sm font-semibold">{item.title}</span>
+                    <span className="block text-xs text-foreground/60">{item.detail}</span>
+                  </span>
+                </label>
+              ))}
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={closeDownloadChecklist}
+                className="flex-1 py-4 rounded-xl border border-border text-sm font-bold hover:bg-muted transition-colors"
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                onClick={confirmChecklistAndDownload}
+                disabled={!Object.values(downloadChecklist).every(Boolean)}
+                className="flex-1 py-4 rounded-xl text-sm font-bold bg-primary text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              >
+                Confirm & Download
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

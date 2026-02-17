@@ -57,6 +57,26 @@ TypeScript type definitions for PlanInput, PlanOutput, and BitcoinNetwork.
 
 Network configuration mapping for bitcoinjs-lib integration.
 
+### `explorer.ts`
+
+Public explorer integration for:
+
+- Address balance and funding status lookup (Mempool.space / Blockstream.info)
+- Transaction broadcast helper with provider fallback
+- Explorer URL builders and sats/BTC formatting helpers
+
+### `checkin.ts`
+
+Owner check-in helper logic:
+
+- Recommended check-in cadence from locktime
+- Current status classification (`on_track`, `due_now`, `beneficiary_path_open`)
+- Remaining blocks estimates for owner/beneficiary paths
+
+### `hex.ts`
+
+Browser-safe hex/byte helpers used by Bitcoin logic modules.
+
 ## Script Logic
 
 ```

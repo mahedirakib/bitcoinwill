@@ -8,19 +8,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Vault address QR code display for easy mobile wallet scanning.
-- Form auto-save to localStorage with progress restoration.
-- Comprehensive JSDoc documentation for Bitcoin module functions.
-- Expanded test coverage from 4 to 93 tests across all modules.
-- CONTRIBUTING.md with contributor guidelines and development setup.
-- This CHANGELOG.md file to track project history.
-- `npm test` script for running test suite.
+- No changes yet.
+
+## [1.0.0] - 2026-02-17
+
+### Added
+- Live vault status checks via public explorer APIs with provider fallback (Mempool.space / Blockstream.info).
+- Transaction broadcast helper for signed raw transactions with Mainnet confirmation gating.
+- Owner check-in helper with locktime cadence guidance and eligibility countdown.
+- "Checklist for Success" modal before Recovery Kit download.
+- Dev-only QA crash trigger to verify ErrorBoundary behavior.
+- Security audit report for release hardening (`docs/SECURITY_AUDIT_2026-02-17.md`).
 
 ### Enhanced
-- Error messages now include detailed examples and troubleshooting guidance.
-- Public key validation errors explain format requirements and common issues.
-- Locktime validation errors provide helpful examples (1 day, 1 week, 1 month, 1 year).
-- Test coverage includes edge cases for all validation scenarios.
+- Browser-safe key/script handling (removed runtime Buffer dependency from client Bitcoin logic path).
+- Production build no longer emits source maps by default, reducing deployment artifact size.
+- Mainnet result badge and stronger mainnet contrast styling.
+- Expanded automated coverage to 127 tests across Bitcoin logic, safety, and explorer integration.
+- Release QA checklist completed for creation flow, safety, portability, and print path.
 
 ## [0.1.0] - 2026-02-08
 
@@ -78,5 +83,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ESLint + TypeScript strict mode.
 - Static build output for easy hosting.
 
-[Unreleased]: https://github.com/mahedirakib/bitcoinwill/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/mahedirakib/bitcoinwill/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/mahedirakib/bitcoinwill/releases/tag/v1.0.0
 [0.1.0]: https://github.com/mahedirakib/bitcoinwill/releases/tag/v0.1.0

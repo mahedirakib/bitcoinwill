@@ -12,6 +12,8 @@ Tests are co-located with source files in `src/lib/bitcoin/`:
 - `planEngine.test.ts` - Core Bitcoin logic
 - `validation.test.ts` - Input validation
 - `instructions.test.ts` - Recovery kit generation
+- `explorer.test.ts` - Public explorer integration + broadcast fallback
+- `checkin.test.ts` - Check-in cadence and eligibility helpers
 
 ## Running Tests
 
@@ -79,6 +81,8 @@ describe('buildPlan', () => {
 - Validation: 100% coverage
 - Instructions: 90%+ coverage
 - UI components: 70%+ coverage
+
+Current automated suite: **127 tests** across critical Bitcoin and recovery modules.
 
 ## Manual Testing
 

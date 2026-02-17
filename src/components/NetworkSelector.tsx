@@ -87,7 +87,7 @@ export const NetworkSelector = () => {
         aria-label="Select Bitcoin network"
         className={`bg-muted text-[10px] font-black uppercase tracking-[0.15em] py-2 px-4 rounded-full border outline-none appearance-none cursor-pointer pr-10 transition-all ${
           network === 'mainnet' 
-            ? 'text-red-500 border-red-500/30 bg-red-50' 
+            ? 'text-red-700 border-red-600/40 bg-red-100' 
             : 'text-primary border-border hover:border-primary/30'
         }`}
       >
@@ -117,7 +117,7 @@ export const NetworkSelector = () => {
                 <h2 id="mainnet-warning-title" className="text-3xl font-black tracking-tight">Serious Risk Ahead</h2>
                 <div id="mainnet-warning-description" className="space-y-4 text-base text-foreground/60 font-medium leading-relaxed">
                   <p>Mainnet uses <span className="text-red-600 font-bold">real Bitcoin</span>. A single mistake could result in the permanent loss of your funds.</p>
-                  <p>By proceeding, you acknowledge this tool is currently in its beta phase and you accept all technical risks.</p>
+                  <p>By proceeding, you acknowledge this is a non-custodial tool and you accept all technical risks.</p>
                 </div>
               </div>
             </div>

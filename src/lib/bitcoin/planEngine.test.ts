@@ -47,6 +47,14 @@ describe('PlanEngine', () => {
       expect(result.address).toMatch(/^bcrt1[qpzry9x8gf2tvdw0s3jn54khce6mua7l]{39,59}$/);
     });
 
+    it('keeps sample-key output deterministic for UI safety checks', () => {
+      const result = buildPlan({
+        ...sampleInput,
+        locktime_blocks: 144,
+      });
+      expect(result.address).toBe('tb1qwh9gn7qyw323gzxc83xaj97aamsenwpx4jyuuf8cg0sqstz9q6xqsf6zdl');
+    });
+
     it('produces different script hashes for different locktimes', () => {
       const input1 = { ...sampleInput, locktime_blocks: 144 };
       const input2 = { ...sampleInput, locktime_blocks: 1000 };

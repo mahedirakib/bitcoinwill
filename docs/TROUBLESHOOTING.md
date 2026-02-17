@@ -73,6 +73,16 @@ Common issues and their solutions when using Bitcoin Will.
 - Check on correct network (testnet vs mainnet)
 - Use block explorer: mempool.space for mainnet, mempool.space/testnet for testnet
 
+### Live Status or Broadcast Fails
+
+**Problem:** The built-in status refresh or broadcast helper returns an error.
+
+**Solution:**
+- Retry with the alternate explorer provider (Mempool.space vs Blockstream.info).
+- Confirm you are on the correct network for the Recovery Kit.
+- For Regtest, use a local node/local Esplora (public explorers do not support Regtest).
+- Ensure broadcast input is a fully signed raw transaction hex (not PSBT).
+
 ## Wallet Compatibility
 
 ### Sparrow Wallet

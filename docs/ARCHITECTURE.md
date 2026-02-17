@@ -22,6 +22,8 @@ Bitcoin Logic Layer (src/lib/bitcoin/)
   ├── planEngine.ts (script generation)
   ├── validation.ts (input validation)
   ├── instructions.ts (recovery kit)
+  ├── explorer.ts (public explorer integration)
+  ├── checkin.ts (owner check-in schedule helper)
   └── types.ts (TypeScript definitions)
   │
   ▼
@@ -109,12 +111,17 @@ src/
 ```
 planEngine.ts
 ├── validation.ts
+├── hex.ts
 ├── types.ts
 └── network.ts
 
 instructions.ts
 ├── types.ts
 └── planEngine.ts (types only)
+
+explorer.ts
+├── types.ts
+└── public Esplora APIs (mempool/blockstream)
 ```
 
 ## Future Considerations
