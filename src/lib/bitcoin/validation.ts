@@ -1,4 +1,4 @@
-import { PlanInput, isBitcoinNetwork, INHERITANCE_TYPE } from './types';
+import { PlanInput, isBitcoinNetwork, isAddressType, INHERITANCE_TYPE } from './types';
 import * as ecc from 'tiny-secp256k1';
 import { hexToBytes } from './hex';
 
@@ -61,6 +61,10 @@ export const validatePlanInput = (input: PlanInput): void => {
 
   if (input.inheritance_type !== INHERITANCE_TYPE) {
     throw new Error(`Invalid inheritance type. Supported value: "${INHERITANCE_TYPE}".`);
+  }
+
+  if (input.address_type !== undefined && !isAddressType(input.address_type)) {
+    throw new Error('Invalid address type. Supported values: p2wsh, p2tr.');
   }
 
   if (!validatePubkey(input.owner_pubkey)) {

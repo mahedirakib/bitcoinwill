@@ -1,10 +1,11 @@
 import { script, payments, initEccLib } from 'bitcoinjs-lib';
 import * as ecc from 'tiny-secp256k1';
-import { PlanInput, PlanOutput } from './types';
+import { PlanInput, PlanOutput, AddressType } from './types';
 import { getNetworkParams } from './network';
 import { validatePlanInput } from './validation';
 import { calculateTime } from './utils';
 import { bytesToHex, hexToBytes } from './hex';
+import { buildTaprootPlan } from './taproot';
 
 // Initialize ECC library for bitcoinjs-lib
 initEccLib(ecc);
@@ -68,6 +69,12 @@ initEccLib(ecc);
 export const buildPlan = (input: PlanInput): PlanOutput => {
   validatePlanInput(input);
   
+  const addressType: AddressType = input.address_type ?? 'p2wsh';
+  
+  if (addressType === 'p2tr') {
+    return buildTaprootPlan(input);
+  }
+  
   const network = getNetworkParams(input.network);
   const ownerPub = hexToBytes(input.owner_pubkey);
   const beneficiaryPub = hexToBytes(input.beneficiary_pubkey);
@@ -104,6 +111,7 @@ export const buildPlan = (input: PlanInput): PlanOutput => {
     address: p2wsh.address,
     witness_script: scriptHex,
     network: input.network,
+    address_type: 'p2wsh' as AddressType,
     human_explanation: generateExplanation(input, p2wsh.address),
   };
 };

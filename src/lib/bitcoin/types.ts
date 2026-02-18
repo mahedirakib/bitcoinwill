@@ -19,6 +19,16 @@ export const isBitcoinNetwork = (value: unknown): value is BitcoinNetwork =>
   typeof value === 'string' && BITCOIN_NETWORKS.includes(value as BitcoinNetwork);
 
 /**
+ * Supported Bitcoin address types for vault creation.
+ * - 'p2wsh': Pay-to-Witness-Script-Hash (SegWit v0) - starts with bc1/tb1/bcrt1
+ * - 'p2tr': Pay-to-Taproot (SegWit v1) - starts with bc1p/tb1p/bcrt1p
+ */
+export type AddressType = 'p2wsh' | 'p2tr';
+export const ADDRESS_TYPES: readonly AddressType[] = ['p2wsh', 'p2tr'];
+export const isAddressType = (value: unknown): value is AddressType =>
+  typeof value === 'string' && ADDRESS_TYPES.includes(value as AddressType);
+
+/**
  * Input parameters for creating a Bitcoin Will plan.
  * 
  * @interface PlanInput
@@ -27,6 +37,7 @@ export const isBitcoinNetwork = (value: unknown): value is BitcoinNetwork =>
  * @property {string} owner_pubkey - Owner's compressed public key in hex format (66 characters, starts with 02 or 03)
  * @property {string} beneficiary_pubkey - Beneficiary's compressed public key in hex format
  * @property {number} locktime_blocks - Relative locktime in blocks (1-52560, approx 1 block = 10 minutes)
+ * @property {AddressType} [address_type] - Address type for vault (default: 'p2wsh' for backward compatibility)
  * @property {string} [plan_label] - Optional human-readable label for the plan
  * 
  * @example
@@ -36,6 +47,7 @@ export const isBitcoinNetwork = (value: unknown): value is BitcoinNetwork =>
  *   owner_pubkey: '02e9634f19b165239105436a5c17e3371901c5651581452a329978747474747474',
  *   beneficiary_pubkey: '03e9634f19b165239105436a5c17e3371901c5651581452a329978747474747474',
  *   locktime_blocks: 144, // ~1 day
+ *   address_type: 'p2tr', // Use Taproot
  *   plan_label: 'My Inheritance Plan'
  * };
  */
@@ -48,6 +60,8 @@ export interface PlanInput {
   beneficiary_pubkey: string;
   /** Relative locktime in blocks (1-52560). Approximately 10 minutes per block. */
   locktime_blocks: number;
+  /** Address type for vault (default: 'p2wsh' for backward compatibility) */
+  address_type?: AddressType;
   /** Optional label for identifying this plan */
   plan_label?: string;
 }
@@ -91,12 +105,14 @@ export interface PlanOutput {
   script_asm: string;
   /** Hex representation of the compiled witness script */
   script_hex: string;
-  /** The P2WSH SegWit address where funds should be deposited */
+  /** The vault address where funds should be deposited (P2WSH or P2TR) */
   address: string;
   /** Witness script (hex) - same as script_hex, provided for clarity */
   witness_script: string;
   /** Network this plan targets */
   network: BitcoinNetwork;
+  /** Address type used for this plan */
+  address_type: AddressType;
   /** Human-readable explanation of the plan's spending conditions */
   human_explanation: string[];
 }
