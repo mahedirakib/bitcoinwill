@@ -42,11 +42,6 @@ export interface SocialRecoveryKit {
   instructions: string[];
 }
 
-const SSS_CONFIGS: Record<string, SSSConfig> = {
-  '2-of-3': { threshold: 2, total: 3 },
-  '3-of-5': { threshold: 3, total: 5 },
-};
-
 /**
  * Get available SSS configurations for UI display.
  */

@@ -8,9 +8,11 @@ import {
   HelpCircle,
   FileText,
   Copy,
-  QrCode
+  QrCode,
+  Users
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
+import * as ecc from 'tiny-secp256k1';
 import { buildPlan } from '@/lib/bitcoin/planEngine';
 import { PlanInput, PlanOutput, type BitcoinNetwork } from '@/lib/bitcoin/types';
 import { validatePubkey } from '@/lib/bitcoin/validation';
@@ -22,6 +24,8 @@ import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { SAMPLE_KEYS, normalizePubkeyHex, usesDisallowedSampleKey } from './safety';
 import { parseWizardDraft } from './draftState';
+import { splitPrivateKey } from '@/lib/bitcoin/sss';
+import { bytesToHex } from '@/lib/bitcoin/hex';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -58,6 +62,7 @@ const createInitialState = (network: BitcoinNetwork | 'mainnet'): WizardState =>
     beneficiary_pubkey: '',
     locktime_blocks: 144, // ~1 day
     address_type: 'p2tr', // default to Taproot for new users
+    recovery_method: 'single', // default to single key
   },
   result: null,
   errors: {},
@@ -222,7 +227,14 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
   }, [showDownloadChecklist]);
 
   const nextStep = () => {
-    if (state.step === 'TYPE') dispatch({ type: 'SET_STEP', payload: 'KEYS' });
+    if (state.step === 'TYPE') {
+      // Validate social recovery config if enabled
+      if (state.input.recovery_method === 'social' && !state.input.sss_config) {
+        dispatch({ type: 'SET_ERRORS', payload: { sss: 'Please select a share configuration (2-of-3 or 3-of-5)' } });
+        return;
+      }
+      dispatch({ type: 'SET_STEP', payload: 'KEYS' });
+    }
     else if (state.step === 'KEYS') {
       const errors: Record<string, string> = {};
       const ownerPubkey = normalizePubkeyHex(state.input.owner_pubkey);
@@ -244,7 +256,7 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
     else if (state.step === 'REVIEW') dispatch({ type: 'SET_STEP', payload: 'TIMELOCK' });
   };
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     if (
       state.input.network === 'mainnet' &&
       usesDisallowedSampleKey(state.input.owner_pubkey, state.input.beneficiary_pubkey)
@@ -259,7 +271,38 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
     }
 
     try {
-      const result = buildPlan(state.input);
+      const planInput = { ...state.input };
+      let socialKit = null;
+
+      // If social recovery enabled, generate beneficiary keypair
+      if (state.input.recovery_method === 'social') {
+        // Generate random private key using Web Crypto API
+        const randomBytes = crypto.getRandomValues(new Uint8Array(32));
+        const privateKey = randomBytes;
+        const publicKey = ecc.pointFromScalar(privateKey, true); // compressed
+        
+        if (!publicKey) {
+          throw new Error('Failed to generate beneficiary keypair');
+        }
+
+        // Update input with generated beneficiary public key
+        planInput.beneficiary_pubkey = bytesToHex(publicKey);
+
+        // Split private key into shares
+        if (!state.input.sss_config) {
+          throw new Error('SSS configuration not set');
+        }
+        
+        socialKit = await splitPrivateKey(bytesToHex(privateKey), state.input.sss_config);
+      }
+
+      const result = buildPlan(planInput);
+      
+      // Attach social recovery kit if applicable
+      if (socialKit) {
+        result.social_recovery_kit = socialKit;
+      }
+      
       dispatch({ type: 'SET_RESULT', payload: result });
       dispatch({ type: 'SET_STEP', payload: 'RESULT' });
       clearDraftState();
@@ -393,6 +436,88 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
               </button>
             </div>
 
+            {/* Social Recovery Toggle */}
+            <div className="flex items-center justify-between p-4 rounded-2xl bg-muted/50 border border-border">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold">Enable Social Recovery</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-orange-500 bg-orange-500/10 px-2 py-0.5 rounded-full">Advanced</span>
+                </div>
+                <p className="text-xs text-foreground/50">
+                  Split beneficiary key among trusted people
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => dispatch({ type: 'UPDATE_INPUT', payload: { recovery_method: state.input.recovery_method === 'social' ? 'single' : 'social' } })}
+                className={cn(
+                  "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
+                  state.input.recovery_method === 'social' ? "bg-orange-500" : "bg-muted-foreground/30"
+                )}
+                aria-label="Toggle social recovery"
+              >
+                <span
+                  className={cn(
+                    "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
+                    state.input.recovery_method === 'social' ? "translate-x-6" : "translate-x-1"
+                  )}
+                />
+              </button>
+            </div>
+
+            {/* Social Recovery Options */}
+            {state.input.recovery_method === 'social' && (
+              <div className="space-y-4 p-6 rounded-2xl bg-orange-500/5 border border-orange-500/10 animate-in fade-in slide-in-from-top-2">
+                <p className="text-sm font-medium text-orange-600/80">
+                  Choose how to distribute trust among your recovery group:
+                </p>
+                <div className="grid grid-cols-2 gap-4">
+                  <button
+                    type="button"
+                    onClick={() => dispatch({ type: 'UPDATE_INPUT', payload: { sss_config: { threshold: 2, total: 3 } } })}
+                    className={cn(
+                      "p-4 rounded-xl border-2 text-left transition-all",
+                      state.input.sss_config?.threshold === 2
+                        ? "border-orange-500 bg-orange-500/10"
+                        : "border-border hover:border-orange-500/30"
+                    )}
+                  >
+                    <div className="space-y-1">
+                      <span className="text-sm font-bold">2-of-3 Shares</span>
+                      <p className="text-xs text-foreground/60">
+                        Any 2 of 3 people can recover
+                      </p>
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => dispatch({ type: 'UPDATE_INPUT', payload: { sss_config: { threshold: 3, total: 5 } } })}
+                    className={cn(
+                      "p-4 rounded-xl border-2 text-left transition-all",
+                      state.input.sss_config?.threshold === 3
+                        ? "border-orange-500 bg-orange-500/10"
+                        : "border-border hover:border-orange-500/30"
+                    )}
+                  >
+                    <div className="space-y-1">
+                      <span className="text-sm font-bold">3-of-5 Shares</span>
+                      <p className="text-xs text-foreground/60">
+                        Any 3 of 5 people can recover
+                      </p>
+                    </div>
+                  </button>
+                </div>
+                {!state.input.sss_config && (
+                  <p className="text-xs text-orange-500 font-medium">
+                    Please select a share configuration to continue
+                  </p>
+                )}
+                {state.errors.sss && (
+                  <p className="text-xs text-red-500 font-medium">{state.errors.sss}</p>
+                )}
+              </div>
+            )}
+
             <div className="flex justify-between items-center pt-6">
               <button type="button" onClick={handleCancel} className="text-foreground/40 font-bold hover:text-foreground/60 transition-colors">Cancel</button>
               <button type="button" onClick={nextStep} className="btn-primary flex items-center gap-2">
@@ -405,8 +530,14 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
         {state.step === 'KEYS' && (
           <div className="space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
             <div className="space-y-3">
-              <h3 className="text-2xl font-bold">Identify the players</h3>
-              <p className="text-foreground/50 font-medium">Provide the 66-character compressed public keys.</p>
+              <h3 className="text-2xl font-bold">
+                {state.input.recovery_method === 'social' ? 'Owner Identification' : 'Identify the players'}
+              </h3>
+              <p className="text-foreground/50 font-medium">
+                {state.input.recovery_method === 'social' 
+                  ? 'Provide your public key. The beneficiary key will be generated automatically for social recovery.' 
+                  : 'Provide the 66-character compressed public keys.'}
+              </p>
             </div>
 
             <button 
@@ -422,6 +553,16 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
             {showKeyHelp && (
               <div id="public-key-help" className="p-6 bg-muted rounded-2xl text-sm text-foreground/60 border border-border space-y-3 font-medium leading-relaxed animate-in fade-in zoom-in-95">
                 <p>A <strong>Public Key</strong> allows you to receive funds and create scripts. It is <strong>NOT</strong> a private key and cannot be used alone to spend your money.</p>
+              </div>
+            )}
+
+            {state.input.recovery_method === 'social' && (
+              <div className="p-4 rounded-2xl bg-orange-500/5 border border-orange-500/10 text-sm text-orange-600/80">
+                <div className="flex items-center gap-2 mb-2">
+                  <Users className="w-4 h-4" />
+                  <span className="font-bold">Social Recovery Enabled</span>
+                </div>
+                <p>The beneficiary's key will be automatically generated and split into shares for distribution.</p>
               </div>
             )}
 
@@ -454,33 +595,35 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
                 {state.errors.owner && <p id="owner-pubkey-error" className="text-xs text-red-500 font-bold">{state.errors.owner}</p>}
               </div>
 
-              <div className="space-y-3">
-                <label htmlFor="beneficiary-pubkey" className="text-sm font-bold tracking-tight flex justify-between">
-                  Beneficiary Public Key
-                  {state.input.network !== 'mainnet' ? (
-                    <button
-                      type="button"
-                      onClick={() => dispatch({ type: 'UPDATE_INPUT', payload: { beneficiary_pubkey: SAMPLE_KEYS.beneficiary }})}
-                      className="text-[10px] text-primary hover:underline uppercase tracking-widest font-black"
-                    >
-                      Use Sample
-                    </button>
-                  ) : (
-                    <span className="text-[10px] uppercase tracking-widest font-black text-red-500/70">Sample Disabled</span>
-                  )}
-                </label>
-                <input 
-                  id="beneficiary-pubkey"
-                  type="text" 
-                  value={state.input.beneficiary_pubkey}
-                  onChange={(e) => dispatch({ type: 'UPDATE_INPUT', payload: { beneficiary_pubkey: normalizePubkeyHex(e.target.value) }})}
-                  aria-invalid={Boolean(state.errors.beneficiary)}
-                  aria-describedby={state.errors.beneficiary ? 'beneficiary-pubkey-error' : undefined}
-                  className={cn("w-full bg-muted border p-5 rounded-2xl font-mono text-sm outline-none transition-all focus:ring-2 focus:ring-primary/20", state.errors.beneficiary ? "border-red-500/50 shadow-sm" : "border-border hover:border-primary/20 focus:border-primary/50")}
-                  placeholder="03..."
-                />
-                {state.errors.beneficiary && <p id="beneficiary-pubkey-error" className="text-xs text-red-500 font-bold">{state.errors.beneficiary}</p>}
-              </div>
+              {state.input.recovery_method !== 'social' && (
+                <div className="space-y-3">
+                  <label htmlFor="beneficiary-pubkey" className="text-sm font-bold tracking-tight flex justify-between">
+                    Beneficiary Public Key
+                    {state.input.network !== 'mainnet' ? (
+                      <button
+                        type="button"
+                        onClick={() => dispatch({ type: 'UPDATE_INPUT', payload: { beneficiary_pubkey: SAMPLE_KEYS.beneficiary }})}
+                        className="text-[10px] text-primary hover:underline uppercase tracking-widest font-black"
+                      >
+                        Use Sample
+                      </button>
+                    ) : (
+                      <span className="text-[10px] uppercase tracking-widest font-black text-red-500/70">Sample Disabled</span>
+                    )}
+                  </label>
+                  <input 
+                    id="beneficiary-pubkey"
+                    type="text" 
+                    value={state.input.beneficiary_pubkey}
+                    onChange={(e) => dispatch({ type: 'UPDATE_INPUT', payload: { beneficiary_pubkey: normalizePubkeyHex(e.target.value) }})}
+                    aria-invalid={Boolean(state.errors.beneficiary)}
+                    aria-describedby={state.errors.beneficiary ? 'beneficiary-pubkey-error' : undefined}
+                    className={cn("w-full bg-muted border p-5 rounded-2xl font-mono text-sm outline-none transition-all focus:ring-2 focus:ring-primary/20", state.errors.beneficiary ? "border-red-500/50 shadow-sm" : "border-border hover:border-primary/20 focus:border-primary/50")}
+                    placeholder="03..."
+                  />
+                  {state.errors.beneficiary && <p id="beneficiary-pubkey-error" className="text-xs text-red-500 font-bold">{state.errors.beneficiary}</p>}
+                </div>
+              )}
             </div>
 
             {state.input.network === 'mainnet' && (
@@ -632,6 +775,54 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
                     </button>
                   </div>
                 </div>
+
+                {state.result.social_recovery_kit && (
+                  <div className="glass p-8 space-y-6 border-orange-500/20 bg-orange-500/5">
+                    <div className="flex items-center gap-2">
+                      <Users className="w-5 h-5 text-orange-500" />
+                      <h4 className="font-black text-[10px] uppercase tracking-[0.2em] opacity-60">Social Recovery Shares</h4>
+                    </div>
+                    
+                    <div className="p-4 rounded-xl bg-orange-500/10 text-sm text-orange-700 space-y-2">
+                      <p className="font-bold">
+                        {state.result.social_recovery_kit.config.threshold}-of-{state.result.social_recovery_kit.config.total} Configuration
+                      </p>
+                      <p className="text-xs">
+                        Distribute these shares to trusted people. Any {state.result.social_recovery_kit.config.threshold} shares can reconstruct the beneficiary key.
+                      </p>
+                    </div>
+
+                    <div className="space-y-3">
+                      {state.result.social_recovery_kit.shares.map((share) => (
+                        <div key={share.index} className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold">Share {share.index}</span>
+                            <button
+                              type="button"
+                              onClick={() => copyToClipboard(share.share, `Share ${share.index}`)}
+                              className="text-xs text-primary font-bold hover:underline"
+                            >
+                              Copy
+                            </button>
+                          </div>
+                          <div className="p-3 bg-muted border border-border rounded-xl font-mono text-[10px] break-all">
+                            {share.share}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="p-4 rounded-xl bg-muted/50 text-xs space-y-2">
+                      <p className="font-bold text-foreground/70">Distribution Tips:</p>
+                      <ul className="space-y-1 text-foreground/50 list-disc list-inside">
+                        <li>Give each share to a different trusted person</li>
+                        <li>Never store all shares in one location</li>
+                        <li>Inform each person what the share is for</li>
+                        <li>Consider geographic distribution</li>
+                      </ul>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="lg:col-span-2 space-y-4 pt-4">
