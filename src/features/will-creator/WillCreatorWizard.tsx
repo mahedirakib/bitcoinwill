@@ -9,7 +9,8 @@ import {
   FileText,
   Copy,
   QrCode,
-  Users
+  Users,
+  Printer,
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import * as ecc from 'tiny-secp256k1';
@@ -358,6 +359,152 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
       .writeText(text)
       .then(() => showToast(`${label} Copied`))
       .catch(() => showToast('Clipboard unavailable in this browser context'));
+  };
+
+  const printShares = (result: PlanOutput) => {
+    if (!result.social_recovery_kit) return;
+    
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      showToast('Please allow popups to print share cards');
+      return;
+    }
+
+    const { shares, config } = result.social_recovery_kit;
+    
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Bitcoin Will - Social Recovery Shares</title>
+        <style>
+          body { font-family: system-ui, sans-serif; padding: 20px; background: #f5f5f5; }
+          .card { 
+            background: white; 
+            border: 2px solid #f97316; 
+            border-radius: 12px; 
+            padding: 24px; 
+            margin-bottom: 20px; 
+            page-break-inside: avoid;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+          }
+          .header { 
+            background: #f97316; 
+            color: white; 
+            padding: 12px 24px; 
+            margin: -24px -24px 20px -24px; 
+            border-radius: 10px 10px 0 0;
+            font-weight: bold;
+            font-size: 18px;
+          }
+          .share-number { font-size: 48px; font-weight: bold; color: #f97316; }
+          .share-data { 
+            font-family: monospace; 
+            font-size: 11px; 
+            background: #f5f5f5; 
+            padding: 12px; 
+            border-radius: 8px; 
+            word-break: break-all;
+            margin: 16px 0;
+          }
+          .info { font-size: 12px; color: #666; margin-top: 16px; }
+          .warning { 
+            background: #fef3c7; 
+            border-left: 4px solid #f59e0b; 
+            padding: 12px; 
+            margin-top: 16px;
+            font-size: 12px;
+          }
+          @media print { 
+            body { background: white; }
+            .card { box-shadow: none; break-inside: avoid; }
+          }
+        </style>
+      </head>
+      <body>
+        <div style="text-align: center; margin-bottom: 30px;">
+          <h1 style="margin: 0;">Bitcoin Will - Social Recovery Shares</h1>
+          <p style="color: #666; margin: 8px 0;">
+            Vault: ${result.address.slice(0, 20)}...${result.address.slice(-10)}
+          </p>
+          <p style="color: #f97316; font-weight: bold;">
+            ${config.threshold}-of-${config.total} Configuration
+          </p>
+        </div>
+        
+        ${shares.map(share => `
+          <div class="card">
+            <div class="header">Social Recovery Share #${share.index}</div>
+            <div class="share-number">${share.index}</div>
+            <div class="share-data">${share.share}</div>
+            <div class="info">
+              <strong>This is Share ${share.index} of ${config.total}</strong><br>
+              Store this card in a safe place. Any ${config.threshold} shares can recover the funds.
+            </div>
+            <div class="warning">
+              ⚠️ <strong>Important:</strong> Do not store multiple shares in the same location.
+              Give this card to a trusted person who understands what it's for.
+            </div>
+          </div>
+        `).join('')}
+        
+        <div style="text-align: center; margin-top: 30px; padding: 20px; background: #fef3c7; border-radius: 8px;">
+          <strong>Recovery Instructions:</strong><br>
+          To claim funds, the beneficiary needs:<br>
+          1. This share (or ${config.threshold - 1} other shares)<br>
+          2. The Recovery Kit file<br>
+          3. Access to the Bitcoin Will app
+        </div>
+      </body>
+      </html>
+    `);
+    
+    printWindow.document.close();
+    printWindow.print();
+  };
+
+  const downloadSharesAsTxt = (result: PlanOutput) => {
+    if (!result.social_recovery_kit) return;
+    
+    const { shares, config } = result.social_recovery_kit;
+    const content = `BITCOIN WILL - SOCIAL RECOVERY SHARES
+======================================
+
+Vault Address: ${result.address}
+Configuration: ${config.threshold}-of-${config.total}
+Generated: ${new Date().toISOString()}
+
+INSTRUCTIONS:
+- Distribute each share to a different trusted person
+- Any ${config.threshold} shares can reconstruct the beneficiary key
+- Never store all shares in one location
+
+SHARES:
+${shares.map(s => `
+--- SHARE ${s.index} OF ${config.total} ---
+${s.share}
+`).join('\n')}
+
+RECOVERY PROCESS:
+To claim funds, the beneficiary needs:
+1. ${config.threshold} shares (including this one or others)
+2. The Recovery Kit JSON file
+3. Access to the Bitcoin Will app at https://bitcoinwill.app
+
+For support, visit: https://github.com/mahedirakib/bitcoinwill
+`;
+
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `bitcoin-will-shares-${result.address.slice(0, 8)}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    showToast('Shares downloaded');
   };
 
   return (
@@ -792,32 +939,65 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
                       </p>
                     </div>
 
-                    <div className="space-y-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {state.result.social_recovery_kit.shares.map((share) => (
-                        <div key={share.index} className="space-y-2">
+                        <div key={share.index} className="space-y-3 p-4 bg-white rounded-xl border border-orange-500/20">
                           <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold">Share {share.index}</span>
-                            <button
-                              type="button"
-                              onClick={() => copyToClipboard(share.share, `Share ${share.index}`)}
-                              className="text-xs text-primary font-bold hover:underline"
-                            >
-                              Copy
-                            </button>
+                            <span className="text-sm font-bold">Share {share.index}</span>
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                onClick={() => copyToClipboard(share.share, `Share ${share.index}`)}
+                                className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                                title="Copy share"
+                              >
+                                <Copy className="w-4 h-4" />
+                              </button>
+                            </div>
                           </div>
-                          <div className="p-3 bg-muted border border-border rounded-xl font-mono text-[10px] break-all">
-                            {share.share}
+                          
+                          <div className="bg-white p-3 rounded-lg border border-border inline-block">
+                            <QRCodeSVG
+                              value={share.share}
+                              size={120}
+                              bgColor="#ffffff"
+                              fgColor="#000000"
+                              level="H"
+                            />
+                          </div>
+                          
+                          <div className="p-2 bg-muted rounded-lg font-mono text-[9px] break-all text-foreground/60">
+                            {share.share.slice(0, 32)}...{share.share.slice(-32)}
                           </div>
                         </div>
                       ))}
                     </div>
 
+                    <div className="flex gap-3">
+                      <button
+                        type="button"
+                        onClick={() => printShares(state.result!)}
+                        className="flex-1 py-3 px-4 bg-orange-500 text-white rounded-xl text-sm font-bold hover:bg-orange-600 transition-colors flex items-center justify-center gap-2"
+                      >
+                        <Printer className="w-4 h-4" />
+                        Print Share Cards
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => downloadSharesAsTxt(state.result!)}
+                        className="flex-1 py-3 px-4 bg-muted text-foreground rounded-xl text-sm font-bold hover:bg-muted/80 transition-colors flex items-center justify-center gap-2"
+                      >
+                        <Download className="w-4 h-4" />
+                        Download All
+                      </button>
+                    </div>
+
                     <div className="p-4 rounded-xl bg-muted/50 text-xs space-y-2">
                       <p className="font-bold text-foreground/70">Distribution Tips:</p>
                       <ul className="space-y-1 text-foreground/50 list-disc list-inside">
-                        <li>Give each share to a different trusted person</li>
+                        <li>Print cards and give to different trusted people</li>
+                        <li>Or scan QR codes to share via Signal/WhatsApp</li>
                         <li>Never store all shares in one location</li>
-                        <li>Inform each person what the share is for</li>
                         <li>Consider geographic distribution</li>
                       </ul>
                     </div>
