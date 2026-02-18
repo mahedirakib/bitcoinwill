@@ -18,6 +18,15 @@ export const BITCOIN_NETWORKS: readonly BitcoinNetwork[] = ['testnet', 'regtest'
 export const isBitcoinNetwork = (value: unknown): value is BitcoinNetwork =>
   typeof value === 'string' && BITCOIN_NETWORKS.includes(value as BitcoinNetwork);
 
+import { SSSConfig, SocialRecoveryKit } from './sss';
+
+/**
+ * Recovery method for the inheritance plan.
+ * - 'single': One beneficiary with a single private key
+ * - 'social': Multiple shares distributed to trusted parties
+ */
+export type RecoveryMethod = 'single' | 'social';
+
 /**
  * Supported Bitcoin address types for vault creation.
  * - 'p2wsh': Pay-to-Witness-Script-Hash (SegWit v0) - starts with bc1/tb1/bcrt1
@@ -60,8 +69,12 @@ export interface PlanInput {
   beneficiary_pubkey: string;
   /** Relative locktime in blocks (1-52560). Approximately 10 minutes per block. */
   locktime_blocks: number;
-  /** Address type for vault (default: 'p2wsh' for backward compatibility) */
+  /** Address type for vault (default: 'p2tr' for new users) */
   address_type?: AddressType;
+  /** Recovery method: single key or social recovery with shares */
+  recovery_method?: RecoveryMethod;
+  /** SSS configuration (required if recovery_method is 'social') */
+  sss_config?: SSSConfig;
   /** Optional label for identifying this plan */
   plan_label?: string;
 }
@@ -113,6 +126,8 @@ export interface PlanOutput {
   network: BitcoinNetwork;
   /** Address type used for this plan */
   address_type: AddressType;
+  /** Optional social recovery kit with Shamir shares */
+  social_recovery_kit?: SocialRecoveryKit;
   /** Human-readable explanation of the plan's spending conditions */
   human_explanation: string[];
 }
