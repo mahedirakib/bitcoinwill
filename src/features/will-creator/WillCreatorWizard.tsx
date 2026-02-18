@@ -57,7 +57,7 @@ const createInitialState = (network: BitcoinNetwork | 'mainnet'): WizardState =>
     owner_pubkey: '',
     beneficiary_pubkey: '',
     locktime_blocks: 144, // ~1 day
-    address_type: 'p2wsh', // default to P2WSH for backward compatibility
+    address_type: 'p2tr', // default to Taproot for new users
   },
   result: null,
   errors: {},
@@ -364,53 +364,33 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
               </div>
             </div>
 
-            {/* Address Type Selection */}
-            <div className="space-y-4">
-              <h4 className="text-lg font-bold">Vault Address Type</h4>
-              <div className="grid grid-cols-2 gap-4">
-                <button
-                  type="button"
-                  onClick={() => dispatch({ type: 'UPDATE_INPUT', payload: { address_type: 'p2wsh' } })}
-                  className={cn(
-                    "p-6 rounded-2xl border-2 text-left transition-all",
-                    state.input.address_type === 'p2wsh'
-                      ? "border-primary bg-primary/5"
-                      : "border-border hover:border-primary/20"
-                  )}
-                >
-                  <div className="space-y-2">
-                    <span className="text-xs font-black uppercase tracking-widest text-primary">Legacy</span>
-                    <h5 className="font-bold">P2WSH (SegWit)</h5>
-                    <p className="text-xs text-foreground/60">
-                      Starts with bc1q... or tb1q...
-                    </p>
-                    <p className="text-xs text-foreground/50">
-                      Maximum compatibility with all wallets
-                    </p>
-                  </div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => dispatch({ type: 'UPDATE_INPUT', payload: { address_type: 'p2tr' } })}
-                  className={cn(
-                    "p-6 rounded-2xl border-2 text-left transition-all",
-                    state.input.address_type === 'p2tr'
-                      ? "border-primary bg-primary/5"
-                      : "border-border hover:border-primary/20"
-                  )}
-                >
-                  <div className="space-y-2">
-                    <span className="text-xs font-black uppercase tracking-widest text-primary">Modern</span>
-                    <h5 className="font-bold">P2TR (Taproot)</h5>
-                    <p className="text-xs text-foreground/60">
-                      Starts with bc1p... or tb1p...
-                    </p>
-                    <p className="text-xs text-foreground/50">
-                      Better privacy, lower fees, future-proof
-                    </p>
-                  </div>
-                </button>
+            {/* Simple Taproot Toggle - defaults to on for new users */}
+            <div className="flex items-center justify-between p-4 rounded-2xl bg-muted/50 border border-border">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold">Use Modern Address Format</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-primary bg-primary/10 px-2 py-0.5 rounded-full">Recommended</span>
+                </div>
+                <p className="text-xs text-foreground/50">
+                  Taproot (bc1p...) - Better privacy & lower fees
+                </p>
               </div>
+              <button
+                type="button"
+                onClick={() => dispatch({ type: 'UPDATE_INPUT', payload: { address_type: state.input.address_type === 'p2tr' ? 'p2wsh' : 'p2tr' } })}
+                className={cn(
+                  "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
+                  state.input.address_type === 'p2tr' ? "bg-primary" : "bg-muted-foreground/30"
+                )}
+                aria-label="Toggle Taproot address format"
+              >
+                <span
+                  className={cn(
+                    "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
+                    state.input.address_type === 'p2tr' ? "translate-x-6" : "translate-x-1"
+                  )}
+                />
+              </button>
             </div>
 
             <div className="flex justify-between items-center pt-6">
@@ -570,17 +550,6 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
                 <span className="opacity-60 font-bold uppercase tracking-widest">Network</span>
                 <span className="font-black uppercase text-primary bg-primary/10 px-3 py-1 rounded-lg">{network}</span>
               </div>
-              <div className="flex justify-between items-center text-sm pt-4 border-t border-border">
-                <span className="opacity-60 font-bold uppercase tracking-widest">Address Type</span>
-                <span className={cn(
-                  "font-black uppercase px-3 py-1 rounded-lg",
-                  state.input.address_type === 'p2tr' 
-                    ? "text-primary bg-primary/10" 
-                    : "text-foreground/60 bg-muted"
-                )}>
-                  {state.input.address_type === 'p2tr' ? 'Taproot (P2TR)' : 'Legacy (P2WSH)'}
-                </span>
-              </div>
               <div className="pt-6 border-t border-border space-y-2">
                 <p className="text-xs font-bold opacity-60 uppercase tracking-widest">Delay Settings</p>
                 <p className="text-2xl font-black">{state.input.locktime_blocks} Blocks (~{calculateTime(state.input.locktime_blocks)})</p>
@@ -623,7 +592,7 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
               )}
               {state.result.address_type === 'p2tr' && (
                 <p className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-black uppercase tracking-widest">
-                  Taproot (P2TR)
+                  Modern Format
                 </p>
               )}
             </div>
