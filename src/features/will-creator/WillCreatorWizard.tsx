@@ -57,6 +57,7 @@ const createInitialState = (network: BitcoinNetwork | 'mainnet'): WizardState =>
     owner_pubkey: '',
     beneficiary_pubkey: '',
     locktime_blocks: 144, // ~1 day
+    address_type: 'p2wsh', // default to P2WSH for backward compatibility
   },
   result: null,
   errors: {},
@@ -362,6 +363,56 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
                 </div>
               </div>
             </div>
+
+            {/* Address Type Selection */}
+            <div className="space-y-4">
+              <h4 className="text-lg font-bold">Vault Address Type</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  type="button"
+                  onClick={() => dispatch({ type: 'UPDATE_INPUT', payload: { address_type: 'p2wsh' } })}
+                  className={cn(
+                    "p-6 rounded-2xl border-2 text-left transition-all",
+                    state.input.address_type === 'p2wsh'
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-primary/20"
+                  )}
+                >
+                  <div className="space-y-2">
+                    <span className="text-xs font-black uppercase tracking-widest text-primary">Legacy</span>
+                    <h5 className="font-bold">P2WSH (SegWit)</h5>
+                    <p className="text-xs text-foreground/60">
+                      Starts with bc1q... or tb1q...
+                    </p>
+                    <p className="text-xs text-foreground/50">
+                      Maximum compatibility with all wallets
+                    </p>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => dispatch({ type: 'UPDATE_INPUT', payload: { address_type: 'p2tr' } })}
+                  className={cn(
+                    "p-6 rounded-2xl border-2 text-left transition-all",
+                    state.input.address_type === 'p2tr'
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-primary/20"
+                  )}
+                >
+                  <div className="space-y-2">
+                    <span className="text-xs font-black uppercase tracking-widest text-primary">Modern</span>
+                    <h5 className="font-bold">P2TR (Taproot)</h5>
+                    <p className="text-xs text-foreground/60">
+                      Starts with bc1p... or tb1p...
+                    </p>
+                    <p className="text-xs text-foreground/50">
+                      Better privacy, lower fees, future-proof
+                    </p>
+                  </div>
+                </button>
+              </div>
+            </div>
+
             <div className="flex justify-between items-center pt-6">
               <button type="button" onClick={handleCancel} className="text-foreground/40 font-bold hover:text-foreground/60 transition-colors">Cancel</button>
               <button type="button" onClick={nextStep} className="btn-primary flex items-center gap-2">
@@ -519,6 +570,17 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
                 <span className="opacity-60 font-bold uppercase tracking-widest">Network</span>
                 <span className="font-black uppercase text-primary bg-primary/10 px-3 py-1 rounded-lg">{network}</span>
               </div>
+              <div className="flex justify-between items-center text-sm pt-4 border-t border-border">
+                <span className="opacity-60 font-bold uppercase tracking-widest">Address Type</span>
+                <span className={cn(
+                  "font-black uppercase px-3 py-1 rounded-lg",
+                  state.input.address_type === 'p2tr' 
+                    ? "text-primary bg-primary/10" 
+                    : "text-foreground/60 bg-muted"
+                )}>
+                  {state.input.address_type === 'p2tr' ? 'Taproot (P2TR)' : 'Legacy (P2WSH)'}
+                </span>
+              </div>
               <div className="pt-6 border-t border-border space-y-2">
                 <p className="text-xs font-bold opacity-60 uppercase tracking-widest">Delay Settings</p>
                 <p className="text-2xl font-black">{state.input.locktime_blocks} Blocks (~{calculateTime(state.input.locktime_blocks)})</p>
@@ -557,6 +619,11 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
               {state.result.network === 'mainnet' && (
                 <p className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-600 text-xs font-black uppercase tracking-widest">
                   <AlertTriangle className="w-3 h-3" /> Mainnet Address
+                </p>
+              )}
+              {state.result.address_type === 'p2tr' && (
+                <p className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-black uppercase tracking-widest">
+                  Taproot (P2TR)
                 </p>
               )}
             </div>

@@ -25,6 +25,7 @@ describe('Instructions Module', () => {
     address: 'tb1qxyz123',
     witness_script: '6376a914...88ac',
     network: 'testnet',
+    address_type: 'p2wsh',
     human_explanation: [
       'Vault Address: tb1qxyz123',
       'Owner can spend at any time',
