@@ -12,6 +12,8 @@ import {
   Users,
   Printer,
   Wallet,
+  Shield,
+  X,
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import * as ecc from 'tiny-secp256k1';
@@ -131,6 +133,7 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
   const [showHardwareWallet, setShowHardwareWallet] = useState(false);
   const [hardwareWalletLoading, setHardwareWalletLoading] = useState(false);
   const [hardwareWalletError, setHardwareWalletError] = useState<string | null>(null);
+  const [hardwareWalletConnected, setHardwareWalletConnected] = useState<HardwareWalletType | null>(null);
   const checklistModalRef = useRef<HTMLDivElement | null>(null);
   const checklistLastFocusedRef = useRef<HTMLElement | null>(null);
   const clearDraftState = () => {
@@ -377,13 +380,20 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
     try {
       const { publicKey } = await connectHardwareWallet(type);
       dispatch({ type: 'UPDATE_INPUT', payload: { owner_pubkey: publicKey } });
+      setHardwareWalletConnected(type);
       setShowHardwareWallet(false);
-      showToast(`${type} connected successfully`);
+      showToast(`${type.charAt(0).toUpperCase() + type.slice(1)} connected successfully`);
     } catch (error) {
       setHardwareWalletError((error as Error).message);
     } finally {
       setHardwareWalletLoading(false);
     }
+  };
+
+  const clearHardwareWalletKey = () => {
+    dispatch({ type: 'UPDATE_INPUT', payload: { owner_pubkey: '' } });
+    setHardwareWalletConnected(null);
+    showToast('Key cleared');
   };
 
   const printShares = (result: PlanOutput) => {
@@ -766,15 +776,38 @@ For support, visit: https://github.com/mahedirakib/bitcoinwill
                 />
                 
                 {/* Hardware Wallet Connect */}
-                <div className="flex gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowHardwareWallet(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-xl text-xs font-bold hover:bg-primary/20 transition-colors"
-                  >
-                    <Wallet className="w-4 h-4" />
-                    Connect Hardware Wallet
-                  </button>
+                <div className="flex items-center justify-between pt-2">
+                  {hardwareWalletConnected ? (
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2 px-3 py-1.5 bg-green-500/10 text-green-600 rounded-lg text-xs font-bold">
+                        <Shield className="w-3.5 h-3.5" />
+                        {hardwareWalletConnected.charAt(0).toUpperCase() + hardwareWalletConnected.slice(1)} Connected
+                      </div>
+                      <button
+                        type="button"
+                        onClick={clearHardwareWalletKey}
+                        className="p-1.5 text-foreground/40 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                        title="Clear key"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setShowHardwareWallet(true)}
+                      className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-xl text-xs font-bold hover:bg-primary/20 transition-colors"
+                    >
+                      <Wallet className="w-4 h-4" />
+                      Connect Hardware Wallet
+                    </button>
+                  )}
+                  
+                  {/* Security Tip */}
+                  <div className="hidden sm:flex items-center gap-1.5 text-[10px] text-foreground/40">
+                    <Shield className="w-3 h-3" />
+                    <span>Hardware wallets are the gold standard</span>
+                  </div>
                 </div>
                 
                 {state.errors.owner && <p id="owner-pubkey-error" className="text-xs text-red-500 font-bold">{state.errors.owner}</p>}
@@ -1139,16 +1172,22 @@ For support, visit: https://github.com/mahedirakib/bitcoinwill
       {showHardwareWallet && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-6 bg-background/85 backdrop-blur-sm animate-in fade-in duration-300">
           <div className="glass max-w-md w-full p-8 space-y-6 border-primary/20 shadow-2xl animate-in zoom-in-95 duration-300">
-            <div className="space-y-2">
-              <h3 className="text-2xl font-black tracking-tight">Connect Hardware Wallet</h3>
-              <p className="text-sm text-foreground/70">
-                Select your device to automatically fill the public key.
-              </p>
+            <div className="flex items-start gap-4">
+              <div className="p-3 rounded-xl bg-primary/10">
+                <Wallet className="w-6 h-6 text-primary" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-2xl font-black tracking-tight">Connect Hardware Wallet</h3>
+                <p className="text-sm text-foreground/70">
+                  Select your device to automatically fill the public key.
+                </p>
+              </div>
             </div>
 
             {hardwareWalletError && (
-              <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 text-sm">
-                {hardwareWalletError}
+              <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 text-sm flex items-start gap-3">
+                <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                <p>{hardwareWalletError}</p>
               </div>
             )}
 
@@ -1159,27 +1198,47 @@ For support, visit: https://github.com/mahedirakib/bitcoinwill
                   type="button"
                   onClick={() => handleHardwareWalletConnect(wallet.type)}
                   disabled={hardwareWalletLoading}
-                  className="w-full p-4 rounded-xl border-2 border-border hover:border-primary/30 transition-all text-left disabled:opacity-50"
+                  className="w-full p-4 rounded-xl border-2 border-border hover:border-primary/30 transition-all text-left disabled:opacity-50 group"
                 >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="font-bold">{wallet.label}</span>
+                  <div className="flex items-center gap-4">
+                    <div className="p-2 rounded-lg bg-muted group-hover:bg-primary/10 transition-colors">
+                      <Wallet className="w-5 h-5 text-foreground/60 group-hover:text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <span className="font-bold block">{wallet.label}</span>
                       <p className="text-xs text-foreground/60">{wallet.description}</p>
                     </div>
-                    {hardwareWalletLoading && (
+                    {hardwareWalletLoading ? (
                       <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <ChevronRight className="w-5 h-5 text-foreground/30 group-hover:text-primary transition-colors" />
                     )}
                   </div>
                 </button>
               ))}
             </div>
 
+            <div className="p-4 rounded-xl bg-green-500/5 border border-green-500/10 text-xs space-y-2">
+              <div className="flex items-center gap-2 text-green-600 font-bold">
+                <Shield className="w-4 h-4" />
+                <span>Why use a hardware wallet?</span>
+              </div>
+              <ul className="space-y-1 text-foreground/60 list-disc list-inside pl-1">
+                <li>Private keys never leave the device</li>
+                <li>Verify addresses on the device screen</li>
+                <li>Protection against malware and keyloggers</li>
+              </ul>
+            </div>
+
             <div className="p-4 rounded-xl bg-muted/50 text-xs text-foreground/60 space-y-2">
-              <p className="font-bold">Requirements:</p>
+              <p className="font-bold flex items-center gap-2">
+                <HelpCircle className="w-3.5 h-3.5" />
+                Requirements
+              </p>
               <ul className="space-y-1 list-disc list-inside">
-                <li>Use Chrome or Edge browser</li>
-                <li>Connect device via USB</li>
-                <li>Approve connection on device</li>
+                <li>Use Chrome, Edge, or Brave browser</li>
+                <li>Connect device via USB cable</li>
+                <li>Unlock device and approve the connection</li>
               </ul>
             </div>
 
