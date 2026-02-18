@@ -11,6 +11,7 @@ import {
   QrCode,
   Users,
   Printer,
+  Wallet,
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import * as ecc from 'tiny-secp256k1';
@@ -27,6 +28,11 @@ import { SAMPLE_KEYS, normalizePubkeyHex, usesDisallowedSampleKey } from './safe
 import { parseWizardDraft } from './draftState';
 import { splitPrivateKey } from '@/lib/bitcoin/sss';
 import { bytesToHex } from '@/lib/bitcoin/hex';
+import {
+  connectHardwareWallet,
+  SUPPORTED_WALLETS,
+  type HardwareWalletType,
+} from '@/lib/bitcoin/hardwareWallet';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -122,6 +128,9 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
   const [hasRestored, setHasRestored] = useState(false);
   const [showDownloadChecklist, setShowDownloadChecklist] = useState(false);
   const [downloadChecklist, setDownloadChecklist] = useState<Record<ChecklistItemId, boolean>>(createChecklistState);
+  const [showHardwareWallet, setShowHardwareWallet] = useState(false);
+  const [hardwareWalletLoading, setHardwareWalletLoading] = useState(false);
+  const [hardwareWalletError, setHardwareWalletError] = useState<string | null>(null);
   const checklistModalRef = useRef<HTMLDivElement | null>(null);
   const checklistLastFocusedRef = useRef<HTMLElement | null>(null);
   const clearDraftState = () => {
@@ -359,6 +368,22 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: { onCancel: 
       .writeText(text)
       .then(() => showToast(`${label} Copied`))
       .catch(() => showToast('Clipboard unavailable in this browser context'));
+  };
+
+  const handleHardwareWalletConnect = async (type: HardwareWalletType) => {
+    setHardwareWalletLoading(true);
+    setHardwareWalletError(null);
+    
+    try {
+      const { publicKey } = await connectHardwareWallet(type);
+      dispatch({ type: 'UPDATE_INPUT', payload: { owner_pubkey: publicKey } });
+      setShowHardwareWallet(false);
+      showToast(`${type} connected successfully`);
+    } catch (error) {
+      setHardwareWalletError((error as Error).message);
+    } finally {
+      setHardwareWalletLoading(false);
+    }
   };
 
   const printShares = (result: PlanOutput) => {
@@ -739,6 +764,19 @@ For support, visit: https://github.com/mahedirakib/bitcoinwill
                   className={cn("w-full bg-muted border p-5 rounded-2xl font-mono text-sm outline-none transition-all focus:ring-2 focus:ring-primary/20", state.errors.owner ? "border-red-500/50 shadow-sm" : "border-border hover:border-primary/20 focus:border-primary/50")}
                   placeholder="02..."
                 />
+                
+                {/* Hardware Wallet Connect */}
+                <div className="flex gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowHardwareWallet(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-xl text-xs font-bold hover:bg-primary/20 transition-colors"
+                  >
+                    <Wallet className="w-4 h-4" />
+                    Connect Hardware Wallet
+                  </button>
+                </div>
+                
                 {state.errors.owner && <p id="owner-pubkey-error" className="text-xs text-red-500 font-bold">{state.errors.owner}</p>}
               </div>
 
@@ -1093,6 +1131,68 @@ For support, visit: https://github.com/mahedirakib/bitcoinwill
                 className="flex-1 py-4 rounded-xl text-sm font-bold bg-primary text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all"
               >
                 Confirm & Download
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showHardwareWallet && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-6 bg-background/85 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="glass max-w-md w-full p-8 space-y-6 border-primary/20 shadow-2xl animate-in zoom-in-95 duration-300">
+            <div className="space-y-2">
+              <h3 className="text-2xl font-black tracking-tight">Connect Hardware Wallet</h3>
+              <p className="text-sm text-foreground/70">
+                Select your device to automatically fill the public key.
+              </p>
+            </div>
+
+            {hardwareWalletError && (
+              <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 text-sm">
+                {hardwareWalletError}
+              </div>
+            )}
+
+            <div className="space-y-3">
+              {SUPPORTED_WALLETS.filter(w => w.supported).map((wallet) => (
+                <button
+                  key={wallet.type}
+                  type="button"
+                  onClick={() => handleHardwareWalletConnect(wallet.type)}
+                  disabled={hardwareWalletLoading}
+                  className="w-full p-4 rounded-xl border-2 border-border hover:border-primary/30 transition-all text-left disabled:opacity-50"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="font-bold">{wallet.label}</span>
+                      <p className="text-xs text-foreground/60">{wallet.description}</p>
+                    </div>
+                    {hardwareWalletLoading && (
+                      <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            <div className="p-4 rounded-xl bg-muted/50 text-xs text-foreground/60 space-y-2">
+              <p className="font-bold">Requirements:</p>
+              <ul className="space-y-1 list-disc list-inside">
+                <li>Use Chrome or Edge browser</li>
+                <li>Connect device via USB</li>
+                <li>Approve connection on device</li>
+              </ul>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowHardwareWallet(false);
+                  setHardwareWalletError(null);
+                }}
+                className="flex-1 py-4 rounded-xl border border-border text-sm font-bold hover:bg-muted transition-colors"
+              >
+                Cancel
               </button>
             </div>
           </div>

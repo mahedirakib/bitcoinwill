@@ -13,6 +13,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@ledgerhq/hw-app-btc": "^10.17.0",
+    "@ledgerhq/hw-transport-webhid": "^6.31.0",
+    "@trezor/connect-web": "^9.7.1",
     "bitcoinjs-lib": "^7.0.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.446.0",
