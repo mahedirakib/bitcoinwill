@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, memo } from 'react';
 import { useSettings } from '@/state/settings';
 import { AlertTriangle, Lock } from 'lucide-react';
 import type { BitcoinNetwork } from '@/lib/bitcoin/types';
 
 const CONFIRMATION_PHRASE = "I UNDERSTAND MAINNET IS REAL MONEY";
 
-export const NetworkSelector = () => {
+const NetworkSelectorComponent = () => {
   const { network, setNetwork, isMainnetUnlocked, unlockMainnet } = useSettings();
   const [showModal, setShowModal] = useState(false);
   const [phrase, setPhrase] = useState('');
@@ -167,3 +167,5 @@ export const NetworkSelector = () => {
     </div>
   );
 };
+
+export const NetworkSelector = memo(NetworkSelectorComponent);

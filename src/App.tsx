@@ -10,6 +10,7 @@ import { SettingsProvider, useSettings } from './state/settings'
 import { NetworkSelector } from './components/NetworkSelector'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { ToastProvider } from './components/Toast'
+import { KeyboardShortcutsHelp } from './components/KeyboardShortcutsHelp'
 import type { PlanInput, PlanOutput } from './lib/bitcoin/types'
 import logo from './assets/logo.png'
 
@@ -245,13 +246,15 @@ const AppContent = () => {
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 md:gap-6 justify-center pt-4 md:pt-8 w-full md:w-auto px-6">
-                <button 
+                <button
+                  type="button"
                   onClick={() => navigateTo('create')}
                   className="btn-primary w-full sm:w-auto"
                 >
                   Create Spending Plan
                 </button>
-                <button 
+                <button
+                  type="button"
                   onClick={() => navigateTo('learn')}
                   className="btn-secondary w-full sm:w-auto"
                 >
@@ -278,8 +281,8 @@ const AppContent = () => {
                   desc: 'Easy-to-follow instructions for beneficiaries to claim funds when the time is right.',
                   icon: History 
                 }
-              ].map((item, i) => (
-                <div key={i} className="glass p-6 md:p-8 space-y-6 glass-hover group">
+              ].map((item) => (
+                <div key={item.title} className="glass p-6 md:p-8 space-y-6 glass-hover group">
                   <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center group-hover:scale-110 group-hover:bg-primary/20 transition-all duration-300">
                     <item.icon className="w-6 h-6 text-primary" />
                   </div>
@@ -371,6 +374,7 @@ const App = () => (
       <SettingsProvider>
         <AppContent />
       </SettingsProvider>
+      <KeyboardShortcutsHelp />
     </ToastProvider>
   </ErrorBoundary>
 )
