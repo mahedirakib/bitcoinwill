@@ -18,6 +18,36 @@ export const BITCOIN_NETWORKS: readonly BitcoinNetwork[] = ['testnet', 'regtest'
 export const isBitcoinNetwork = (value: unknown): value is BitcoinNetwork =>
   typeof value === 'string' && BITCOIN_NETWORKS.includes(value as BitcoinNetwork);
 
+/**
+ * Protocol Constants
+ * 
+ * These constants define the bounds and defaults for the TimeLock Inheritance Protocol.
+ */
+
+/** Average block time in minutes (Bitcoin target) */
+export const AVG_BLOCK_TIME_MINUTES = 10;
+
+/** Blocks per day (144 = 24 * 60 / 10) */
+export const BLOCKS_PER_DAY = 144;
+
+/** Blocks per week (1008 = 144 * 7) */
+export const BLOCKS_PER_WEEK = 1008;
+
+/** Blocks per month (~30.44 days, 4320 = 144 * 30) */
+export const BLOCKS_PER_MONTH = 4320;
+
+/** Blocks per year (~365.25 days, 52560 = 144 * 365) */
+export const BLOCKS_PER_YEAR = 52560;
+
+/** Minimum allowed locktime in blocks (1 block = ~10 minutes) */
+export const MIN_LOCKTIME_BLOCKS = 1;
+
+/** Maximum allowed locktime in blocks (~1 year) */
+export const MAX_LOCKTIME_BLOCKS = BLOCKS_PER_YEAR;
+
+/** Default locktime (144 blocks = ~1 day) */
+export const DEFAULT_LOCKTIME_BLOCKS = 144;
+
 import { SSSConfig, SocialRecoveryKit } from './sss';
 
 /**

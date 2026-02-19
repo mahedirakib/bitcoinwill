@@ -1,4 +1,4 @@
-import { PlanInput, isBitcoinNetwork, isAddressType, INHERITANCE_TYPE } from './types';
+import { PlanInput, isBitcoinNetwork, isAddressType, INHERITANCE_TYPE, MIN_LOCKTIME_BLOCKS, MAX_LOCKTIME_BLOCKS, BLOCKS_PER_DAY, BLOCKS_PER_WEEK, BLOCKS_PER_MONTH, BLOCKS_PER_YEAR } from './types';
 import * as ecc from 'tiny-secp256k1';
 import { hexToBytes } from './hex';
 
@@ -105,16 +105,16 @@ export const validatePlanInput = (input: PlanInput): void => {
     );
   }
   
-  if (!Number.isSafeInteger(input.locktime_blocks) || input.locktime_blocks < 1 || input.locktime_blocks > 52560) {
+  if (!Number.isSafeInteger(input.locktime_blocks) || input.locktime_blocks < MIN_LOCKTIME_BLOCKS || input.locktime_blocks > MAX_LOCKTIME_BLOCKS) {
     throw new Error(
-      'Invalid delay period.\n\n' +
-      'Delay must be between 1 and 52,560 blocks (approximately 1 year).\n\n' +
-      'Common examples:\n' +
-      '- 144 blocks ≈ 1 day\n' +
-      '- 1,008 blocks ≈ 1 week\n' +
-      '- 4,320 blocks ≈ 1 month\n' +
-      '- 52,560 blocks ≈ 1 year (maximum)\n\n' +
-      'Note: Each block takes approximately 10 minutes on average.'
+      `Invalid delay period.\n\n` +
+      `Delay must be between ${MIN_LOCKTIME_BLOCKS} and ${MAX_LOCKTIME_BLOCKS.toLocaleString()} blocks (approximately 1 year).\n\n` +
+      `Common examples:\n` +
+      `- ${BLOCKS_PER_DAY} blocks ≈ 1 day\n` +
+      `- ${BLOCKS_PER_WEEK.toLocaleString()} blocks ≈ 1 week\n` +
+      `- ${BLOCKS_PER_MONTH.toLocaleString()} blocks ≈ 1 month\n` +
+      `- ${BLOCKS_PER_YEAR.toLocaleString()} blocks ≈ 1 year (maximum)\n\n` +
+      `Note: Each block takes approximately 10 minutes on average.`
     );
   }
 };
