@@ -1,6 +1,7 @@
 import { PlanInput, PlanOutput } from './types';
 import { calculateTime } from './utils';
 import { buildPlan } from './planEngine';
+import { bytesToHex } from './hex';
 
 /**
  * Data model for beneficiary-facing instructions.
@@ -45,6 +46,67 @@ export interface RecoveryKitData {
 
 const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
+
+/**
+ * Generates a SHA-256 checksum for recovery kit data.
+ *
+ * Creates a cryptographic hash of the plan and result data to detect
+ * any tampering or corruption of the recovery kit file.
+ *
+ * @param plan - The plan input data
+ * @param result - The plan result data
+ * @returns Hex-encoded SHA-256 checksum
+ */
+export const generateRecoveryKitChecksum = async (
+  plan: PlanInput,
+  result: PlanOutput
+): Promise<string> => {
+  const data = JSON.stringify({
+    plan: {
+      network: plan.network,
+      inheritance_type: plan.inheritance_type,
+      owner_pubkey: plan.owner_pubkey,
+      beneficiary_pubkey: plan.beneficiary_pubkey,
+      locktime_blocks: plan.locktime_blocks,
+      address_type: plan.address_type,
+    },
+    result: {
+      address: result.address,
+      script_hex: result.script_hex,
+      descriptor: result.descriptor,
+      network: result.network,
+      address_type: result.address_type,
+    },
+  });
+
+  const encoder = new TextEncoder();
+  const dataBuffer = encoder.encode(data);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer.buffer as ArrayBuffer);
+  const hashArray = new Uint8Array(hashBuffer);
+
+  return bytesToHex(hashArray);
+};
+
+/**
+ * Verifies the checksum of a recovery kit.
+ *
+ * @param plan - The plan input data
+ * @param result - The plan result data
+ * @param expectedChecksum - The expected checksum to verify against
+ * @returns True if checksum matches, false otherwise
+ */
+export const verifyRecoveryKitChecksum = async (
+  plan: PlanInput,
+  result: PlanOutput,
+  expectedChecksum: string
+): Promise<boolean> => {
+  try {
+    const actualChecksum = await generateRecoveryKitChecksum(plan, result);
+    return actualChecksum.toLowerCase() === expectedChecksum.toLowerCase();
+  } catch {
+    return false;
+  }
+};
 
 /**
  * Validates Recovery Kit JSON and normalizes the result using canonical script generation.

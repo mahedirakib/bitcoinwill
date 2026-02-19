@@ -72,8 +72,8 @@ export const connectTrezor = async (
     lazyLoad: true,
     manifest: {
       appName: 'Bitcoin Will',
-      email: 'developer@hollywood.app',
-      appUrl: 'https://bitcoinwill.app',
+      email: 'github.com/mahedirakib/bitcoinwill',
+      appUrl: 'https://github.com/mahedirakib/bitcoinwill',
     },
   });
 
@@ -83,7 +83,17 @@ export const connectTrezor = async (
   });
 
   if (!result.success) {
-    throw new Error(result.payload.error || 'Failed to connect to Trezor');
+    const errorMessage = result.payload.error || 'Failed to connect to Trezor';
+    const actionableError = new Error(
+      `${errorMessage}\n\n` +
+      'Troubleshooting steps:\n' +
+      '1. Ensure your Trezor is connected via USB and unlocked\n' +
+      '2. Try a different USB cable or port\n' +
+      '3. Close any other wallet apps that might be using the device\n' +
+      '4. Use Chrome or Edge browser (Firefox has limited WebUSB support)\n' +
+      '5. Check that your device firmware is up to date'
+    );
+    throw actionableError;
   }
 
   return {
@@ -98,7 +108,13 @@ export const connectTrezor = async (
  */
 export const connectLedger = async (): Promise<WalletPublicKey> => {
   if (!isWebHidSupported()) {
-    throw new Error('WebHID not supported in this browser. Use Chrome or Edge.');
+    throw new Error(
+      'WebHID not supported in this browser.\n\n' +
+      'To use hardware wallets:\n' +
+      '1. Use Chrome, Edge, or Brave browser\n' +
+      '2. Ensure your browser is up to date\n' +
+      '3. Firefox and Safari do not support WebHID required for hardware wallets'
+    );
   }
 
   // Dynamically import Ledger libraries
