@@ -189,7 +189,7 @@ describe('buildPlan', () => {
 
 **DO NOT** open public issues for security vulnerabilities.
 
-Instead, email: `security@bitcoinwill.app`
+Instead, use GitHub private vulnerability reporting.
 
 Include:
 - Description of the vulnerability
