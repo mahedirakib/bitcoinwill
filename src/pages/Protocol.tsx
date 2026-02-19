@@ -4,7 +4,8 @@ import diagram from '@/assets/diagram.svg';
 const Protocol = ({ onBack, onOpenWhitepaper }: { onBack: () => void; onOpenWhitepaper: () => void }) => {
   return (
     <div className="max-w-4xl mx-auto py-12 px-6 space-y-16 animate-in fade-in slide-in-from-bottom-4">
-      <button 
+      <button
+        type="button"
         onClick={onBack}
         className="flex items-center gap-2 text-foreground/60 hover:text-primary transition-colors"
       >
@@ -82,7 +83,7 @@ const Protocol = ({ onBack, onOpenWhitepaper }: { onBack: () => void; onOpenWhit
                 title: 'After the timelock expires, the future-spend path becomes valid and can be used.',
               },
             ].map((step, i, arr) => (
-              <div key={i} className="flex gap-4">
+              <div key={step.num} className="flex gap-4">
                 <div className="flex flex-col items-center">
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                     <span className="text-primary font-bold text-sm">{step.num}</span>
@@ -115,7 +116,7 @@ const Protocol = ({ onBack, onOpenWhitepaper }: { onBack: () => void; onOpenWhit
         <section className="space-y-6">
           <h3 className="text-xl font-bold">Logic Flow</h3>
           <div className="glass p-8 flex justify-center bg-white/5">
-            <img src={diagram} alt="Bitcoin Will Logic Diagram" className="max-w-full h-auto" />
+            <img src={diagram} alt="Bitcoin Will Logic Diagram" className="max-w-full h-auto" loading="lazy" />
           </div>
         </section>
 
@@ -168,8 +169,8 @@ OP_ENDIF`}
               'Does not require an account',
               'Does not store user data on any server',
               'Does not see private keys',
-            ].map((item, i) => (
-              <li key={i} className="flex items-start gap-3">
+            ].map((item) => (
+              <li key={item} className="flex items-start gap-3">
                 <CheckCircle className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
                 <span>{item}</span>
               </li>
@@ -191,8 +192,8 @@ OP_ENDIF`}
               'A legal will',
               'A monitoring service that checks whether someone is alive',
               'A guarantee against user error',
-            ].map((item, i) => (
-              <li key={i} className="flex items-start gap-3">
+            ].map((item) => (
+              <li key={item} className="flex items-start gap-3">
                 <XCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
                 <span>{item}</span>
               </li>
@@ -219,8 +220,8 @@ OP_ENDIF`}
               'Client-side only',
               'Outputs are inspectable and verifiable',
               'Open-source and reviewable',
-            ].map((item, i) => (
-              <li key={i} className="flex items-start gap-3">
+            ].map((item) => (
+              <li key={item} className="flex items-start gap-3">
                 <CheckCircle className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
                 <span>{item}</span>
               </li>

@@ -150,10 +150,10 @@ const Whitepaper = ({ onBack }: { onBack: () => void }) => {
       </header>
 
       <article className="glass p-6 md:p-10 space-y-6 leading-relaxed">
-        {blocks.map((block, blockIndex) => {
+        {blocks.map((block) => {
           if (block.type === 'h1') {
             return (
-              <h2 key={`h1-${blockIndex}`} className="text-2xl md:text-3xl font-bold tracking-tight">
+              <h2 key={`h1-${block.text}`} className="text-2xl md:text-3xl font-bold tracking-tight">
                 {block.text}
               </h2>
             );
@@ -161,7 +161,7 @@ const Whitepaper = ({ onBack }: { onBack: () => void }) => {
 
           if (block.type === 'h2') {
             return (
-              <h3 key={`h2-${blockIndex}`} className="text-xl md:text-2xl font-bold tracking-tight pt-2">
+              <h3 key={`h2-${block.text}`} className="text-xl md:text-2xl font-bold tracking-tight pt-2">
                 {block.text}
               </h3>
             );
@@ -169,7 +169,7 @@ const Whitepaper = ({ onBack }: { onBack: () => void }) => {
 
           if (block.type === 'paragraph') {
             return (
-              <p key={`p-${blockIndex}`} className="text-foreground/80">
+              <p key={`p-${block.text.slice(0, 50)}`} className="text-foreground/80">
                 {renderInlineMarkdown(block.text)}
               </p>
             );
@@ -177,18 +177,18 @@ const Whitepaper = ({ onBack }: { onBack: () => void }) => {
 
           if (block.type === 'ul') {
             return (
-              <ul key={`ul-${blockIndex}`} className="space-y-2 pl-5 list-disc text-foreground/80">
-                {block.items.map((item, itemIndex) => (
-                  <li key={`ul-item-${blockIndex}-${itemIndex}`}>{renderInlineMarkdown(item)}</li>
+              <ul key={`ul-${block.items[0]?.slice(0, 30) ?? 'empty'}`} className="space-y-2 pl-5 list-disc text-foreground/80">
+                {block.items.map((item) => (
+                  <li key={`ul-item-${item.slice(0, 50)}`}>{renderInlineMarkdown(item)}</li>
                 ))}
               </ul>
             );
           }
 
           return (
-            <ol key={`ol-${blockIndex}`} className="space-y-2 pl-5 list-decimal text-foreground/80">
-              {block.items.map((item, itemIndex) => (
-                <li key={`ol-item-${blockIndex}-${itemIndex}`}>{renderInlineMarkdown(item)}</li>
+            <ol key={`ol-${block.items[0]?.slice(0, 30) ?? 'empty'}`} className="space-y-2 pl-5 list-decimal text-foreground/80">
+              {block.items.map((item) => (
+                <li key={`ol-item-${item.slice(0, 50)}`}>{renderInlineMarkdown(item)}</li>
               ))}
             </ol>
           );

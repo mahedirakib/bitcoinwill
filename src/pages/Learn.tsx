@@ -4,7 +4,8 @@ import diagram from '@/assets/diagram.svg';
 const Learn = ({ onBack }: { onBack: () => void }) => {
   return (
     <div className="max-w-3xl mx-auto py-12 px-6 space-y-12 animate-in fade-in slide-in-from-bottom-4">
-      <button 
+      <button
+        type="button"
         onClick={onBack}
         className="flex items-center gap-2 text-foreground/60 hover:text-primary transition-colors"
       >
@@ -23,7 +24,7 @@ const Learn = ({ onBack }: { onBack: () => void }) => {
           <Zap className="text-primary w-6 h-6" /> Two Spending Paths
         </h2>
         <div className="glass p-8 flex justify-center bg-white/5">
-          <img src={diagram} alt="Logic Flow" className="max-w-full h-auto" />
+          <img src={diagram} alt="Logic Flow" className="max-w-full h-auto" loading="lazy" />
         </div>
         <p className="text-sm text-foreground/60 text-center">
           The Vault Address protects your Bitcoin with a branching rule.
@@ -113,7 +114,8 @@ const Learn = ({ onBack }: { onBack: () => void }) => {
       </div>
 
       <footer className="pt-12 text-center">
-        <button 
+        <button
+          type="button"
           onClick={onBack}
           className="bg-primary text-primary-foreground px-8 py-3 rounded-xl font-bold"
         >
