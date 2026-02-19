@@ -8,7 +8,7 @@ describe('wizard draft restore helpers', () => {
 
   it('returns null for invalid step payloads', () => {
     const payload = JSON.stringify({
-      step: 'RESULT',
+      step: 'INVALID_STEP',
       input: {
         network: 'testnet',
         owner_pubkey: '',

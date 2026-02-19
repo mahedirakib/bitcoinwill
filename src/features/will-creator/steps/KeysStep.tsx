@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { HelpCircle, Shield, Wallet, X, Users } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -178,5 +179,3 @@ export const KeysStep = ({
     </div>
   );
 };
-
-import { useState } from 'react';

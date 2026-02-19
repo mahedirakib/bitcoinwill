@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import type { BitcoinNetwork } from '@/lib/bitcoin/types';
 import type { 
   AddressSummary, 
@@ -11,6 +11,8 @@ import {
 import { useToast } from '@/components/Toast';
 import type { UseVaultStatusReturn } from '../types';
 
+const MIN_REFRESH_INTERVAL_MS = 5000;
+
 export const useVaultStatus = (
   network: BitcoinNetwork,
   address: string | undefined
@@ -20,6 +22,7 @@ export const useVaultStatus = (
   const [vaultStatus, setVaultStatus] = useState<AddressSummary | null>(null);
   const [statusError, setStatusError] = useState<string | null>(null);
   const [isCheckingStatus, setIsCheckingStatus] = useState(false);
+  const lastRefreshRef = useRef<number>(0);
 
   const publicExplorerAvailable = supportsPublicExplorerNetwork(network);
 
@@ -33,8 +36,18 @@ export const useVaultStatus = (
       return;
     }
 
+    const now = Date.now();
+    const timeSinceLastRefresh = now - lastRefreshRef.current;
+    if (timeSinceLastRefresh < MIN_REFRESH_INTERVAL_MS) {
+      const secondsRemaining = Math.ceil((MIN_REFRESH_INTERVAL_MS - timeSinceLastRefresh) / 1000);
+      const message = `Please wait ${secondsRemaining} second${secondsRemaining > 1 ? 's' : ''} before refreshing again`;
+      showToast(message);
+      return;
+    }
+
     setIsCheckingStatus(true);
     setStatusError(null);
+    lastRefreshRef.current = now;
     
     try {
       const summary = await fetchAddressSummary({
@@ -57,6 +70,7 @@ export const useVaultStatus = (
   const clearVaultStatus = useCallback(() => {
     setVaultStatus(null);
     setStatusError(null);
+    lastRefreshRef.current = 0;
   }, []);
 
   return {

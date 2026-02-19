@@ -18,6 +18,9 @@ import { ReviewStep } from './steps/ReviewStep';
 import { ResultStep } from './steps/ResultStep';
 import { DownloadChecklistModal } from './components/DownloadChecklistModal';
 import { HardwareWalletModal } from './components/HardwareWalletModal';
+import { SSSPrivateKeyModal } from './components/SSSPrivateKeyModal';
+import { StepErrorBoundary } from './components/StepErrorBoundary';
+import type { PlanInput } from '@/lib/bitcoin/types';
 import {
   ChecklistItemId,
   STORAGE_KEY,
@@ -27,9 +30,15 @@ import {
   wizardReducer,
 } from './types';
 
+export interface InstructionData {
+  plan: PlanInput;
+  result: PlanOutput;
+  created_at?: string;
+}
+
 interface WillCreatorWizardProps {
   onCancel: () => void;
-  onViewInstructions: (data: unknown) => void;
+  onViewInstructions: (data: InstructionData) => void;
 }
 
 export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorWizardProps) => {
@@ -41,6 +50,8 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorW
   const [downloadChecklist, setDownloadChecklist] = useState<Record<ChecklistItemId, boolean>>(createChecklistState);
   const [showHardwareWallet, setShowHardwareWallet] = useState(false);
   const [hardwareWalletConnected, setHardwareWalletConnected] = useState<HardwareWalletType | null>(null);
+  const [pendingSSSKey, setPendingSSSKey] = useState<string | null>(null);
+  const [pendingSSSConfig, setPendingSSSConfig] = useState<{ threshold: 2 | 3; total: 3 | 5 } | null>(null);
 
   const clearDraftState = () => {
     try {
@@ -70,17 +81,21 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorW
     if (restored) {
       dispatch({ type: 'UPDATE_INPUT', payload: restored.input });
       dispatch({ type: 'SET_STEP', payload: restored.step });
+      if (restored.result && restored.step === 'RESULT') {
+        dispatch({ type: 'SET_RESULT', payload: restored.result });
+      }
       showToast('Previous progress restored');
     }
     setHasRestored(true);
   }, [hasRestored, network, showToast]);
 
   useEffect(() => {
-    if (!hasRestored || state.step === 'RESULT') return;
-    
+    if (!hasRestored) return;
+
     const dataToSave = {
       step: state.step,
       input: state.input,
+      result: state.result,
       timestamp: new Date().toISOString(),
     };
     try {
@@ -88,7 +103,7 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorW
     } catch {
       // Ignore storage errors
     }
-  }, [state.step, state.input, hasRestored]);
+  }, [state.step, state.input, state.result, hasRestored]);
 
   useEffect(() => {
     if (state.step !== 'RESULT') {
@@ -141,9 +156,12 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorW
 
     try {
       const planInput = { ...state.input };
-      let socialKit = null;
 
       if (state.input.recovery_method === 'social') {
+        if (!state.input.sss_config) {
+          throw new Error('SSS configuration not set');
+        }
+
         const randomBytes = crypto.getRandomValues(new Uint8Array(32));
         const privateKey = randomBytes;
         const publicKey = ecc.pointFromScalar(privateKey, true);
@@ -153,26 +171,49 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorW
         }
 
         planInput.beneficiary_pubkey = bytesToHex(publicKey);
-
-        if (!state.input.sss_config) {
-          throw new Error('SSS configuration not set');
-        }
-        
-        socialKit = await splitPrivateKey(bytesToHex(privateKey), state.input.sss_config);
+        setPendingSSSKey(bytesToHex(privateKey));
+        setPendingSSSConfig(state.input.sss_config);
+        return;
       }
 
       const result = buildPlan(planInput);
-      
-      if (socialKit) {
-        result.social_recovery_kit = socialKit;
-      }
-      
       dispatch({ type: 'SET_RESULT', payload: result });
       dispatch({ type: 'SET_STEP', payload: 'RESULT' });
       clearDraftState();
     } catch (e) {
       dispatch({ type: 'SET_ERRORS', payload: { global: (e as Error).message } });
     }
+  };
+
+  const completeSSSGeneration = async () => {
+    if (!pendingSSSKey || !pendingSSSConfig) return;
+
+    try {
+      const planInput = { ...state.input };
+      const publicKey = ecc.pointFromScalar(Buffer.from(pendingSSSKey, 'hex'), true);
+      
+      if (!publicKey) {
+        throw new Error('Failed to regenerate beneficiary keypair');
+      }
+
+      planInput.beneficiary_pubkey = bytesToHex(publicKey);
+      const socialKit = await splitPrivateKey(pendingSSSKey, pendingSSSConfig);
+      const result = buildPlan(planInput);
+      result.social_recovery_kit = socialKit;
+
+      setPendingSSSKey(null);
+      setPendingSSSConfig(null);
+      dispatch({ type: 'SET_RESULT', payload: result });
+      dispatch({ type: 'SET_STEP', payload: 'RESULT' });
+      clearDraftState();
+    } catch (e) {
+      dispatch({ type: 'SET_ERRORS', payload: { global: (e as Error).message } });
+    }
+  };
+
+  const cancelSSSGeneration = () => {
+    setPendingSSSKey(null);
+    setPendingSSSConfig(null);
   };
 
   const handleCancel = () => {
@@ -200,7 +241,7 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorW
   };
 
   const handleHardwareWalletConnect = async (type: HardwareWalletType) => {
-    const { publicKey } = await connectHardwareWallet(type);
+    const { publicKey } = await connectHardwareWallet(type, network as BitcoinNetwork);
     dispatch({ type: 'UPDATE_INPUT', payload: { owner_pubkey: publicKey } });
     setHardwareWalletConnected(type);
     showToast(`${type.charAt(0).toUpperCase() + type.slice(1)} connected successfully`);
@@ -351,56 +392,69 @@ For support, visit: https://github.com/mahedirakib/bitcoinwill
 
       <div className="space-y-10">
         {state.step === 'TYPE' && (
-          <TypeStep
-            input={state.input}
-            errors={state.errors}
-            dispatch={dispatch}
-            onCancel={handleCancel}
-            onNext={nextStep}
-          />
+          <StepErrorBoundary stepName="Type Selection" onReset={() => dispatch({ type: 'SET_STEP', payload: 'TYPE' })}>
+            <TypeStep
+              input={state.input}
+              errors={state.errors}
+              dispatch={dispatch}
+              onCancel={handleCancel}
+              onNext={nextStep}
+            />
+          </StepErrorBoundary>
         )}
 
         {state.step === 'KEYS' && (
-          <KeysStep
-            input={state.input}
-            errors={state.errors}
-            hardwareWalletConnected={hardwareWalletConnected}
-            dispatch={dispatch}
-            setShowHardwareWallet={setShowHardwareWallet}
-            clearHardwareWalletKey={clearHardwareWalletKey}
-            onBack={prevStep}
-            onNext={nextStep}
-          />
+          <StepErrorBoundary stepName="Key Entry" onReset={() => dispatch({ type: 'SET_STEP', payload: 'KEYS' })}>
+            <KeysStep
+              input={state.input}
+              errors={state.errors}
+              hardwareWalletConnected={hardwareWalletConnected}
+              dispatch={dispatch}
+              setShowHardwareWallet={setShowHardwareWallet}
+              clearHardwareWalletKey={clearHardwareWalletKey}
+              onBack={prevStep}
+              onNext={nextStep}
+            />
+          </StepErrorBoundary>
         )}
 
         {state.step === 'TIMELOCK' && (
-          <TimelockStep
-            input={state.input}
-            dispatch={dispatch}
-            onBack={prevStep}
-            onNext={nextStep}
-          />
+          <StepErrorBoundary stepName="Timelock Settings" onReset={() => dispatch({ type: 'SET_STEP', payload: 'TIMELOCK' })}>
+            <TimelockStep
+              input={state.input}
+              dispatch={dispatch}
+              onBack={prevStep}
+              onNext={nextStep}
+            />
+          </StepErrorBoundary>
         )}
 
         {state.step === 'REVIEW' && (
-          <ReviewStep
-            input={state.input}
-            errors={state.errors}
-            network={network as BitcoinNetwork}
-            onBack={prevStep}
-            onGenerate={handleGenerate}
-          />
+          <StepErrorBoundary stepName="Review" onReset={() => dispatch({ type: 'SET_STEP', payload: 'REVIEW' })}>
+            <ReviewStep
+              input={state.input}
+              errors={state.errors}
+              network={network as BitcoinNetwork}
+              onBack={prevStep}
+              onGenerate={handleGenerate}
+            />
+          </StepErrorBoundary>
         )}
 
         {state.step === 'RESULT' && state.result && (
-          <ResultStep
-            result={state.result}
-            onOpenDownloadChecklist={() => setShowDownloadChecklist(true)}
-            onViewInstructions={() => onViewInstructions({ plan: state.input, result: state.result, created_at: new Date().toISOString() })}
-            onCopyToClipboard={copyToClipboard}
-            onPrintShares={printShares}
-            onDownloadShares={downloadSharesAsTxt}
-          />
+          <StepErrorBoundary stepName="Results">
+            <ResultStep
+              result={state.result}
+              onOpenDownloadChecklist={() => setShowDownloadChecklist(true)}
+              onViewInstructions={() => {
+                if (!state.result) return;
+                onViewInstructions({ plan: state.input, result: state.result, created_at: new Date().toISOString() });
+              }}
+              onCopyToClipboard={copyToClipboard}
+              onPrintShares={printShares}
+              onDownloadShares={downloadSharesAsTxt}
+            />
+          </StepErrorBoundary>
         )}
       </div>
 
@@ -417,6 +471,14 @@ For support, visit: https://github.com/mahedirakib/bitcoinwill
         <HardwareWalletModal
           onConnect={handleHardwareWalletConnect}
           onClose={() => setShowHardwareWallet(false)}
+        />
+      )}
+
+      {pendingSSSKey && (
+        <SSSPrivateKeyModal
+          privateKey={pendingSSSKey}
+          onConfirm={completeSSSGeneration}
+          onCancel={cancelSSSGeneration}
         />
       )}
     </div>

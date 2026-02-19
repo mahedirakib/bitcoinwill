@@ -1,5 +1,7 @@
+import { AlertTriangle } from 'lucide-react';
 import { calculateTime } from '@/lib/bitcoin/utils';
 import type { PlanInput } from '@/lib/bitcoin/types';
+import { BLOCKS_PER_MONTH } from '@/lib/bitcoin/types';
 
 interface TimelockStepProps {
   input: PlanInput;
@@ -47,6 +49,20 @@ export const TimelockStep = ({ input, dispatch, onBack, onNext }: TimelockStepPr
         <p>• The timer resets every time you move the funds.</p>
         <p>• The delay starts <strong>only after</strong> the funding transaction confirms on-chain.</p>
       </div>
+
+      {input.locktime_blocks > BLOCKS_PER_MONTH && (
+        <div className="p-6 bg-red-500/5 border border-red-500/20 rounded-2xl space-y-3">
+          <div className="flex items-center gap-2 text-red-600">
+            <AlertTriangle className="w-5 h-5" />
+            <span className="font-bold">Extended Locktime Warning</span>
+          </div>
+          <p className="text-sm text-red-600/80 leading-relaxed">
+            You have selected a locktime of approximately <strong>{calculateTime(input.locktime_blocks)}</strong>. 
+            This means if you lose access to your owner key, your funds will be locked for this entire period 
+            before the beneficiary can claim them. Consider a shorter locktime (1 day to 1 week) for most use cases.
+          </p>
+        </div>
+      )}
 
       <div className="flex justify-between items-center pt-6">
         <button type="button" onClick={onBack} className="text-foreground/60 font-bold hover:text-foreground/80 transition-colors">Back</button>

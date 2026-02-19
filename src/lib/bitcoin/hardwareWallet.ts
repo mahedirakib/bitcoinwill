@@ -1,13 +1,4 @@
-/**
- * Hardware Wallet Integration Module
- * 
- * Supports USB/QR connection to major hardware wallets:
- * - Trezor (Model T, One) via WebUSB/WebHID
- * - Ledger (Nano S, S Plus, X) via WebHID
- * - Coldcard (Mk4, Q) via USB or QR (xpub export)
- * 
- * @module hardwareWallet
- */
+import type { BitcoinNetwork } from './types';
 
 export type HardwareWalletType = 'trezor' | 'ledger' | 'coldcard';
 
@@ -48,6 +39,23 @@ export const SUPPORTED_WALLETS: HardwareWalletInfo[] = [
 /**
  * Check if WebHID is supported (required for Ledger, newer Trezor)
  */
+const getCoinType = (network: BitcoinNetwork): number => {
+  switch (network) {
+    case 'mainnet':
+      return 0;
+    case 'testnet':
+    case 'regtest':
+      return 1;
+    default:
+      return 0;
+  }
+};
+
+const getDerivationPath = (network: BitcoinNetwork, account: number = 0): string => {
+  const coinType = getCoinType(network);
+  return `84'/${coinType}'/${account}'/0/0`;
+};
+
 export const isWebHidSupported = (): boolean => {
   return typeof window !== 'undefined' && 'hid' in navigator;
 };
@@ -59,15 +67,12 @@ export const isWebUsbSupported = (): boolean => {
   return typeof window !== 'undefined' && 'usb' in navigator;
 };
 
-/**
- * Connect to Trezor and get public key
- */
 export const connectTrezor = async (
-  path: string = "m/84'/0'/0'/0/0"
+  network: BitcoinNetwork = 'mainnet'
 ): Promise<WalletPublicKey> => {
-  // Dynamically import Trezor Connect to avoid SSR issues
   const TrezorConnect = (await import('@trezor/connect-web')).default;
-  
+  const path = getDerivationPath(network);
+
   await TrezorConnect.init({
     lazyLoad: true,
     manifest: {
@@ -79,7 +84,7 @@ export const connectTrezor = async (
 
   const result = await TrezorConnect.getPublicKey({
     path,
-    coin: 'btc',
+    coin: network === 'mainnet' ? 'btc' : 'testnet',
   });
 
   if (!result.success) {
@@ -106,7 +111,9 @@ export const connectTrezor = async (
 /**
  * Connect to Ledger and get public key
  */
-export const connectLedger = async (): Promise<WalletPublicKey> => {
+export const connectLedger = async (
+  network: BitcoinNetwork = 'mainnet'
+): Promise<WalletPublicKey> => {
   if (!isWebHidSupported()) {
     throw new Error(
       'WebHID not supported in this browser.\n\n' +
@@ -117,23 +124,21 @@ export const connectLedger = async (): Promise<WalletPublicKey> => {
     );
   }
 
-  // Dynamically import Ledger libraries
   const TransportWebHID = (await import('@ledgerhq/hw-transport-webhid')).default;
   const Btc = (await import('@ledgerhq/hw-app-btc')).default;
 
   const transport = await TransportWebHID.create();
-  
+  const path = getDerivationPath(network);
+
   try {
     const app = new Btc({ transport });
-    
-    // Get wallet public key for native segwit path
-    const result = await app.getWalletPublicKey("84'/0'/0'/0/0", { 
-      format: 'bech32' 
+    const result = await app.getWalletPublicKey(path, {
+      format: 'bech32',
     });
 
     return {
       publicKey: result.publicKey,
-      path: "m/84'/0'/0'/0/0",
+      path: `m/${path}`,
     };
   } finally {
     await transport.close();
@@ -144,13 +149,14 @@ export const connectLedger = async (): Promise<WalletPublicKey> => {
  * Connect to hardware wallet based on type
  */
 export const connectHardwareWallet = async (
-  type: HardwareWalletType
+  type: HardwareWalletType,
+  network: BitcoinNetwork = 'mainnet'
 ): Promise<WalletPublicKey> => {
   switch (type) {
     case 'trezor':
-      return connectTrezor();
+      return connectTrezor(network);
     case 'ledger':
-      return connectLedger();
+      return connectLedger(network);
     case 'coldcard':
       throw new Error('Coldcard USB support coming soon. Use QR code scan instead.');
     default:

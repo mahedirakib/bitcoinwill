@@ -6,12 +6,15 @@ import {
 } from '@/lib/bitcoin/types';
 import { normalizePubkeyHex } from './safety';
 
-export type WizardDraftStep = 'TYPE' | 'KEYS' | 'TIMELOCK' | 'REVIEW';
+import type { PlanOutput } from '@/lib/bitcoin/types';
+
+export type WizardDraftStep = 'TYPE' | 'KEYS' | 'TIMELOCK' | 'REVIEW' | 'RESULT';
 
 const DEFAULT_LOCKTIME_BLOCKS = 144;
 const MIN_LOCKTIME_BLOCKS = 1;
 const MAX_LOCKTIME_BLOCKS = 52_560;
-const WIZARD_DRAFT_STEPS: readonly WizardDraftStep[] = ['TYPE', 'KEYS', 'TIMELOCK', 'REVIEW'];
+const WIZARD_DRAFT_STEPS: readonly WizardDraftStep[] = ['TYPE', 'KEYS', 'TIMELOCK', 'REVIEW', 'RESULT'];
+const DRAFT_EXPIRY_MS = 60 * 60 * 1000;
 
 const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
@@ -39,9 +42,24 @@ const sanitizePlanInput = (value: Record<string, unknown>, fallbackNetwork: Bitc
   locktime_blocks: sanitizeLocktime(value.locktime_blocks),
 });
 
+const isValidPlanOutput = (value: unknown): value is PlanOutput => {
+  if (!isObjectRecord(value)) return false;
+  if (typeof value.address !== 'string') return false;
+  if (typeof value.script_hex !== 'string') return false;
+  return true;
+};
+
+const parseTimestamp = (value: unknown): Date | null => {
+  if (typeof value !== 'string') return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date;
+};
+
 export interface RestoredWizardDraft {
   step: WizardDraftStep;
   input: PlanInput;
+  result?: PlanOutput;
 }
 
 export const parseWizardDraft = (
@@ -61,8 +79,22 @@ export const parseWizardDraft = (
   if (!isWizardDraftStep(parsed.step)) return null;
   if (!isObjectRecord(parsed.input)) return null;
 
-  return {
+  const timestamp = parseTimestamp(parsed.timestamp);
+  if (timestamp) {
+    const ageMs = Date.now() - timestamp.getTime();
+    if (ageMs > DRAFT_EXPIRY_MS) {
+      return null;
+    }
+  }
+
+  const restored: RestoredWizardDraft = {
     step: parsed.step,
     input: sanitizePlanInput(parsed.input, fallbackNetwork),
   };
+
+  if (parsed.result && isValidPlanOutput(parsed.result)) {
+    restored.result = parsed.result as PlanOutput;
+  }
+
+  return restored;
 };

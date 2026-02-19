@@ -1,27 +1,12 @@
-import type { InstructionModel } from '@/lib/bitcoin/instructions';
-import type { 
-  AddressSummary, 
-  BroadcastTransactionResult, 
-  ExplorerProvider 
+import type { InstructionModel, RecoveryKitData } from '@/lib/bitcoin/instructions';
+import type {
+  AddressSummary,
+  BroadcastTransactionResult,
+  ExplorerProvider
 } from '@/lib/bitcoin/explorer';
 import type { CheckInPlan } from '@/lib/bitcoin/checkin';
-import type { BitcoinNetwork } from '@/lib/bitcoin/types';
 
-export interface RecoveryKitData {
-  plan: {
-    network: BitcoinNetwork;
-    owner_pubkey: string;
-    beneficiary_pubkey: string;
-    locktime_blocks: number;
-  };
-  result: {
-    address: string;
-    witness_script: string;
-    script_asm: string;
-    descriptor: string;
-  };
-  created_at?: string;
-}
+export type { RecoveryKitData };
 
 export interface UseVaultStatusReturn {
   vaultStatus: AddressSummary | null;

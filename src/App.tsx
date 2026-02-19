@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { BookOpen, AlertCircle, FileText, ShieldAlert, Cpu, Menu, X, Users, Zap, History, ScrollText } from 'lucide-react'
 import DevPlayground from './components/DevPlayground'
-import { WillCreatorWizard } from './features/will-creator/WillCreatorWizard'
+import { WillCreatorWizard, type InstructionData } from './features/will-creator/WillCreatorWizard'
 import Learn from './pages/Learn'
 import Instructions from './pages/Instructions'
 import Protocol from './pages/Protocol'
@@ -68,11 +68,7 @@ const AppContent = () => {
   const [forceQaCrash, setForceQaCrash] = useState(false)
   const currentView: AppView = activeView
   const historyActionRef = useRef<'push' | 'replace'>('replace')
-  const [instructionData, setInstructionData] = useState<{
-    plan: PlanInput;
-    result: PlanOutput;
-    created_at?: string;
-  } | undefined>(undefined)
+  const [instructionData, setInstructionData] = useState<InstructionData | undefined>(undefined)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const { network } = useSettings()
 

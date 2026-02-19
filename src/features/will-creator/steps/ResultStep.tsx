@@ -1,6 +1,7 @@
-import { CheckCircle2, Copy, Download, FileText, Printer, QrCode, Users, AlertTriangle } from 'lucide-react';
+import { CheckCircle2, Download, FileText, Printer, QrCode, Users, AlertTriangle } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import type { PlanOutput } from '@/lib/bitcoin/types';
+import { CopyButton } from '@/components/CopyButton';
 
 interface ResultStepProps {
   result: PlanOutput;
@@ -48,14 +49,13 @@ export const ResultStep = ({
               <div className="flex-1 p-5 bg-muted border border-border rounded-2xl font-mono text-xs break-all leading-relaxed shadow-inner">
                 {result.address}
               </div>
-              <button
-                type="button"
-                aria-label="Copy vault address"
-                onClick={() => onCopyToClipboard(result.address, 'Address')}
+              <CopyButton
+                text={result.address}
+                label="Address"
+                onCopy={onCopyToClipboard}
+                ariaLabel="Copy vault address"
                 className="p-4 bg-white border border-border rounded-2xl hover:bg-muted transition-colors group shadow-sm"
-              >
-                <Copy className="w-5 h-5 opacity-60 group-hover:opacity-100 transition-opacity" />
-              </button>
+              />
             </div>
           </div>
 
@@ -65,14 +65,13 @@ export const ResultStep = ({
               <pre className="flex-1 p-5 bg-muted border border-border rounded-2xl text-[10px] font-mono overflow-x-auto opacity-80 leading-relaxed shadow-inner">
                 {result.script_asm}
               </pre>
-              <button
-                type="button"
-                aria-label="Copy witness script hex"
-                onClick={() => onCopyToClipboard(result.script_hex, 'Script')}
+              <CopyButton
+                text={result.script_hex}
+                label="Script"
+                onCopy={onCopyToClipboard}
+                ariaLabel="Copy witness script hex"
                 className="p-4 bg-white border border-border rounded-2xl h-fit hover:bg-muted transition-colors group shadow-sm"
-              >
-                <Copy className="w-5 h-5 opacity-60 group-hover:opacity-100 transition-opacity" />
-              </button>
+              />
             </div>
           </div>
 
@@ -98,14 +97,12 @@ export const ResultStep = ({
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-bold">Share {share.index}</span>
                       <div className="flex gap-2">
-                        <button
-                          type="button"
-                          onClick={() => onCopyToClipboard(share.share, `Share ${share.index}`)}
+                        <CopyButton
+                          text={share.share}
+                          label={`Share ${share.index}`}
+                          onCopy={onCopyToClipboard}
                           className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors"
-                          title="Copy share"
-                        >
-                          <Copy className="w-4 h-4" />
-                        </button>
+                        />
                       </div>
                     </div>
                     
