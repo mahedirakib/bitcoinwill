@@ -44,6 +44,7 @@ export interface RecoveryPageProps {
 export interface RecoveryKitLoaderProps {
   onLoad: (model: InstructionModel) => void;
   onBack: () => void;
+  onSocialRecovery?: () => void;
 }
 
 export interface VaultStatusPanelProps {
@@ -74,6 +75,7 @@ export interface BroadcastPanelProps {
   broadcastMainnetPhrase: string;
   onBroadcastMainnetPhraseChange: (value: string) => void;
   onBroadcast: () => void;
+  reconstructedKey?: string | null;
 }
 
 import { ReactNode } from 'react';

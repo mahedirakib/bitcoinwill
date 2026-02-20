@@ -7,4 +7,5 @@ export * from './components/VaultStatusPanel';
 export * from './components/CheckInPanel';
 export * from './components/BroadcastPanel';
 export * from './components/InstructionsView';
+export * from './components/ShareRecovery';
 export { default as RecoveryPage } from './RecoveryPage';

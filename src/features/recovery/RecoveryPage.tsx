@@ -18,11 +18,14 @@ import {
   VaultStatusPanel,
   CheckInPanel,
   BroadcastPanel,
+  ShareRecovery,
 } from '@/features/recovery';
 import type { RecoveryPageProps } from '@/features/recovery';
 
 const RecoveryPage = ({ initialData, onBack }: RecoveryPageProps) => {
   const [model, setModel] = useState<InstructionModel | null>(null);
+  const [showShareRecovery, setShowShareRecovery] = useState(false);
+  const [reconstructedKey, setReconstructedKey] = useState<string | null>(null);
   const { showToast } = useToast();
 
   const recoveryNetwork = (model?.network.toLowerCase() ?? 'testnet') as BitcoinNetwork;
@@ -79,6 +82,14 @@ const RecoveryPage = ({ initialData, onBack }: RecoveryPageProps) => {
     setModel(loadedModel);
   };
 
+  const handleKeyReconstructed = (privateKeyHex: string) => {
+    setReconstructedKey(privateKeyHex);
+    showToast('Private key reconstructed. Proceed to claim.');
+    // Note: We still need the recovery kit to get the vault details
+    // The beneficiary should load the recovery kit OR enter vault details manually
+    setShowShareRecovery(false);
+  };
+
   const handleDownloadTxt = () => {
     if (model) {
       downloadTxt('beneficiary-instructions.txt', generateInstructionTxt(model));
@@ -89,8 +100,29 @@ const RecoveryPage = ({ initialData, onBack }: RecoveryPageProps) => {
     window.print();
   };
 
+  const handleBackToLoader = () => {
+    setShowShareRecovery(false);
+    setReconstructedKey(null);
+    setModel(null);
+  };
+
+  if (showShareRecovery) {
+    return (
+      <ShareRecovery
+        onKeyReconstructed={handleKeyReconstructed}
+        onCancel={handleBackToLoader}
+      />
+    );
+  }
+
   if (!model) {
-    return <RecoveryKitLoader onLoad={handleLoadModel} onBack={onBack} />;
+    return (
+      <RecoveryKitLoader
+        onLoad={handleLoadModel}
+        onBack={onBack}
+        onSocialRecovery={() => setShowShareRecovery(true)}
+      />
+    );
   }
 
   return (
@@ -98,7 +130,7 @@ const RecoveryPage = ({ initialData, onBack }: RecoveryPageProps) => {
       model={model}
       onDownloadTxt={handleDownloadTxt}
       onPrint={handlePrint}
-      onBack={onBack}
+      onBack={handleBackToLoader}
     >
       {publicExplorerAvailable ? (
         <>
@@ -130,6 +162,7 @@ const RecoveryPage = ({ initialData, onBack }: RecoveryPageProps) => {
             broadcastMainnetPhrase={broadcastMainnetPhrase}
             onBroadcastMainnetPhraseChange={setBroadcastMainnetPhrase}
             onBroadcast={broadcastTransaction}
+            reconstructedKey={reconstructedKey}
           />
         </>
       ) : (

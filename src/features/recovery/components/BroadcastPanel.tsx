@@ -1,4 +1,4 @@
-import { Send, ExternalLink } from 'lucide-react';
+import { Send, ExternalLink, Key, CheckCircle2 } from 'lucide-react';
 import type { BroadcastPanelProps } from '../types';
 
 const MAINNET_BROADCAST_CONFIRMATION = 'I UNDERSTAND THIS BROADCASTS ON MAINNET';
@@ -13,6 +13,7 @@ export const BroadcastPanel = ({
   broadcastMainnetPhrase,
   onBroadcastMainnetPhraseChange,
   onBroadcast,
+  reconstructedKey,
 }: BroadcastPanelProps) => {
   const isMainnet = model.network === 'MAINNET';
   const canBroadcast = 
@@ -24,6 +25,26 @@ export const BroadcastPanel = ({
       <h2 className="text-xl font-bold border-b border-border pb-2 flex items-center gap-2 print:border-gray-300">
         <Send className="w-5 h-5 text-primary" /> Broadcast Recovery Transaction
       </h2>
+
+      {reconstructedKey && (
+        <div className="p-4 rounded-xl border border-green-500/20 bg-green-500/5 space-y-3">
+          <div className="flex items-center gap-2 text-green-700">
+            <CheckCircle2 className="w-5 h-5" />
+            <span className="font-bold">Private Key Reconstructed</span>
+          </div>
+          <p className="text-sm text-green-600/80">
+            You have successfully combined your shares. Use the reconstructed private key 
+            in a wallet like Sparrow to create and sign the recovery transaction, then paste 
+            the signed transaction hex below.
+          </p>
+          <div className="flex items-center gap-2 p-3 bg-white rounded-lg border border-green-500/20">
+            <Key className="w-4 h-4 text-green-600" />
+            <span className="text-xs font-mono text-foreground/60">
+              {reconstructedKey.slice(0, 16)}...{reconstructedKey.slice(-16)}
+            </span>
+          </div>
+        </div>
+      )}
 
       <p className="text-sm text-foreground/70 leading-relaxed">
         Paste a fully signed raw transaction hex from your wallet, then broadcast it to the selected public explorer.
