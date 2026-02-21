@@ -1,18 +1,38 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, lazy, Suspense } from 'react'
 import { BookOpen, AlertCircle, FileText, ShieldAlert, Cpu, Menu, X, Users, Zap, History, ScrollText } from 'lucide-react'
 import DevPlayground from './components/DevPlayground'
 import { WillCreatorWizard, type InstructionData } from './features/will-creator/WillCreatorWizard'
-import Learn from './pages/Learn'
-import Instructions from './pages/Instructions'
-import Protocol from './pages/Protocol'
-import Whitepaper from './pages/Whitepaper'
 import { SettingsProvider, useSettings } from './state/settings'
 import { NetworkSelector } from './components/NetworkSelector'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { ToastProvider } from './components/Toast'
 import { KeyboardShortcutsHelp } from './components/KeyboardShortcutsHelp'
+import { PageLoading } from './components/Loading'
 import type { PlanInput, PlanOutput } from './lib/bitcoin/types'
 import logo from './assets/logo.png'
+
+// Lazy load pages for code splitting with prefetching
+const Learn = lazy(() => import('./pages/Learn'))
+const Instructions = lazy(() => import('./pages/Instructions'))
+const Protocol = lazy(() => import('./pages/Protocol'))
+const Whitepaper = lazy(() => import('./pages/Whitepaper'))
+
+// Prefetch functions for hover/idle loading
+const prefetchLearn = () => {
+  const link = document.createElement('link')
+  link.rel = 'prefetch'
+  link.as = 'script'
+  link.href = new URL('./pages/Learn', import.meta.url).href
+  document.head.appendChild(link)
+}
+
+const prefetchProtocol = () => {
+  const link = document.createElement('link')
+  link.rel = 'prefetch'
+  link.as = 'script'
+  link.href = new URL('./pages/Protocol', import.meta.url).href
+  document.head.appendChild(link)
+}
 
 type AppView = 'home' | 'create' | 'recover' | 'dev' | 'learn' | 'instructions' | 'protocol' | 'whitepaper'
 const DEV_VIEW_ENABLED = import.meta.env.DEV
@@ -111,17 +131,31 @@ const AppContent = () => {
   }, [activeView])
 
   if (activeView === 'dev' && DEV_VIEW_ENABLED) return <DevPlayground />;
-  if (activeView === 'learn') return <Learn onBack={() => navigateTo('home', 'replace')} />;
-  if (activeView === 'protocol') return <Protocol onBack={() => navigateTo('home', 'replace')} onOpenWhitepaper={() => openWhitepaper('protocol')} />;
-  if (activeView === 'whitepaper') return <Whitepaper onBack={() => navigateTo(whitepaperBackView, 'replace')} />;
+  if (activeView === 'learn') return (
+    <Suspense fallback={<PageLoading />}>
+      <Learn onBack={() => navigateTo('home', 'replace')} />
+    </Suspense>
+  );
+  if (activeView === 'protocol') return (
+    <Suspense fallback={<PageLoading />}>
+      <Protocol onBack={() => navigateTo('home', 'replace')} onOpenWhitepaper={() => openWhitepaper('protocol')} />
+    </Suspense>
+  );
+  if (activeView === 'whitepaper') return (
+    <Suspense fallback={<PageLoading />}>
+      <Whitepaper onBack={() => navigateTo(whitepaperBackView, 'replace')} />
+    </Suspense>
+  );
   if (activeView === 'instructions') return (
-    <Instructions 
-      initialData={instructionData}
-      onBack={() => {
-        setInstructionData(undefined);
-        navigateTo('home', 'replace');
-      }} 
-    />
+    <Suspense fallback={<PageLoading />}>
+      <Instructions 
+        initialData={instructionData}
+        onBack={() => {
+          setInstructionData(undefined);
+          navigateTo('home', 'replace');
+        }} 
+      />
+    </Suspense>
   );
 
   const navItems = [
@@ -168,7 +202,12 @@ const AppContent = () => {
                   return;
                 }
                 navigateTo(item.view);
-              }} 
+              }}
+              onMouseEnter={() => {
+                // Prefetch on hover for faster navigation
+                if (item.view === 'learn') prefetchLearn();
+                if (item.view === 'protocol') prefetchProtocol();
+              }}
               aria-current={currentView === item.view ? 'page' : undefined}
               className="text-sm font-semibold text-foreground/70 hover:text-primary transition-colors flex items-center gap-2"
             >
