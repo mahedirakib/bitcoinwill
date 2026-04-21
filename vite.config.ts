@@ -43,7 +43,7 @@ const getWalletVendorChunk = (id: string): string | undefined => {
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  base: '/bitcoinwill/',
+  base: '/',
   plugins: [
     react(),
     wasm(),
