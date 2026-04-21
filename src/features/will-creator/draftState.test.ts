@@ -58,12 +58,55 @@ describe('wizard draft restore helpers', () => {
         owner_pubkey: '02aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
         beneficiary_pubkey: '03bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
         locktime_blocks: 1_008,
+        address_type: 'p2wsh',
+        recovery_method: 'social',
+        sss_config: { threshold: 3, total: 5 },
+        plan_label: ' Family vault ',
       },
     });
 
     const restored = parseWizardDraft(payload, 'testnet');
     expect(restored?.step).toBe('REVIEW');
-    expect(restored?.input.network).toBe('mainnet');
-    expect(restored?.input.locktime_blocks).toBe(1_008);
+    expect(restored?.input).toEqual({
+      network: 'mainnet',
+      inheritance_type: 'timelock_recovery',
+      owner_pubkey: '02aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      beneficiary_pubkey: '03bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+      locktime_blocks: 1_008,
+      address_type: 'p2wsh',
+      recovery_method: 'social',
+      sss_config: { threshold: 3, total: 5 },
+      plan_label: 'Family vault',
+    });
+  });
+
+  it('drops invalid optional configuration fields', () => {
+    const payload = JSON.stringify({
+      step: 'TYPE',
+      input: {
+        network: 'testnet',
+        inheritance_type: 'timelock_recovery',
+        owner_pubkey: '02aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+        beneficiary_pubkey: '03bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+        locktime_blocks: 144,
+        address_type: 'legacy',
+        recovery_method: 'social',
+        sss_config: { threshold: 2, total: 5 },
+        plan_label: '   ',
+      },
+    });
+
+    const restored = parseWizardDraft(payload, 'testnet');
+    expect(restored?.input).toEqual({
+      network: 'testnet',
+      inheritance_type: 'timelock_recovery',
+      owner_pubkey: '02aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      beneficiary_pubkey: '03bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+      locktime_blocks: 144,
+      recovery_method: 'social',
+      sss_config: undefined,
+      address_type: undefined,
+      plan_label: undefined,
+    });
   });
 });

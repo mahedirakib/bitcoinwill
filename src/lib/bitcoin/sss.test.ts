@@ -4,6 +4,7 @@ import {
   combineShares,
   validateShare,
   getSSSOptions,
+  collectUniqueValidShares,
 } from './sss';
 
 describe('Shamir Secret Sharing', () => {
@@ -113,6 +114,10 @@ describe('Shamir Secret Sharing', () => {
       expect(validateShare('abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234')).toBe(true);
     });
 
+    it('should accept surrounding whitespace and uppercase hex', () => {
+      expect(validateShare('  ABCD1234ABCD1234ABCD1234ABCD1234ABCD1234ABCD1234ABCD1234ABCD1234  ')).toBe(true);
+    });
+
     it('should reject short shares', () => {
       expect(validateShare('abcd')).toBe(false);
       expect(validateShare('')).toBe(false);
@@ -120,6 +125,22 @@ describe('Shamir Secret Sharing', () => {
 
     it('should reject non-hex shares', () => {
       expect(validateShare('ghijklmnop')).toBe(false);
+    });
+  });
+
+  describe('collectUniqueValidShares', () => {
+    it('should trim, normalize, and deduplicate valid shares', () => {
+      const shareA = 'abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234';
+      const shareB = 'efef5678efef5678efef5678efef5678efef5678efef5678efef5678efef5678';
+
+      expect(
+        collectUniqueValidShares([
+          `  ${shareA.toUpperCase()}  `,
+          'not-a-share',
+          shareB,
+          shareA,
+        ]),
+      ).toEqual([shareA, shareB]);
     });
   });
 

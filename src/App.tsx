@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef, lazy, Suspense } from 'react'
+import { useState, useEffect, useRef, lazy, Suspense, startTransition } from 'react'
 import { BookOpen, AlertCircle, FileText, ShieldAlert, Cpu, Menu, X, Users, Zap, History, ScrollText } from 'lucide-react'
 import DevPlayground from './components/DevPlayground'
-import { WillCreatorWizard, type InstructionData } from './features/will-creator/WillCreatorWizard'
+import type { InstructionData } from './features/will-creator/WillCreatorWizard'
 import { SettingsProvider, useSettings } from './state/settings'
 import { NetworkSelector } from './components/NetworkSelector'
 import { ErrorBoundary } from './components/ErrorBoundary'
@@ -11,31 +11,42 @@ import { PageLoading } from './components/Loading'
 import type { PlanInput, PlanOutput } from './lib/bitcoin/types'
 import logo from './assets/logo.png'
 
-// Lazy load pages for code splitting with prefetching
-const Learn = lazy(() => import('./pages/Learn'))
-const Instructions = lazy(() => import('./pages/Instructions'))
-const Protocol = lazy(() => import('./pages/Protocol'))
-const Whitepaper = lazy(() => import('./pages/Whitepaper'))
-
-// Prefetch functions for hover/idle loading
-const prefetchLearn = () => {
-  const link = document.createElement('link')
-  link.rel = 'prefetch'
-  link.as = 'script'
-  link.href = new URL('./pages/Learn', import.meta.url).href
-  document.head.appendChild(link)
-}
-
-const prefetchProtocol = () => {
-  const link = document.createElement('link')
-  link.rel = 'prefetch'
-  link.as = 'script'
-  link.href = new URL('./pages/Protocol', import.meta.url).href
-  document.head.appendChild(link)
-}
-
 type AppView = 'home' | 'create' | 'recover' | 'dev' | 'learn' | 'instructions' | 'protocol' | 'whitepaper'
 const DEV_VIEW_ENABLED = import.meta.env.DEV
+
+const loadWillCreatorWizard = () => import('./features/will-creator/WillCreatorWizard')
+const loadLearnPage = () => import('./pages/Learn')
+const loadInstructionsPage = () => import('./pages/Instructions')
+const loadProtocolPage = () => import('./pages/Protocol')
+const loadWhitepaperPage = () => import('./pages/Whitepaper')
+
+const WillCreatorWizard = lazy(async () => {
+  const module = await loadWillCreatorWizard()
+  return { default: module.WillCreatorWizard }
+})
+const Learn = lazy(loadLearnPage)
+const Instructions = lazy(loadInstructionsPage)
+const Protocol = lazy(loadProtocolPage)
+const Whitepaper = lazy(loadWhitepaperPage)
+
+const preloadedViews = new Set<AppView>()
+const VIEW_PRELOADERS: Partial<Record<AppView, () => Promise<unknown>>> = {
+  create: loadWillCreatorWizard,
+  learn: loadLearnPage,
+  instructions: loadInstructionsPage,
+  protocol: loadProtocolPage,
+  whitepaper: loadWhitepaperPage,
+}
+
+const preloadView = (view: AppView) => {
+  const loader = VIEW_PRELOADERS[view]
+  if (!loader || preloadedViews.has(view)) return
+
+  preloadedViews.add(view)
+  void loader().catch(() => {
+    preloadedViews.delete(view)
+  })
+}
 
 const normalizeAppPath = (pathname: string): string => {
   const base = import.meta.env.BASE_URL || '/'
@@ -98,7 +109,10 @@ const AppContent = () => {
 
   const navigateTo = (view: AppView, action: 'push' | 'replace' = 'push') => {
     historyActionRef.current = action
-    setActiveView(view)
+    preloadView(view)
+    startTransition(() => {
+      setActiveView(view)
+    })
   }
 
   const openWhitepaper = (fromView: AppView = 'home') => {
@@ -203,11 +217,8 @@ const AppContent = () => {
                 }
                 navigateTo(item.view);
               }}
-              onMouseEnter={() => {
-                // Prefetch on hover for faster navigation
-                if (item.view === 'learn') prefetchLearn();
-                if (item.view === 'protocol') prefetchProtocol();
-              }}
+              onMouseEnter={() => preloadView(item.view)}
+              onFocus={() => preloadView(item.view)}
               aria-current={currentView === item.view ? 'page' : undefined}
               className="text-sm font-semibold text-foreground/70 hover:text-primary transition-colors flex items-center gap-2"
             >
@@ -355,19 +366,21 @@ const AppContent = () => {
         )}
 
         {activeView === 'create' && (
-          <div className="w-full px-4">
-            <WillCreatorWizard 
-              onCancel={() => navigateTo('home', 'replace')} 
-              onViewInstructions={(data) => {
-                setInstructionData(data as {
-                  plan: PlanInput;
-                  result: PlanOutput;
-                  created_at?: string;
-                });
-                navigateTo('instructions');
-              }}
-            />
-          </div>
+          <Suspense fallback={<PageLoading />}>
+            <div className="w-full px-4">
+              <WillCreatorWizard 
+                onCancel={() => navigateTo('home', 'replace')} 
+                onViewInstructions={(data) => {
+                  setInstructionData(data as {
+                    plan: PlanInput;
+                    result: PlanOutput;
+                    created_at?: string;
+                  });
+                  navigateTo('instructions');
+                }}
+              />
+            </div>
+          </Suspense>
         )}
       </main>
 

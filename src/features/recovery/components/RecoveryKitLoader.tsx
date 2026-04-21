@@ -15,9 +15,9 @@ export const RecoveryKitLoader = ({ onLoad, onBack, onSocialRecovery }: Extended
   const [jsonInput, setJsonInput] = useState('');
   const { showToast } = useToast();
 
-  const handleJsonUpload = () => {
+  const loadRecoveryKit = (serializedKit: string) => {
     try {
-      const parsed = JSON.parse(jsonInput);
+      const parsed = JSON.parse(serializedKit);
       const normalized = validateAndNormalizeRecoveryKit(parsed);
       const model = buildInstructions(normalized.plan, normalized.result, normalized.created_at);
       onLoad(model);
@@ -25,6 +25,26 @@ export const RecoveryKitLoader = ({ onLoad, onBack, onSocialRecovery }: Extended
     } catch (error) {
       const message = (error as Error).message;
       showToast(message || "Error parsing JSON");
+    }
+  };
+
+  const handleJsonUpload = () => {
+    loadRecoveryKit(jsonInput);
+  };
+
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = event.target.files?.[0];
+    if (!selectedFile) return;
+
+    try {
+      const fileContents = await selectedFile.text();
+      setJsonInput(fileContents);
+      loadRecoveryKit(fileContents);
+    } catch (error) {
+      const message = (error as Error).message;
+      showToast(message || "Error reading Recovery Kit file");
+    } finally {
+      event.target.value = '';
     }
   };
 
@@ -51,9 +71,25 @@ export const RecoveryKitLoader = ({ onLoad, onBack, onSocialRecovery }: Extended
             </div>
             <div>
               <h3 className="font-bold">I have the Recovery Kit</h3>
-              <p className="text-sm text-foreground/60">Paste your JSON recovery kit file</p>
+              <p className="text-sm text-foreground/60">Paste the JSON or choose the exported recovery kit file</p>
             </div>
           </div>
+
+          <label
+            htmlFor="recovery-kit-file"
+            className="flex items-center justify-center w-full py-3 rounded-xl border border-dashed border-primary/30 text-sm font-bold text-primary hover:bg-primary/5 transition-colors cursor-pointer"
+          >
+            Choose Recovery Kit File
+            <input
+              id="recovery-kit-file"
+              type="file"
+              accept=".json,application/json"
+              className="sr-only"
+              onChange={handleFileSelect}
+            />
+          </label>
+
+          <p className="text-xs text-center text-foreground/50 uppercase tracking-[0.2em]">or paste it below</p>
           
           <label htmlFor="recovery-kit-json" className="sr-only">Recovery kit JSON</label>
           <textarea

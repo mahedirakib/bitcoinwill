@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Shield, Users, Lock, Unlock, AlertTriangle, ChevronRight, Trash2, Key } from 'lucide-react';
-import { combineShares } from '@/lib/bitcoin/sss';
+import { collectUniqueValidShares, combineShares } from '@/lib/bitcoin/sss';
 import { useToast } from '@/components/Toast';
 
 interface ShareRecoveryProps {
@@ -37,8 +37,8 @@ export const ShareRecovery = ({ onKeyReconstructed, onCancel }: ShareRecoveryPro
     }
   };
 
-  const validShares = shares.filter(s => s.length >= 64);
-  const canCombine = validShares.length >= threshold;
+  const recoverableShares = collectUniqueValidShares(shares);
+  const canCombine = recoverableShares.length >= threshold;
 
   const handleCombine = async () => {
     if (!canCombine) {
@@ -48,7 +48,7 @@ export const ShareRecovery = ({ onKeyReconstructed, onCancel }: ShareRecoveryPro
 
     setIsCombining(true);
     try {
-      const key = await combineShares(validShares.slice(0, threshold));
+      const key = await combineShares(recoverableShares);
       setReconstructedKey(key);
       showToast('Private key reconstructed successfully');
     } catch (error) {
@@ -225,7 +225,7 @@ export const ShareRecovery = ({ onKeyReconstructed, onCancel }: ShareRecoveryPro
         <div className="flex items-center gap-2 text-sm">
           <div className={`w-2 h-2 rounded-full ${canCombine ? 'bg-green-500' : 'bg-foreground/20'}`} />
           <span className={canCombine ? 'text-green-600' : 'text-foreground/50'}>
-            {validShares.length} of {threshold} required shares entered
+            {recoverableShares.length} of {threshold} required unique shares entered
           </span>
         </div>
       </div>

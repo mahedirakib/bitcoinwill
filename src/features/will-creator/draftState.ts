@@ -1,5 +1,6 @@
 import {
   INHERITANCE_TYPE,
+  isAddressType,
   isBitcoinNetwork,
   type BitcoinNetwork,
   type PlanInput,
@@ -34,13 +35,45 @@ const sanitizeLocktime = (value: unknown): number => {
   return locktime;
 };
 
-const sanitizePlanInput = (value: Record<string, unknown>, fallbackNetwork: BitcoinNetwork): PlanInput => ({
-  network: isBitcoinNetwork(value.network) ? value.network : fallbackNetwork,
-  inheritance_type: INHERITANCE_TYPE,
-  owner_pubkey: sanitizePubkey(value.owner_pubkey),
-  beneficiary_pubkey: sanitizePubkey(value.beneficiary_pubkey),
-  locktime_blocks: sanitizeLocktime(value.locktime_blocks),
-});
+const sanitizeRecoveryMethod = (value: unknown): PlanInput['recovery_method'] | undefined =>
+  value === 'single' || value === 'social' ? value : undefined;
+
+const sanitizeSssConfig = (value: unknown): PlanInput['sss_config'] | undefined => {
+  if (!isObjectRecord(value)) return undefined;
+
+  const { threshold, total } = value;
+  if (
+    (threshold === 2 && total === 3) ||
+    (threshold === 3 && total === 5)
+  ) {
+    return { threshold, total };
+  }
+
+  return undefined;
+};
+
+const sanitizePlanLabel = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+};
+
+const sanitizePlanInput = (value: Record<string, unknown>, fallbackNetwork: BitcoinNetwork): PlanInput => {
+  const recoveryMethod = sanitizeRecoveryMethod(value.recovery_method);
+  const sssConfig = recoveryMethod === 'social' ? sanitizeSssConfig(value.sss_config) : undefined;
+
+  return {
+    network: isBitcoinNetwork(value.network) ? value.network : fallbackNetwork,
+    inheritance_type: INHERITANCE_TYPE,
+    owner_pubkey: sanitizePubkey(value.owner_pubkey),
+    beneficiary_pubkey: sanitizePubkey(value.beneficiary_pubkey),
+    locktime_blocks: sanitizeLocktime(value.locktime_blocks),
+    address_type: isAddressType(value.address_type) ? value.address_type : undefined,
+    recovery_method: recoveryMethod,
+    sss_config: sssConfig,
+    plan_label: sanitizePlanLabel(value.plan_label),
+  };
+};
 
 const isValidPlanOutput = (value: unknown): value is PlanOutput => {
   if (!isObjectRecord(value)) return false;

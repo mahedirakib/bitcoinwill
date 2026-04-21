@@ -1,4 +1,6 @@
+import { Buffer } from 'buffer';
 import type { BitcoinNetwork } from './types';
+import { bytesToHex } from './hex';
 
 export type HardwareWalletType = 'trezor' | 'ledger' | 'coldcard';
 
@@ -67,10 +69,70 @@ export const isWebUsbSupported = (): boolean => {
   return typeof window !== 'undefined' && 'usb' in navigator;
 };
 
+const LEDGER_BECH32_FORMAT = 2;
+
+interface LedgerTransportLike {
+  send: (
+    cla: number,
+    ins: number,
+    p1: number,
+    p2: number,
+    data?: Buffer,
+    statusList?: number[],
+    options?: { abortTimeoutMs?: number },
+  ) => Promise<Buffer>;
+}
+
+const encodeBip32Path = (path: string): Buffer => {
+  const segments = path.split('/').filter(Boolean);
+  const encodedPath = Buffer.alloc(1 + segments.length * 4);
+
+  encodedPath[0] = segments.length;
+
+  segments.forEach((segment, index) => {
+    const isHardened = segment.endsWith("'");
+    const normalizedSegment = isHardened ? segment.slice(0, -1) : segment;
+
+    if (!/^\d+$/.test(normalizedSegment)) {
+      throw new Error(`Invalid derivation path segment: ${segment}`);
+    }
+
+    const value = Number.parseInt(normalizedSegment, 10);
+    if (!Number.isSafeInteger(value) || value < 0 || value >= 0x80000000) {
+      throw new Error(`Invalid derivation path index: ${segment}`);
+    }
+
+    encodedPath.writeUInt32BE(isHardened ? value + 0x80000000 : value, 1 + index * 4);
+  });
+
+  return encodedPath;
+};
+
+const getLedgerWalletPublicKey = async (
+  transport: LedgerTransportLike,
+  path: string,
+): Promise<WalletPublicKey> => {
+  const response = await transport.send(
+    0xe0,
+    0x40,
+    0x00,
+    LEDGER_BECH32_FORMAT,
+    encodeBip32Path(path),
+  );
+
+  const publicKeyLength = response[0];
+  const addressLengthOffset = 1 + publicKeyLength;
+
+  return {
+    publicKey: bytesToHex(response.slice(1, addressLengthOffset)),
+    path: `m/${path}`,
+  };
+};
+
 export const connectTrezor = async (
   network: BitcoinNetwork = 'mainnet'
 ): Promise<WalletPublicKey> => {
-  const TrezorConnect = (await import('@trezor/connect-web')).default;
+  const TrezorConnect = (await import('@trezor/connect-web/lib/module/index.js')).default;
   const path = getDerivationPath(network);
 
   await TrezorConnect.init({
@@ -124,22 +186,15 @@ export const connectLedger = async (
     );
   }
 
-  const TransportWebHID = (await import('@ledgerhq/hw-transport-webhid')).default;
-  const Btc = (await import('@ledgerhq/hw-app-btc')).default;
+  const transportModule = await import('@ledgerhq/hw-transport-webhid');
+
+  const TransportWebHID = transportModule.default;
 
   const transport = await TransportWebHID.create();
   const path = getDerivationPath(network);
 
   try {
-    const app = new Btc({ transport });
-    const result = await app.getWalletPublicKey(path, {
-      format: 'bech32',
-    });
-
-    return {
-      publicKey: result.publicKey,
-      path: `m/${path}`,
-    };
+    return await getLedgerWalletPublicKey(transport, path);
   } finally {
     await transport.close();
   }

@@ -42,6 +42,9 @@ export interface SocialRecoveryKit {
   instructions: string[];
 }
 
+const normalizeShareHex = (shareHex: string): string =>
+  shareHex.trim().toLowerCase();
+
 /**
  * Get available SSS configurations for UI display.
  */
@@ -105,7 +108,7 @@ export const combineShares = async (shares: string[]): Promise<string> => {
     throw new Error('At least 2 shares required to reconstruct');
   }
 
-  const shareBuffers = shares.map(hexToBytes);
+  const shareBuffers = shares.map((share) => hexToBytes(normalizeShareHex(share)));
   const secret = await combine(shareBuffers);
   
   return bytesToHex(secret);
@@ -141,5 +144,17 @@ const generateInstructions = (config: SSSConfig): string[] => {
 export const validateShare = (shareHex: string): boolean => {
   // Shares are typically longer than the secret (contain metadata)
   // Minimum: 64 hex chars, but typically 70-80+ chars
-  return /^[0-9a-fA-F]{64,}$/.test(shareHex);
+  return /^[0-9a-f]{64,}$/.test(normalizeShareHex(shareHex));
 };
+
+/**
+ * Normalizes pasted share input and keeps the first occurrence of each valid share.
+ */
+export const collectUniqueValidShares = (shares: string[]): string[] =>
+  Array.from(
+    new Set(
+      shares
+        .map(normalizeShareHex)
+        .filter((share) => validateShare(share)),
+    ),
+  );
