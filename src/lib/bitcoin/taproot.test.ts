@@ -88,6 +88,22 @@ describe('Taproot (P2TR) Plan Generation', () => {
     expect(plan.descriptor.startsWith('tr(')).toBe(true);
   });
 
+  it('should use the full BIP341 NUMS x-only internal key', () => {
+    const input: PlanInput = {
+      network: 'testnet',
+      inheritance_type: 'timelock_recovery',
+      owner_pubkey: TEST_OWNER_KEY,
+      beneficiary_pubkey: TEST_BENEFICIARY_KEY,
+      locktime_blocks: 144,
+    };
+
+    const plan = buildTaprootPlan(input);
+
+    expect(plan.descriptor).toContain(
+      'tr(50929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac0,',
+    );
+  });
+
   it('should provide human-readable explanations', () => {
     const input: PlanInput = {
       network: 'testnet',

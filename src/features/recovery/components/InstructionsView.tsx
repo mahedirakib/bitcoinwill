@@ -1,5 +1,5 @@
 import { Printer, Download, ChevronLeft, AlertTriangle, Info, History } from 'lucide-react';
-import logo from '@/assets/logo.png';
+import logo from '@/assets/logo.svg';
 import { DataRow } from '@/components/DataDisplay';
 import type { InstructionsViewProps } from '../types';
 

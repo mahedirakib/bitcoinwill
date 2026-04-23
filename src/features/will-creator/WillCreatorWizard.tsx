@@ -9,7 +9,7 @@ import { useToast } from '@/components/Toast';
 import { normalizePubkeyHex, usesDisallowedSampleKey } from './safety';
 import { parseWizardDraft } from './draftState';
 import { splitPrivateKey } from '@/lib/bitcoin/sss';
-import { bytesToHex } from '@/lib/bitcoin/hex';
+import { bytesToHex, hexToBytes } from '@/lib/bitcoin/hex';
 import { connectHardwareWallet, type HardwareWalletType } from '@/lib/bitcoin/hardwareWallet';
 import { TypeStep } from './steps/TypeStep';
 import { KeysStep } from './steps/KeysStep';
@@ -131,10 +131,13 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorW
       const errors: Record<string, string> = {};
       const ownerPubkey = normalizePubkeyHex(state.input.owner_pubkey);
       const beneficiaryPubkey = normalizePubkeyHex(state.input.beneficiary_pubkey);
+      const usesGeneratedBeneficiaryKey = state.input.recovery_method === 'social';
 
       if (!validatePubkey(ownerPubkey)) errors.owner = 'Invalid public key format (must be 66 hex characters).';
-      if (!validatePubkey(beneficiaryPubkey)) errors.beneficiary = 'Invalid public key format.';
-      if (ownerPubkey === beneficiaryPubkey) errors.beneficiary = 'Keys must be different.';
+      if (!usesGeneratedBeneficiaryKey) {
+        if (!validatePubkey(beneficiaryPubkey)) errors.beneficiary = 'Invalid public key format.';
+        if (ownerPubkey === beneficiaryPubkey) errors.beneficiary = 'Keys must be different.';
+      }
       
       if (Object.keys(errors).length > 0) dispatch({ type: 'SET_ERRORS', payload: errors });
       else dispatch({ type: 'SET_STEP', payload: 'TIMELOCK' });
@@ -151,7 +154,10 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorW
   const handleGenerate = async () => {
     if (
       state.input.network === 'mainnet' &&
-      usesDisallowedSampleKey(state.input.owner_pubkey, state.input.beneficiary_pubkey)
+      usesDisallowedSampleKey(
+        state.input.owner_pubkey,
+        state.input.recovery_method === 'social' ? '' : state.input.beneficiary_pubkey,
+      )
     ) {
       dispatch({
         type: 'SET_ERRORS',
@@ -198,7 +204,7 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorW
 
     try {
       const planInput = { ...state.input };
-      const publicKey = ecc.pointFromScalar(Buffer.from(pendingSSSKey, 'hex'), true);
+      const publicKey = ecc.pointFromScalar(hexToBytes(pendingSSSKey), true);
       
       if (!publicKey) {
         throw new Error('Failed to regenerate beneficiary keypair');
@@ -241,11 +247,20 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorW
     showToast("Recovery Kit Downloaded");
   };
 
-  const copyToClipboard = (text: string, label: string) => {
-    navigator.clipboard
-      .writeText(text)
-      .then(() => showToast(`${label} Copied`))
-      .catch(() => showToast('Clipboard unavailable in this browser context'));
+  const copyToClipboard = async (text: string, label: string): Promise<boolean> => {
+    try {
+      if (!navigator.clipboard?.writeText) {
+        showToast('Clipboard unavailable in this browser context');
+        return false;
+      }
+
+      await navigator.clipboard.writeText(text);
+      showToast(`${label} Copied`);
+      return true;
+    } catch {
+      showToast('Clipboard unavailable in this browser context');
+      return false;
+    }
   };
 
   const handleHardwareWalletConnect = async (type: HardwareWalletType) => {

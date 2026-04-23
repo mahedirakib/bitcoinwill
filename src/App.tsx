@@ -9,7 +9,7 @@ import { ToastProvider } from './components/Toast'
 import { KeyboardShortcutsHelp } from './components/KeyboardShortcutsHelp'
 import { PageLoading } from './components/Loading'
 import type { PlanInput, PlanOutput } from './lib/bitcoin/types'
-import logo from './assets/logo.png'
+import logo from './assets/logo.svg'
 
 type AppView = 'home' | 'create' | 'recover' | 'dev' | 'learn' | 'instructions' | 'protocol' | 'whitepaper'
 const DEV_VIEW_ENABLED = import.meta.env.DEV

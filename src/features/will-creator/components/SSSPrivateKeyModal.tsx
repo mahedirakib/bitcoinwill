@@ -13,24 +13,35 @@ export const SSSPrivateKeyModal = ({ privateKey, onConfirm, onCancel }: SSSPriva
   const [hasCopied, setHasCopied] = useState(false);
   const [hasConfirmed, setHasConfirmed] = useState(false);
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(privateKey).then(() => {
+  const handleCopy = async () => {
+    try {
+      if (!navigator.clipboard?.writeText) {
+        showToast('Clipboard unavailable in this browser context');
+        return;
+      }
+
+      await navigator.clipboard.writeText(privateKey);
       setHasCopied(true);
       showToast('Private key copied to clipboard');
       setTimeout(() => setHasCopied(false), 2000);
-    }).catch(() => {
+    } catch {
       showToast('Failed to copy to clipboard');
-    });
+    }
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
-      <div className="w-full max-w-2xl bg-background rounded-3xl shadow-2xl border border-border overflow-hidden animate-in zoom-in-95">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="sss-private-key-title"
+        className="w-full max-w-2xl bg-background rounded-3xl shadow-2xl border border-border overflow-hidden animate-in zoom-in-95"
+      >
         <div className="p-6 bg-red-500/10 border-b border-red-500/20">
           <div className="flex items-center gap-3">
             <Shield className="w-8 h-8 text-red-500" />
             <div>
-              <h2 className="text-xl font-bold text-red-700">Critical Security Step</h2>
+              <h2 id="sss-private-key-title" className="text-xl font-bold text-red-700">Critical Security Step</h2>
               <p className="text-sm text-red-600/80">This private key will be split into shares. Save it now.</p>
             </div>
           </div>
@@ -61,6 +72,7 @@ export const SSSPrivateKeyModal = ({ privateKey, onConfirm, onCancel }: SSSPriva
                 onClick={handleCopy}
                 className="absolute top-2 right-2 p-2 bg-background rounded-xl border border-border hover:bg-muted transition-colors"
                 title="Copy to clipboard"
+                aria-label="Copy beneficiary private key"
               >
                 {hasCopied ? (
                   <Check className="w-4 h-4 text-green-500" />

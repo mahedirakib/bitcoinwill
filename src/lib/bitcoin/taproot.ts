@@ -11,7 +11,7 @@ initEccLib(ecc);
 // NUMS (Nothing Up My Sleeve) public key for unspendable internal key
 // This is the standard BIP341 NUMS point (32-byte x-only pubkey)
 // Source: https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki
-const NUMS_KEY_HEX = '50929b74c1a04954b78f4e4c2e56070430ca16dd8bb3856f8e0cb3d38f7d03aec';
+const NUMS_KEY_HEX = '50929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac0';
 
 export const buildTaprootPlan = (input: PlanInput): PlanOutput => {
   validatePlanInput(input);
@@ -40,8 +40,7 @@ export const buildTaprootPlan = (input: PlanInput): PlanOutput => {
     version: 0xc0 as const,
   };
 
-  // Convert NUMS key to Buffer for internal pubkey
-  const internalPubkey = Buffer.from(NUMS_KEY_HEX, 'hex');
+  const internalPubkey = hexToBytes(NUMS_KEY_HEX);
 
   const p2tr = payments.p2tr({
     internalPubkey,

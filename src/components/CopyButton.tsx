@@ -4,7 +4,7 @@ import { Copy, Check } from 'lucide-react';
 interface CopyButtonProps {
   text: string;
   label: string;
-  onCopy: (text: string, label: string) => void;
+  onCopy: (text: string, label: string) => boolean | Promise<boolean> | void;
   className?: string;
   ariaLabel?: string;
 }
@@ -12,8 +12,14 @@ interface CopyButtonProps {
 export const CopyButton = ({ text, label, onCopy, className = '', ariaLabel }: CopyButtonProps) => {
   const [hasCopied, setHasCopied] = useState(false);
 
-  const handleClick = () => {
-    onCopy(text, label);
+  const handleClick = async () => {
+    try {
+      const didCopy = await onCopy(text, label);
+      if (didCopy === false) return;
+    } catch {
+      return;
+    }
+
     setHasCopied(true);
     setTimeout(() => setHasCopied(false), 2000);
   };
