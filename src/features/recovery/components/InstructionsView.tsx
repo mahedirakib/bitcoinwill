@@ -27,7 +27,7 @@ export const InstructionsView = ({
           <button 
             type="button"
             onClick={onPrint}
-            className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-bold hover:shadow-lg hover:shadow-primary/20 transition-all"
+            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground transition-[background-color,box-shadow,transform] hover:-translate-y-0.5 hover:bg-[#ff9e18] hover:shadow-lg hover:shadow-primary/20"
           >
             <Printer className="w-4 h-4" /> Print PDF
           </button>

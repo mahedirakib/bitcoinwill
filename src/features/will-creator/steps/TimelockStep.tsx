@@ -1,7 +1,7 @@
 import { AlertTriangle } from 'lucide-react';
 import { calculateTime } from '@/lib/bitcoin/utils';
 import type { PlanInput } from '@/lib/bitcoin/types';
-import { BLOCKS_PER_MONTH } from '@/lib/bitcoin/types';
+import { BLOCKS_PER_DAY, BLOCKS_PER_WEEK, BLOCKS_PER_MONTH, MAX_LOCKTIME_BLOCKS } from '@/lib/bitcoin/types';
 
 interface TimelockStepProps {
   input: PlanInput;
@@ -10,27 +10,60 @@ interface TimelockStepProps {
   onNext: () => void;
 }
 
+const TIMELOCK_PRESETS = [
+  { label: '1 day', blocks: BLOCKS_PER_DAY },
+  { label: '1 week', blocks: BLOCKS_PER_WEEK },
+  { label: '1 month', blocks: BLOCKS_PER_MONTH },
+  { label: '3 months', blocks: BLOCKS_PER_MONTH * 3 },
+];
+
 export const TimelockStep = ({ input, dispatch, onBack, onNext }: TimelockStepProps) => {
+  const updateLocktime = (locktimeBlocks: number) => {
+    const boundedBlocks = Math.min(MAX_LOCKTIME_BLOCKS, Math.max(1, locktimeBlocks));
+    dispatch({ type: 'UPDATE_INPUT', payload: { locktime_blocks: boundedBlocks } });
+  };
+
   return (
-    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-500 md:space-y-10">
       <div className="space-y-3">
-        <h3 className="text-2xl font-bold">Set the Delay</h3>
-        <p className="text-foreground/60 font-medium">How long should the network wait before allowing your heir to claim funds?</p>
+        <h3 className="text-3xl font-black tracking-tight">Set the Delay</h3>
+        <p className="max-w-2xl font-medium text-foreground/60">
+          Choose how long the network should wait before the beneficiary path can be used. Blocks are roughly ten minutes each.
+        </p>
       </div>
 
-      <div className="glass p-12 space-y-12">
-        <div className="flex justify-between items-center">
+      <div className="glass space-y-8 p-6 md:space-y-10 md:p-10">
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
           <div className="space-y-1">
-            <span className="text-6xl font-black text-primary">{input.locktime_blocks}</span>
+            <span className="text-5xl font-black text-primary [font-variant-numeric:tabular-nums] md:text-6xl">{input.locktime_blocks}</span>
             <p className="text-xs font-bold uppercase tracking-widest text-foreground/60">Network Blocks</p>
           </div>
-          <div className="text-right space-y-1">
+          <div className="space-y-1 text-left sm:text-right">
             <p className="text-xs font-bold uppercase tracking-widest text-foreground/60">Approx. Delay</p>
-            <p className="text-4xl font-black">~{calculateTime(input.locktime_blocks)}</p>
+            <p className="text-3xl font-black md:text-4xl">~{calculateTime(input.locktime_blocks)}</p>
           </div>
         </div>
 
-        <div className="relative py-4">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {TIMELOCK_PRESETS.map((preset) => (
+            <button
+              key={preset.label}
+              type="button"
+              onClick={() => updateLocktime(preset.blocks)}
+              className={`rounded-xl border px-4 py-3 text-left transition-[border-color,background-color,transform] hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 ${
+                input.locktime_blocks === preset.blocks
+                  ? 'border-primary/30 bg-primary/10'
+                  : 'border-border bg-white/70 hover:border-primary/20'
+              }`}
+            >
+              <p className="text-sm font-bold text-foreground">{preset.label}</p>
+              <p className="text-xs text-foreground/55">{preset.blocks.toLocaleString()} blocks</p>
+            </button>
+          ))}
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_220px] lg:items-end">
+          <div className="relative py-1">
           <label htmlFor="timelock-range" className="sr-only">
             Timelock blocks
           </label>
@@ -39,19 +72,40 @@ export const TimelockStep = ({ input, dispatch, onBack, onNext }: TimelockStepPr
             aria-label="Timelock blocks"
             type="range" min="1" max="52560" step="1"
             value={input.locktime_blocks}
-            onChange={(e) => dispatch({ type: 'UPDATE_INPUT', payload: { locktime_blocks: parseInt(e.target.value) }})}
+            onChange={(e) => updateLocktime(parseInt(e.target.value, 10))}
             className="w-full h-3 bg-muted rounded-full appearance-none cursor-pointer accent-primary"
           />
         </div>
+
+          <div className="space-y-2">
+            <label htmlFor="timelock-exact" className="text-xs font-bold uppercase tracking-widest text-foreground/58">
+              Exact Blocks
+            </label>
+            <input
+              id="timelock-exact"
+              type="number"
+              min={1}
+              max={MAX_LOCKTIME_BLOCKS}
+              inputMode="numeric"
+              value={input.locktime_blocks}
+              onChange={(event) => {
+                const nextValue = Number.parseInt(event.target.value, 10);
+                if (Number.isNaN(nextValue)) return;
+                updateLocktime(nextValue);
+              }}
+              className="w-full rounded-2xl border border-border bg-muted px-4 py-3 font-mono text-sm transition-[border-color,box-shadow] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+            />
+          </div>
+        </div>
       </div>
 
-      <div className="p-6 bg-orange-500/5 border border-orange-500/10 rounded-2xl text-xs text-orange-600/70 space-y-3 font-medium leading-relaxed">
+      <div className="space-y-3 rounded-2xl border border-orange-500/10 bg-orange-500/5 p-6 text-xs font-medium leading-relaxed text-orange-600/75">
         <p>• The timer resets every time you move the funds.</p>
         <p>• The delay starts <strong>only after</strong> the funding transaction confirms on-chain.</p>
       </div>
 
       {input.locktime_blocks > BLOCKS_PER_MONTH && (
-        <div className="p-6 bg-red-500/5 border border-red-500/20 rounded-2xl space-y-3">
+        <div className="space-y-3 rounded-2xl border border-red-500/20 bg-red-500/5 p-6">
           <div className="flex items-center gap-2 text-red-600">
             <AlertTriangle className="w-5 h-5" />
             <span className="font-bold">Extended Locktime Warning</span>
@@ -64,9 +118,9 @@ export const TimelockStep = ({ input, dispatch, onBack, onNext }: TimelockStepPr
         </div>
       )}
 
-      <div className="flex justify-between items-center pt-6">
-        <button type="button" onClick={onBack} className="text-foreground/60 font-bold hover:text-foreground/80 transition-colors">Back</button>
-        <button type="button" onClick={onNext} className="btn-primary">Continue</button>
+      <div className="flex flex-col-reverse gap-3 pt-4 sm:flex-row sm:items-center sm:justify-between">
+        <button type="button" onClick={onBack} className="text-left font-bold text-foreground/60 transition-colors hover:text-foreground/80">Back</button>
+        <button type="button" onClick={onNext} className="btn-primary w-full sm:w-auto">Continue</button>
       </div>
     </div>
   );

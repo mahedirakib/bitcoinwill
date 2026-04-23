@@ -84,8 +84,9 @@ const NetworkSelectorComponent = () => {
       <select 
         value={network}
         onChange={handleSelect}
+        name="bitcoin_network"
         aria-label="Select Bitcoin network"
-        className={`bg-muted text-[10px] font-black uppercase tracking-[0.15em] py-2 px-4 rounded-full border outline-none appearance-none cursor-pointer pr-10 transition-all ${
+        className={`appearance-none cursor-pointer rounded-full border bg-muted py-2 px-4 pr-10 text-[10px] font-black uppercase tracking-[0.15em] transition-[border-color,background-color,color,box-shadow] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 ${
           network === 'mainnet' 
             ? 'text-red-700 border-red-600/40 bg-red-100' 
             : 'text-primary border-border hover:border-primary/30'
@@ -138,8 +139,12 @@ const NetworkSelectorComponent = () => {
                   type="text" 
                   value={phrase}
                   onChange={(e) => setPhrase(e.target.value)}
-                  className="w-full bg-muted border border-border p-5 rounded-2xl font-mono text-sm outline-none focus:border-red-500/50 focus:ring-4 focus:ring-red-500/5 transition-all"
-                  placeholder="Type carefully..."
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="characters"
+                  spellCheck={false}
+                  className="w-full rounded-2xl border border-border bg-muted p-5 font-mono text-sm transition-[border-color,box-shadow] focus-visible:outline-none focus-visible:border-red-500/50 focus-visible:ring-4 focus-visible:ring-red-500/5"
+                  placeholder="Type carefully…"
                 />
               </div>
 
@@ -155,7 +160,7 @@ const NetworkSelectorComponent = () => {
                   type="button"
                   onClick={confirmUnlock}
                   disabled={phrase !== CONFIRMATION_PHRASE}
-                  className="flex-1 bg-red-600 disabled:opacity-20 disabled:grayscale py-4 rounded-2xl text-sm font-bold text-white transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-red-600/20"
+                  className="flex-1 rounded-2xl bg-red-600 py-4 text-sm font-bold text-white shadow-lg shadow-red-600/20 transition-[background-color,box-shadow,transform] hover:-translate-y-0.5 hover:bg-red-500 active:translate-y-0 active:scale-[0.99] disabled:grayscale disabled:opacity-20"
                 >
                   Unlock Mainnet
                 </button>

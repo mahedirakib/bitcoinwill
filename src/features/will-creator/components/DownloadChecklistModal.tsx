@@ -105,7 +105,7 @@ export const DownloadChecklistModal = ({
           ))}
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row">
           <button
             type="button"
             onClick={onClose}
@@ -117,7 +117,7 @@ export const DownloadChecklistModal = ({
             type="button"
             onClick={onConfirm}
             disabled={!allChecked}
-            className="flex-1 py-4 rounded-xl text-sm font-bold bg-primary text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            className="flex-1 rounded-xl bg-primary py-4 text-sm font-bold text-primary-foreground transition-[background-color,box-shadow,transform] hover:-translate-y-0.5 hover:bg-[#ff9e18] active:translate-y-0 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40"
           >
             Confirm & Download
           </button>

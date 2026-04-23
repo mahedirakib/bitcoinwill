@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef, lazy, Suspense, startTransition } from 'react'
-import { BookOpen, AlertCircle, FileText, ShieldAlert, Cpu, Menu, X, Users, Zap, History, ScrollText } from 'lucide-react'
+import { useState, useEffect, useRef, lazy, Suspense, startTransition, type MouseEvent as ReactMouseEvent } from 'react'
+import { BookOpen, AlertCircle, FileText, ShieldAlert, Cpu, Menu, X, Users, Zap, History, ScrollText, ArrowRight } from 'lucide-react'
 import DevPlayground from './components/DevPlayground'
 import type { InstructionData } from './features/will-creator/WillCreatorWizard'
 import { SettingsProvider, useSettings } from './state/settings'
@@ -47,6 +47,15 @@ const preloadView = (view: AppView) => {
     preloadedViews.delete(view)
   })
 }
+
+const shouldHandleClientNavigation = (event: ReactMouseEvent<HTMLAnchorElement>): boolean => (
+  event.button === 0 &&
+  !event.defaultPrevented &&
+  !event.metaKey &&
+  !event.ctrlKey &&
+  !event.shiftKey &&
+  !event.altKey
+)
 
 const normalizeAppPath = (pathname: string): string => {
   const base = import.meta.env.BASE_URL || '/'
@@ -179,38 +188,90 @@ const AppContent = () => {
     { label: 'Instructions', view: 'instructions' as const, icon: FileText },
   ]
 
+  const homeHighlights = [
+    {
+      title: 'For Holders',
+      desc: 'Keep inheritance planning under your control instead of relying on a custodian or service provider.',
+      icon: Users,
+    },
+    {
+      title: 'Purely Native',
+      desc: 'The plan is enforced by Bitcoin script rules, not by company uptime or legal red tape.',
+      icon: Zap,
+    },
+    {
+      title: 'Simple Recovery',
+      desc: 'Export recovery instructions that a beneficiary can use when the required delay has actually passed.',
+      icon: History,
+    },
+  ]
+
+  const protocolSteps = [
+    'Choose the owner key, beneficiary key, and a delay.',
+    'Fund the generated vault address with your own wallet.',
+    'If the funds remain unmoved long enough, the beneficiary path becomes valid.',
+  ]
+
+  const beforeYouStart = [
+    {
+      title: 'Bring Public Keys',
+      desc: 'Have the owner and beneficiary public keys ready before you begin. The app never asks for private keys.',
+    },
+    {
+      title: 'Pick a Delay',
+      desc: 'Start with a delay you can realistically monitor and reset. For most people, days or weeks are easier than months.',
+    },
+    {
+      title: 'Store the Kit Offline',
+      desc: 'After generation, download the recovery kit and beneficiary instructions to durable offline storage.',
+    },
+  ]
+
+  const showFooter = currentView !== 'create' && currentView !== 'instructions'
+
   return (
     <div className="min-h-screen flex flex-col bg-mesh">
-      {/* Header */}
-      <header className="h-20 md:h-24 px-6 md:px-8 flex justify-between items-center max-w-7xl mx-auto w-full relative z-50">
-        <button
-          type="button"
-          className="flex items-center gap-3 cursor-pointer group bg-transparent border-0 p-0 text-left" 
-          aria-label="Go to home"
-          onClick={() => {
-            navigateTo('home', 'replace');
-            setIsMenuOpen(false);
-          }}
-        >
-          <div className="relative">
-            <div className="absolute inset-0 bg-primary/10 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
-            <img src={logo} alt="Bitcoin Will Logo" className="w-8 h-8 md:w-10 md:h-10 object-contain relative" loading="lazy" />
-          </div>
-          <span className="text-lg md:text-xl font-bold tracking-tight">Bitcoin Will</span>
-          {network === 'mainnet' && (
-            <span className="ml-2 px-2 py-0.5 bg-red-600 text-[10px] font-bold text-white rounded uppercase animate-pulse">
-              Mainnet
-            </span>
-          )}
-        </button>
+      <a
+        href="#main-content"
+        className="sr-only fixed left-4 top-4 z-[120] rounded-full bg-foreground px-4 py-2 text-sm font-bold text-background focus:not-sr-only"
+      >
+        Skip to content
+      </a>
+
+      <header className="sticky top-0 z-50 border-b border-black/5 bg-background/78 backdrop-blur-xl">
+        <div className="mx-auto flex h-20 w-full max-w-7xl items-center justify-between px-6 md:h-24 md:px-8">
+          <a
+            href={withBase('/')}
+            className="group flex items-center gap-3 text-left"
+            aria-label="Go to home"
+            onClick={(event) => {
+              if (!shouldHandleClientNavigation(event)) return;
+              event.preventDefault();
+              navigateTo('home', 'replace');
+              setIsMenuOpen(false);
+            }}
+          >
+            <div className="relative">
+              <div className="absolute inset-0 rounded-full bg-primary/10 blur-xl opacity-0 transition-opacity group-hover:opacity-100" />
+              <img src={logo} alt="Bitcoin Will" className="relative h-8 w-8 object-contain md:h-10 md:w-10" />
+            </div>
+            <span className="text-lg font-bold tracking-tight md:text-xl">Bitcoin Will</span>
+            {network === 'mainnet' && (
+              <span className="ml-2 rounded bg-red-600 px-2 py-0.5 text-[10px] font-bold uppercase text-white animate-pulse">
+                Mainnet
+              </span>
+            )}
+          </a>
         
         {/* Desktop Nav */}
-        <nav className="hidden lg:flex items-center gap-8">
+        <nav aria-label="Primary" className="hidden lg:flex items-center gap-8">
           {navItems.map((item) => (
-            <button 
-              type="button"
+            <a
               key={item.view}
-              onClick={() => {
+              href={withBase(pathFromView(item.view))}
+              onClick={(event) => {
+                if (!shouldHandleClientNavigation(event)) return;
+                event.preventDefault();
                 if (item.view === 'whitepaper') {
                   openWhitepaper('home');
                   return;
@@ -220,10 +281,12 @@ const AppContent = () => {
               onMouseEnter={() => preloadView(item.view)}
               onFocus={() => preloadView(item.view)}
               aria-current={currentView === item.view ? 'page' : undefined}
-              className="text-sm font-semibold text-foreground/70 hover:text-primary transition-colors flex items-center gap-2"
+              className={`flex items-center gap-2 text-sm font-semibold transition-colors ${
+                currentView === item.view ? 'text-foreground' : 'text-foreground/70 hover:text-primary'
+              }`}
             >
               <item.icon className="w-4 h-4" /> {item.label}
-            </button>
+            </a>
           ))}
           <div className="pl-4 border-l border-black/5">
             <NetworkSelector />
@@ -239,7 +302,7 @@ const AppContent = () => {
             aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
             aria-expanded={isMenuOpen}
             aria-controls="mobile-main-nav"
-            className="p-2 text-foreground/70 hover:text-primary transition-colors"
+            className="rounded-xl p-2 text-foreground/70 transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
           >
             {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
@@ -247,13 +310,15 @@ const AppContent = () => {
 
         {/* Mobile Nav Overlay */}
         {isMenuOpen && (
-          <div className="fixed inset-0 top-20 bg-background/95 backdrop-blur-md z-40 lg:hidden animate-in fade-in slide-in-from-top-4 duration-300">
-            <nav id="mobile-main-nav" className="flex flex-col p-8 gap-6">
+          <div className="fixed inset-x-0 bottom-0 top-20 bg-background/95 backdrop-blur-md z-40 lg:hidden animate-in fade-in slide-in-from-top-4 duration-300">
+            <nav id="mobile-main-nav" aria-label="Mobile" className="flex flex-col p-8 gap-6">
               {navItems.map((item) => (
-                <button 
-                  type="button"
+                <a
                   key={item.view}
-                  onClick={() => {
+                  href={withBase(pathFromView(item.view))}
+                  onClick={(event) => {
+                    if (!shouldHandleClientNavigation(event)) return;
+                    event.preventDefault();
                     if (item.view === 'whitepaper') {
                       openWhitepaper('home');
                       setIsMenuOpen(false);
@@ -261,113 +326,157 @@ const AppContent = () => {
                     }
                     navigateTo(item.view);
                     setIsMenuOpen(false);
-                  }} 
-                  className="text-xl font-bold text-foreground/80 hover:text-primary transition-colors flex items-center gap-4 py-4 border-b border-border/50 text-left"
+                  }}
+                  className="flex items-center gap-4 border-b border-border/50 py-4 text-left text-xl font-bold text-foreground/80 transition-colors hover:text-primary"
                 >
                   <item.icon className="w-6 h-6 text-primary" /> {item.label}
-                </button>
+                </a>
               ))}
             </nav>
           </div>
         )}
+        </div>
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col items-center justify-center p-6 w-full">
+      <main id="main-content" className="flex-1 w-full px-6 pb-16 pt-8 md:px-8 md:pb-20 md:pt-10">
         {activeView === 'home' && (
-          <div className="space-y-20 md:space-y-32 max-w-5xl mx-auto py-12 md:py-20">
-            {/* Hero */}
-            <div className="text-center space-y-8 md:space-y-10 flex flex-col items-center animate-in fade-in slide-in-from-bottom-8 duration-1000">
-              <div className="relative">
-                <div className="absolute inset-0 bg-primary/10 blur-3xl rounded-full" />
-                <img src={logo} alt="Bitcoin Will Logo" className="w-24 h-24 md:w-40 md:h-40 object-contain relative drop-shadow-xl" loading="lazy" />
-              </div>
-              <h1 className="text-4xl md:text-hero">
-                A Simple Bitcoin <br className="hidden md:block" />
-                <span className="text-primary">Inheritance Plan</span>
-              </h1>
-              <p className="text-lg md:text-2xl text-foreground/70 max-w-2xl mx-auto font-medium leading-relaxed px-4">
-                Create a non-custodial Bitcoin spending plan that unlocks funds after a delay. 
-                <span className="text-foreground/90"> No accounts. No custody. No private keys.</span>
-              </p>
-              
-              <div className="flex flex-col sm:flex-row gap-4 md:gap-6 justify-center pt-4 md:pt-8 w-full md:w-auto px-6">
-                <button
-                  type="button"
-                  onClick={() => navigateTo('create')}
-                  className="btn-primary w-full sm:w-auto"
-                >
-                  Create Spending Plan
-                </button>
-                <button
-                  type="button"
-                  onClick={() => navigateTo('learn')}
-                  className="btn-secondary w-full sm:w-auto"
-                >
-                  How It Works
-                </button>
-              </div>
-            </div>
+          <div className="mx-auto flex w-full max-w-7xl flex-col gap-16 md:gap-20">
+            <section className="grid gap-12 md:min-h-[calc(100vh-14rem)] md:grid-cols-[minmax(0,1.05fr)_minmax(340px,0.95fr)] md:items-center">
+              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700">
+                <p className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/5 px-4 py-2 text-[11px] font-black uppercase tracking-[0.24em] text-primary">
+                  Bitcoin-Native Inheritance Planning
+                </p>
 
-            {/* Who is it for? */}
-            <div className="grid md:grid-cols-3 gap-6 px-4">
-              {[
-                { 
-                  title: 'For Holders', 
-                  desc: 'Ensure your Bitcoin remains accessible to heirs without middlemen or legal red tape.',
-                  icon: Users 
-                },
-                { 
-                  title: 'Purely Native', 
-                  desc: 'A deterministic plan that relies on Bitcoin-native scripts rather than company survival.',
-                  icon: Zap 
-                },
-                { 
-                  title: 'Simple Recovery', 
-                  desc: 'Easy-to-follow instructions for beneficiaries to claim funds when the time is right.',
-                  icon: History 
-                }
-              ].map((item) => (
-                <div key={item.title} className="glass p-6 md:p-8 space-y-6 glass-hover group">
-                  <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center group-hover:scale-110 group-hover:bg-primary/20 transition-all duration-300">
-                    <item.icon className="w-6 h-6 text-primary" />
+                <div className="space-y-5">
+                  <h1 className="max-w-[10ch] text-[clamp(3.35rem,9vw,6.8rem)] font-black leading-[0.92] tracking-tight">
+                    Create a Bitcoin <span className="text-primary">Inheritance Plan</span>
+                  </h1>
+                  <p className="max-w-xl text-lg font-medium leading-relaxed text-foreground/72 md:text-xl">
+                    Plan for inheritance without custody, accounts, or private-key uploads. Bitcoin Will generates a script-based spending plan you can inspect, export, and keep offline.
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-4 sm:flex-row">
+                  <a
+                    href={withBase('/create')}
+                    onClick={(event) => {
+                      if (!shouldHandleClientNavigation(event)) return;
+                      event.preventDefault();
+                      navigateTo('create');
+                    }}
+                    onMouseEnter={() => preloadView('create')}
+                    onFocus={() => preloadView('create')}
+                    className="btn-primary w-full sm:w-auto"
+                  >
+                    Create Spending Plan <ArrowRight className="h-5 w-5" />
+                  </a>
+                  <a
+                    href={withBase('/learn')}
+                    onClick={(event) => {
+                      if (!shouldHandleClientNavigation(event)) return;
+                      event.preventDefault();
+                      navigateTo('learn');
+                    }}
+                    onMouseEnter={() => preloadView('learn')}
+                    onFocus={() => preloadView('learn')}
+                    className="btn-secondary w-full sm:w-auto"
+                  >
+                    Learn How It Works
+                  </a>
+                </div>
+
+                <div className="grid gap-4 border-t border-border/80 pt-6 sm:grid-cols-3">
+                  {homeHighlights.map((item) => (
+                    <div key={item.title} className="space-y-3">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                          <item.icon className="h-5 w-5" />
+                        </div>
+                        <h2 className="text-sm font-extrabold tracking-tight">{item.title}</h2>
+                      </div>
+                      <p className="text-sm leading-relaxed text-foreground/68">{item.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <section className="glass rounded-[2rem] border-primary/10 bg-white/80 p-6 md:p-8">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-[11px] font-black uppercase tracking-[0.24em] text-foreground/55">Protocol Flow</p>
+                  <span className="rounded-full bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+                    TIP
+                  </span>
+                </div>
+
+                <div className="mt-6 space-y-6">
+                  {protocolSteps.map((step, index) => (
+                    <div key={step} className="flex gap-4">
+                      <div className="flex flex-col items-center">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-sm font-black text-primary-foreground">
+                          {index + 1}
+                        </div>
+                        {index < protocolSteps.length - 1 && <div className="mt-2 h-full w-px bg-border" />}
+                      </div>
+                      <div className="pb-6 pt-1">
+                        <p className="text-base font-semibold leading-relaxed text-foreground/80">{step}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-8 grid gap-4 border-t border-border/75 pt-6 sm:grid-cols-3">
+                  <div className="space-y-1">
+                    <p className="text-[11px] font-black uppercase tracking-[0.18em] text-foreground/45">No Custody</p>
+                    <p className="text-sm font-semibold text-foreground/80">You keep control of the keys and funding wallet.</p>
                   </div>
-                  <div className="space-y-2">
-                    <h3 className="text-lg font-bold text-primary group-hover:translate-x-1 transition-transform duration-300">{item.title}</h3>
-                    <p className="text-sm text-foreground/80 leading-relaxed font-medium">
-                      {item.desc}
-                    </p>
+                  <div className="space-y-1">
+                    <p className="text-[11px] font-black uppercase tracking-[0.18em] text-foreground/45">Offline Exports</p>
+                    <p className="text-sm font-semibold text-foreground/80">Download recovery kits and beneficiary instructions for long-term storage.</p>
                   </div>
+                  <div className="space-y-1">
+                    <p className="text-[11px] font-black uppercase tracking-[0.18em] text-foreground/45">Open Review</p>
+                    <p className="text-sm font-semibold text-foreground/80">Inspect the script, address, and recovery path before funding anything.</p>
+                  </div>
+                </div>
+              </section>
+            </section>
+
+            <section className="grid gap-8 border-y border-border/80 py-6 md:grid-cols-3">
+              {beforeYouStart.map((item) => (
+                <div key={item.title} className="space-y-3">
+                  <p className="text-[11px] font-black uppercase tracking-[0.2em] text-primary/90">Before You Start</p>
+                  <p className="text-lg font-semibold tracking-tight">{item.title}</p>
+                  <p className="text-sm leading-relaxed text-foreground/68">{item.desc}</p>
                 </div>
               ))}
-            </div>
+            </section>
 
-            {/* What this is NOT */}
-            <div className="max-w-3xl mx-auto p-8 md:p-12 rounded-[2rem] border border-black/5 bg-muted/50 space-y-8 backdrop-blur-sm mx-4">
-              <div className="flex items-center gap-3 text-foreground/40 font-bold uppercase tracking-[0.2em] text-[10px]">
-                <ShieldAlert className="w-4 h-4" /> Safety Protocol
+            <section className="rounded-[2rem] border border-black/5 bg-white/72 p-8 md:p-10">
+              <div className="flex items-center gap-3 text-[11px] font-black uppercase tracking-[0.24em] text-foreground/45">
+                <ShieldAlert className="h-4 w-4 text-primary" /> Safety Protocol
               </div>
-              <div className="grid sm:grid-cols-3 gap-8 md:gap-10">
+              <div className="mt-6 grid gap-8 md:grid-cols-3 md:gap-10">
                 <div className="space-y-2">
-                  <p className="font-bold text-sm tracking-tight">Not a Wallet</p>
-                  <p className="text-xs text-foreground/60 leading-relaxed font-medium">We never see, store, or manage your private keys.</p>
+                  <p className="text-base font-extrabold tracking-tight">Not a Wallet</p>
+                  <p className="text-sm leading-relaxed text-foreground/65">We never see, store, or manage your private keys.</p>
                 </div>
                 <div className="space-y-2">
-                  <p className="font-bold text-sm tracking-tight">Not a Legal Will</p>
-                  <p className="text-xs text-foreground/60 leading-relaxed font-medium">This is a technical recovery tool, not a legal document.</p>
+                  <p className="text-base font-extrabold tracking-tight">Not a Legal Will</p>
+                  <p className="text-sm leading-relaxed text-foreground/65">This is technical recovery tooling. Estate law still needs its own plan.</p>
                 </div>
                 <div className="space-y-2">
-                  <p className="font-bold text-sm tracking-tight">Not a Custodian</p>
-                  <p className="text-xs text-foreground/60 leading-relaxed font-medium">Your Bitcoin stays on the network, under your control.</p>
+                  <p className="text-base font-extrabold tracking-tight">Not a Custodian</p>
+                  <p className="text-sm leading-relaxed text-foreground/65">Your Bitcoin stays on the network, under your control, until the script rules allow recovery.</p>
                 </div>
               </div>
-            </div>
+            </section>
           </div>
         )}
 
         {activeView === 'create' && (
           <Suspense fallback={<PageLoading />}>
-            <div className="w-full px-4">
+            <div className="mx-auto w-full max-w-7xl">
               <WillCreatorWizard 
                 onCancel={() => navigateTo('home', 'replace')} 
                 onViewInstructions={(data) => {
@@ -385,33 +494,41 @@ const AppContent = () => {
       </main>
 
       {/* Footer */}
-      <footer className="p-8 flex flex-col items-center gap-4 text-center text-sm text-foreground/60 border-t border-border mt-12">
-        <div className="flex items-center gap-2 px-3 py-1 bg-muted rounded-full text-xs border border-border">
-           <AlertCircle className="w-3 h-3 text-primary" />
-           Current Environment: <span className="uppercase font-bold text-foreground/80">{network}</span>
-        </div>
-        {import.meta.env.DEV && (
-          <button
-            type="button"
-            onClick={() => setForceQaCrash(true)}
-            className="text-[11px] px-3 py-1 border border-red-500/20 rounded-full text-red-600 hover:bg-red-500/5 transition-colors"
-          >
-            Force ErrorBoundary (Dev QA)
-          </button>
-        )}
-        <p>Built as an educational and practical Bitcoin-native tool.</p>
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => openWhitepaper('home')}
-            className="hover:text-foreground/80 transition-colors underline underline-offset-4 decoration-black/5"
-          >
-            TIP Whitepaper
-          </button>
-          <span className="opacity-40">•</span>
-          <p>No Tracking. No Cookies. Open Source Bitcoin Native Inheritance.</p>
-        </div>
-      </footer>
+      {showFooter && (
+        <footer className="mt-12 border-t border-border/80 px-8 py-8 text-center text-sm text-foreground/60">
+          <div className="mx-auto flex max-w-4xl flex-col items-center gap-4">
+            <div className="flex items-center gap-2 rounded-full border border-border bg-muted px-3 py-1 text-xs">
+              <AlertCircle className="h-3 w-3 text-primary" />
+              Current Environment: <span className="font-bold uppercase text-foreground/80">{network}</span>
+            </div>
+            {import.meta.env.DEV && (
+              <button
+                type="button"
+                onClick={() => setForceQaCrash(true)}
+                className="rounded-full border border-red-500/20 px-3 py-1 text-[11px] text-red-600 transition-colors hover:bg-red-500/5"
+              >
+                Force ErrorBoundary (Dev QA)
+              </button>
+            )}
+            <p>Built as an educational and practical Bitcoin-native tool.</p>
+            <div className="flex items-center gap-3">
+              <a
+                href={withBase('/whitepaper')}
+                onClick={(event) => {
+                  if (!shouldHandleClientNavigation(event)) return;
+                  event.preventDefault();
+                  openWhitepaper('home');
+                }}
+                className="underline underline-offset-4 decoration-black/5 transition-colors hover:text-foreground/80"
+              >
+                TIP Whitepaper
+              </a>
+              <span className="opacity-40">•</span>
+              <p>No Tracking. No Cookies. Open Source Bitcoin Native Inheritance.</p>
+            </div>
+          </div>
+        </footer>
+      )}
     </div>
   )
 }

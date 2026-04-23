@@ -57,7 +57,7 @@ export const HardwareWalletModal = ({ onConnect, onClose }: HardwareWalletModalP
               type="button"
               onClick={() => handleConnect(wallet.type)}
               disabled={loading}
-              className="w-full p-4 rounded-xl border-2 border-border hover:border-primary/30 transition-all text-left disabled:opacity-50 group"
+              className="group w-full rounded-xl border-2 border-border p-4 text-left transition-[border-color,background-color,transform] hover:-translate-y-0.5 hover:border-primary/30 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 disabled:opacity-50"
             >
               <div className="flex items-center gap-4">
                 <div className="p-2 rounded-lg bg-muted group-hover:bg-primary/10 transition-colors">

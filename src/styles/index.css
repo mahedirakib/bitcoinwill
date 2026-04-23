@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=Manrope:wght@400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -15,43 +15,93 @@
   --ring: 33 94% 53%;
   --muted: 210 40% 96.1%;
   --muted-foreground: 215.4 16.3% 46.9%;
+  color-scheme: light;
 }
 
 @layer base {
+  html {
+    @apply scroll-smooth;
+  }
+
   body {
     @apply bg-background text-foreground antialiased selection:bg-primary/20;
+    font-family: 'Manrope', sans-serif;
     background-image: 
-      radial-gradient(at 0% 0%, hsla(33, 94%, 53%, 0.03) 0px, transparent 50%),
-      radial-gradient(at 100% 100%, hsla(33, 94%, 53%, 0.02) 0px, transparent 50%);
-    background-attachment: fixed;
+      radial-gradient(circle at 0% 0%, hsla(33, 94%, 53%, 0.11), transparent 28%),
+      radial-gradient(circle at 100% 0%, hsla(33, 94%, 53%, 0.05), transparent 22%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(255, 255, 255, 0.995));
+    min-height: 100vh;
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  img {
+    max-width: 100%;
+  }
+
+  code,
+  pre,
+  kbd {
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  :where(a, button, input, select, textarea) {
+    touch-action: manipulation;
+  }
+
+  :where(a, button, input, select, textarea):focus-visible {
+    outline: 2px solid hsl(var(--ring) / 0.45);
+    outline-offset: 3px;
   }
 }
 
 @layer components {
   .glass {
-    @apply bg-white/70 backdrop-blur-xl border border-black/5 rounded-2xl shadow-sm transition-all duration-300;
+    @apply backdrop-blur-xl border border-black/5 rounded-2xl shadow-[0_24px_70px_-48px_rgba(15,23,42,0.35)] transition-[background-color,border-color,box-shadow,transform] duration-300;
+    background-color: rgba(255, 255, 255, 0.72);
   }
   
   .glass-hover {
-    @apply hover:bg-white/90 hover:border-primary/20 hover:shadow-xl hover:shadow-black/5;
+    @apply hover:bg-white/92 hover:border-primary/20 hover:shadow-[0_30px_80px_-44px_rgba(247,147,26,0.35)];
   }
 
   .btn-primary {
-    @apply bg-primary text-primary-foreground px-8 py-4 rounded-xl font-bold text-lg 
-           hover:scale-[1.02] active:scale-[0.98] transition-all duration-200
-           shadow-lg shadow-primary/20 hover:shadow-primary/30;
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-8 py-4 text-base font-extrabold text-primary-foreground
+           shadow-[0_22px_50px_-28px_rgba(247,147,26,0.75)] transition-[background-color,box-shadow,transform] duration-200
+           hover:-translate-y-0.5 hover:bg-[#ff9e18] hover:shadow-[0_26px_55px_-26px_rgba(247,147,26,0.82)]
+           active:translate-y-0 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20;
   }
 
   .btn-secondary {
-    @apply bg-white text-foreground px-8 py-4 rounded-xl font-bold text-lg 
-           border border-border hover:bg-muted transition-all duration-200;
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl border border-border bg-white/85 px-8 py-4 text-base font-bold text-foreground
+           transition-[background-color,border-color,color,transform] duration-200 hover:-translate-y-0.5 hover:border-primary/25 hover:bg-white
+           active:translate-y-0 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10;
   }
 }
 
 .bg-mesh {
   background: 
-    radial-gradient(circle at 50% 50%, hsla(33, 94%, 53%, 0.04), transparent 40%),
-    radial-gradient(circle at 0% 0%, hsla(33, 94%, 53%, 0.02), transparent 30%),
-    radial-gradient(circle at 100% 100%, hsla(33, 94%, 53%, 0.02), transparent 30%);
+    radial-gradient(circle at 10% 0%, hsla(33, 94%, 53%, 0.12), transparent 26%),
+    radial-gradient(circle at 90% 8%, hsla(33, 94%, 53%, 0.08), transparent 20%),
+    radial-gradient(circle at 50% 100%, hsla(33, 94%, 53%, 0.05), transparent 24%);
 }
 
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

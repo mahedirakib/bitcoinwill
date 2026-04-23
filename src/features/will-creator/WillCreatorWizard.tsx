@@ -27,8 +27,16 @@ import {
   createChecklistState,
   createInitialState,
   getStepNumber,
+  type Step,
   wizardReducer,
 } from './types';
+
+const STEP_LABELS: Record<Exclude<Step, 'RESULT'>, string> = {
+  TYPE: 'Strategy',
+  KEYS: 'Keys',
+  TIMELOCK: 'Delay',
+  REVIEW: 'Review',
+};
 
 export interface InstructionData {
   plan: PlanInput;
@@ -369,21 +377,29 @@ For support, visit: https://github.com/mahedirakib/bitcoinwill
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto py-12">
+    <div className="mx-auto w-full max-w-5xl pb-10 pt-2 md:pb-16 md:pt-4">
       {state.step !== 'RESULT' && (
-        <div className="mb-16 space-y-6">
-          <div className="flex justify-between items-end">
-            <div className="space-y-1">
-              <h2 className="text-4xl font-black tracking-tight">New Spending Plan</h2>
-              <p className="text-foreground/60 font-medium">Follow the steps to secure your inheritance.</p>
+        <div className="mb-10 space-y-5 md:mb-12">
+          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div className="space-y-2">
+              <p className="text-[11px] font-black uppercase tracking-[0.24em] text-primary">Build The Plan</p>
+              <h2 className="max-w-[12ch] text-3xl font-black tracking-tight md:text-5xl">New Spending Plan</h2>
+              <p className="max-w-2xl text-base font-medium text-foreground/62 md:text-lg">
+                Follow the steps to create a script you can review, export, and keep offline.
+              </p>
             </div>
-            <span className="text-xs font-bold tracking-widest text-primary uppercase bg-primary/10 px-3 py-1 rounded-full">
-              Step {getStepNumber(state.step)} of 4
-            </span>
+            <div className="flex flex-col items-start gap-2 md:items-end">
+              <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold uppercase tracking-widest text-primary">
+                Step {getStepNumber(state.step)} of 4
+              </span>
+              <p className="text-sm font-semibold text-foreground/48">
+                {STEP_LABELS[state.step as Exclude<Step, 'RESULT'>]}
+              </p>
+            </div>
           </div>
-          <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+          <div className="h-1.5 overflow-hidden rounded-full bg-muted">
             <div 
-              className="h-full bg-primary shadow-lg shadow-primary/20 transition-all duration-700 ease-out"
+              className="h-full bg-primary shadow-lg shadow-primary/20 transition-[width] duration-500 ease-out"
               style={{ width: `${(getStepNumber(state.step) / 4) * 100}%` }}
             />
           </div>
