@@ -19,68 +19,68 @@ const TIMELOCK_PRESETS = [
 
 export const TimelockStep = ({ input, dispatch, onBack, onNext }: TimelockStepProps) => {
   const updateLocktime = (locktimeBlocks: number) => {
-    const boundedBlocks = Math.min(MAX_LOCKTIME_BLOCKS, Math.max(1, locktimeBlocks));
-    dispatch({ type: 'UPDATE_INPUT', payload: { locktime_blocks: boundedBlocks } });
+    const bounded = Math.min(MAX_LOCKTIME_BLOCKS, Math.max(1, locktimeBlocks));
+    dispatch({ type: 'UPDATE_INPUT', payload: { locktime_blocks: bounded } });
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-500 md:space-y-10">
-      <div className="space-y-3">
-        <h3 className="text-3xl font-black tracking-tight">Set the Delay</h3>
-        <p className="max-w-2xl font-medium text-foreground/60">
-          Choose how long the network should wait before the beneficiary path can be used. Blocks are roughly ten minutes each.
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-semibold tracking-tight">Set the delay</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Choose how long the network should wait before the beneficiary path can be used. A block is roughly ten minutes.
         </p>
       </div>
 
-      <div className="glass space-y-8 p-6 md:space-y-10 md:p-10">
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-          <div className="space-y-1">
-            <span className="text-5xl font-black text-primary [font-variant-numeric:tabular-nums] md:text-6xl">{input.locktime_blocks}</span>
-            <p className="text-xs font-bold uppercase tracking-widest text-foreground/60">Network Blocks</p>
+      <div className="rounded-md border border-border bg-muted/40 p-5 space-y-5">
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <p className="section-eyebrow">Network blocks</p>
+            <p className="mt-1 font-mono text-3xl font-semibold tabular-nums">{input.locktime_blocks.toLocaleString()}</p>
           </div>
-          <div className="space-y-1 text-left sm:text-right">
-            <p className="text-xs font-bold uppercase tracking-widest text-foreground/60">Approx. Delay</p>
-            <p className="text-3xl font-black md:text-4xl">~{calculateTime(input.locktime_blocks)}</p>
+          <div className="text-right">
+            <p className="section-eyebrow">Approx. delay</p>
+            <p className="mt-1 text-2xl font-semibold">~{calculateTime(input.locktime_blocks)}</p>
           </div>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {TIMELOCK_PRESETS.map((preset) => (
-            <button
-              key={preset.label}
-              type="button"
-              onClick={() => updateLocktime(preset.blocks)}
-              className={`rounded-xl border px-4 py-3 text-left transition-[border-color,background-color,transform] hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 ${
-                input.locktime_blocks === preset.blocks
-                  ? 'border-primary/30 bg-primary/10'
-                  : 'border-border bg-white/70 hover:border-primary/20'
-              }`}
-            >
-              <p className="text-sm font-bold text-foreground">{preset.label}</p>
-              <p className="text-xs text-foreground/55">{preset.blocks.toLocaleString()} blocks</p>
-            </button>
-          ))}
+        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+          {TIMELOCK_PRESETS.map((preset) => {
+            const selected = input.locktime_blocks === preset.blocks;
+            return (
+              <button
+                key={preset.label}
+                type="button"
+                onClick={() => updateLocktime(preset.blocks)}
+                className={`rounded-md border px-3 py-2.5 text-left transition-colors ${
+                  selected
+                    ? 'border-foreground bg-white'
+                    : 'border-border bg-white hover:border-border-strong'
+                }`}
+              >
+                <p className="text-sm font-semibold">{preset.label}</p>
+                <p className="text-xs text-muted-foreground">{preset.blocks.toLocaleString()} blocks</p>
+              </button>
+            );
+          })}
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_220px] lg:items-end">
-          <div className="relative py-1">
-          <label htmlFor="timelock-range" className="sr-only">
-            Timelock blocks
-          </label>
-          <input 
-            id="timelock-range"
-            aria-label="Timelock blocks"
-            type="range" min="1" max="52560" step="1"
-            value={input.locktime_blocks}
-            onChange={(e) => updateLocktime(parseInt(e.target.value, 10))}
-            className="w-full h-3 bg-muted rounded-full appearance-none cursor-pointer accent-primary"
-          />
-        </div>
-
-          <div className="space-y-2">
-            <label htmlFor="timelock-exact" className="text-xs font-bold uppercase tracking-widest text-foreground/58">
-              Exact Blocks
-            </label>
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_180px] lg:items-end">
+          <div>
+            <label htmlFor="timelock-range" className="sr-only">Timelock blocks</label>
+            <input
+              id="timelock-range"
+              type="range"
+              min={1}
+              max={52560}
+              step={1}
+              value={input.locktime_blocks}
+              onChange={(e) => updateLocktime(parseInt(e.target.value, 10))}
+              className="w-full accent-foreground"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label htmlFor="timelock-exact" className="field-label">Exact blocks</label>
             <input
               id="timelock-exact"
               type="number"
@@ -88,39 +88,36 @@ export const TimelockStep = ({ input, dispatch, onBack, onNext }: TimelockStepPr
               max={MAX_LOCKTIME_BLOCKS}
               inputMode="numeric"
               value={input.locktime_blocks}
-              onChange={(event) => {
-                const nextValue = Number.parseInt(event.target.value, 10);
-                if (Number.isNaN(nextValue)) return;
-                updateLocktime(nextValue);
+              onChange={(e) => {
+                const next = Number.parseInt(e.target.value, 10);
+                if (Number.isNaN(next)) return;
+                updateLocktime(next);
               }}
-              className="w-full rounded-2xl border border-border bg-muted px-4 py-3 font-mono text-sm transition-[border-color,box-shadow] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+              className="field-input"
             />
           </div>
         </div>
       </div>
 
-      <div className="space-y-3 rounded-2xl border border-orange-500/10 bg-orange-500/5 p-6 text-xs font-medium leading-relaxed text-orange-600/75">
-        <p>• The timer resets every time you move the funds.</p>
-        <p>• The delay starts <strong>only after</strong> the funding transaction confirms on-chain.</p>
+      <div className="rounded-md border border-border bg-muted/40 p-3 text-xs leading-relaxed text-muted-foreground space-y-1">
+        <p>• The timer resets every time you spend from the vault.</p>
+        <p>• The delay starts <strong className="font-semibold text-foreground">only after</strong> the funding transaction confirms on-chain.</p>
       </div>
 
       {input.locktime_blocks > BLOCKS_PER_MONTH && (
-        <div className="space-y-3 rounded-2xl border border-red-500/20 bg-red-500/5 p-6">
-          <div className="flex items-center gap-2 text-red-600">
-            <AlertTriangle className="w-5 h-5" />
-            <span className="font-bold">Extended Locktime Warning</span>
-          </div>
-          <p className="text-sm text-red-600/80 leading-relaxed">
-            You have selected a locktime of approximately <strong>{calculateTime(input.locktime_blocks)}</strong>. 
-            This means if you lose access to your owner key, your funds will be locked for this entire period 
-            before the beneficiary can claim them. Consider a shorter locktime (1 day to 1 week) for most use cases.
+        <div className="flex gap-2 rounded-md border border-warning/30 bg-warning-bg p-3 text-xs leading-relaxed text-warning">
+          <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+          <p>
+            You have selected a delay of approximately <strong className="font-semibold">{calculateTime(input.locktime_blocks)}</strong>.
+            If you lose access to the owner key, funds stay locked for that entire period before the beneficiary can claim them.
+            Most users are better served by 1 day to 1 week.
           </p>
         </div>
       )}
 
-      <div className="flex flex-col-reverse gap-3 pt-4 sm:flex-row sm:items-center sm:justify-between">
-        <button type="button" onClick={onBack} className="text-left font-bold text-foreground/60 transition-colors hover:text-foreground/80">Back</button>
-        <button type="button" onClick={onNext} className="btn-primary w-full sm:w-auto">Continue</button>
+      <div className="flex items-center justify-between border-t border-border pt-4">
+        <button type="button" onClick={onBack} className="btn-secondary">Back</button>
+        <button type="button" onClick={onNext} className="btn-primary">Continue</button>
       </div>
     </div>
   );

@@ -9,10 +9,10 @@ interface StatusCardProps {
 
 export const StatusCard = ({ label, value, detail }: StatusCardProps) => {
   return (
-    <div className="p-4 rounded-2xl border border-border bg-muted/40 space-y-1">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-foreground/60">{label}</p>
-      <p className="text-sm font-bold text-foreground">{value}</p>
-      <p className="text-xs text-foreground/65 leading-relaxed">{detail}</p>
+    <div className="rounded-md border border-border bg-white p-4 space-y-1">
+      <p className="section-eyebrow">{label}</p>
+      <p className="text-sm font-semibold text-foreground">{value}</p>
+      <p className="text-xs leading-relaxed text-muted-foreground">{detail}</p>
     </div>
   );
 };
@@ -26,7 +26,7 @@ interface DataRowProps {
 
 export const DataRow = ({ label, value, copyable, mono }: DataRowProps) => {
   const [copied, setCopied] = useState(false);
-  
+
   const handleCopy = () => {
     navigator.clipboard
       .writeText(value)
@@ -38,20 +38,24 @@ export const DataRow = ({ label, value, copyable, mono }: DataRowProps) => {
   };
 
   return (
-    <div className="space-y-2">
-      <p className="text-[10px] font-bold uppercase tracking-wider text-foreground/60 print:text-gray-500">{label}</p>
+    <div className="space-y-1.5">
+      <p className="section-eyebrow print:text-gray-500">{label}</p>
       <div className="flex gap-2">
-        <div className={`flex-1 p-3 bg-muted border border-border rounded-lg text-sm break-all print:bg-transparent print:border-none print:p-0 ${mono ? 'font-mono text-[11px]' : ''}`}>
+        <div
+          className={`flex-1 break-all rounded-md border border-border bg-muted/40 px-3 py-2 text-sm print:border-none print:bg-transparent print:p-0 ${
+            mono ? 'font-mono text-xs' : ''
+          }`}
+        >
           {value}
         </div>
         {copyable && (
-          <button 
+          <button
             type="button"
             aria-label={`Copy ${label}`}
             onClick={handleCopy}
-            className="p-3 bg-white border border-border rounded-lg hover:bg-muted transition-colors print:hidden"
+            className="btn-secondary !px-3 !py-2 print:hidden"
           >
-            {copied ? <Check className="w-4 h-4 text-primary" /> : <Copy className="w-4 h-4 opacity-40" />}
+            {copied ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
           </button>
         )}
       </div>

@@ -1,105 +1,124 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=Manrope:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --background: 0 0% 100%;
-  --foreground: 222 47% 11%;
-  --card: 0 0% 100%;
-  --card-foreground: 222 47% 11%;
-  --primary: 33 94% 53%;
+  /* Neutral, paper-toned palette */
+  --background: 48 14% 97%;       /* #FAFAF7 */
+  --surface: 0 0% 100%;            /* panels */
+  --foreground: 0 0% 7%;           /* #111111 */
+  --muted-foreground: 40 4% 42%;   /* #6B6B66 */
+  --border: 45 8% 91%;             /* #ECECE8 */
+  --border-strong: 45 8% 84%;      /* #DDDCD5 */
+  --muted: 45 14% 96%;             /* #F4F3EE */
+
+  /* Single accent, dialed back from #F7931A */
+  --primary: 28 75% 50%;           /* #E07B1F */
   --primary-foreground: 0 0% 100%;
-  --border: 214 32% 91%;
-  --ring: 33 94% 53%;
-  --muted: 210 40% 96.1%;
-  --muted-foreground: 215.4 16.3% 46.9%;
+  --ring: 0 0% 7%;
+
+  /* Status */
+  --success: 140 45% 33%;          /* #2F7A47 */
+  --success-bg: 140 40% 95%;
+  --danger: 8 65% 44%;             /* #B23A2A */
+  --warning: 36 78% 38%;           /* #A86A14 */
+  --warning-bg: 42 88% 93%;        /* #FFF6E5 */
   color-scheme: light;
 }
 
 @layer base {
-  html {
-    @apply scroll-smooth;
-  }
+  html { @apply scroll-smooth; }
 
   body {
-    @apply bg-background text-foreground antialiased selection:bg-primary/20;
-    font-family: 'Manrope', sans-serif;
-    background-image: 
-      radial-gradient(circle at 0% 0%, hsla(33, 94%, 53%, 0.11), transparent 28%),
-      radial-gradient(circle at 100% 0%, hsla(33, 94%, 53%, 0.05), transparent 22%),
-      linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(255, 255, 255, 0.995));
+    @apply bg-background text-foreground antialiased selection:bg-foreground/10;
+    font-family: 'Inter', system-ui, sans-serif;
     min-height: 100vh;
-    overflow-x: hidden;
     -webkit-tap-highlight-color: transparent;
   }
 
-  h1,
-  h2,
-  h3 {
-    text-wrap: balance;
-  }
+  h1, h2, h3 { text-wrap: balance; letter-spacing: -0.01em; }
 
-  img {
-    max-width: 100%;
-  }
+  img { max-width: 100%; }
 
-  code,
-  pre,
-  kbd {
-    font-family: 'IBM Plex Mono', monospace;
-  }
-
-  :where(a, button, input, select, textarea) {
-    touch-action: manipulation;
+  code, pre, kbd {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
   }
 
   :where(a, button, input, select, textarea):focus-visible {
-    outline: 2px solid hsl(var(--ring) / 0.45);
-    outline-offset: 3px;
+    outline: 2px solid hsl(var(--ring) / 0.6);
+    outline-offset: 2px;
   }
 }
 
 @layer components {
-  .glass {
-    @apply backdrop-blur-xl border border-black/5 rounded-2xl shadow-[0_24px_70px_-48px_rgba(15,23,42,0.35)] transition-[background-color,border-color,box-shadow,transform] duration-300;
-    background-color: rgba(255, 255, 255, 0.72);
-  }
-  
-  .glass-hover {
-    @apply hover:bg-white/92 hover:border-primary/20 hover:shadow-[0_30px_80px_-44px_rgba(247,147,26,0.35)];
+  .panel {
+    @apply rounded-lg border border-border bg-white;
   }
 
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-8 py-4 text-base font-extrabold text-primary-foreground
-           shadow-[0_22px_50px_-28px_rgba(247,147,26,0.75)] transition-[background-color,box-shadow,transform] duration-200
-           hover:-translate-y-0.5 hover:bg-[#ff9e18] hover:shadow-[0_26px_55px_-26px_rgba(247,147,26,0.82)]
-           active:translate-y-0 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20;
+    @apply inline-flex items-center justify-center gap-2 rounded-md bg-foreground px-4 py-2.5 text-sm font-medium text-white
+           transition-colors hover:bg-foreground/90
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/40
+           disabled:cursor-not-allowed disabled:opacity-40;
+  }
+
+  .btn-accent {
+    @apply inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground
+           transition-colors hover:bg-primary/90
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40
+           disabled:cursor-not-allowed disabled:opacity-40;
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 rounded-2xl border border-border bg-white/85 px-8 py-4 text-base font-bold text-foreground
-           transition-[background-color,border-color,color,transform] duration-200 hover:-translate-y-0.5 hover:border-primary/25 hover:bg-white
-           active:translate-y-0 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10;
+    @apply inline-flex items-center justify-center gap-2 rounded-md border border-border bg-white px-4 py-2.5 text-sm font-medium text-foreground
+           transition-colors hover:border-border-strong hover:bg-muted
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/15
+           disabled:cursor-not-allowed disabled:opacity-40;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-foreground/70
+           transition-colors hover:text-foreground hover:bg-muted
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/15;
+  }
+
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 rounded-md bg-danger px-4 py-2.5 text-sm font-medium text-white
+           transition-colors hover:bg-danger/90
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/40
+           disabled:cursor-not-allowed disabled:opacity-40;
+  }
+
+  .field-label {
+    @apply text-sm font-semibold text-foreground;
+  }
+
+  .field-hint {
+    @apply text-xs text-muted-foreground;
+  }
+
+  .field-input {
+    @apply w-full rounded-md border border-border bg-white px-3 py-2.5 text-sm font-mono text-foreground
+           transition-colors hover:border-border-strong focus:border-foreground focus:outline-none;
+  }
+
+  .section-eyebrow {
+    @apply text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground;
+  }
+
+  .data-mono {
+    @apply font-mono text-sm break-all text-foreground;
   }
 }
 
-.bg-mesh {
-  background: 
-    radial-gradient(circle at 10% 0%, hsla(33, 94%, 53%, 0.12), transparent 26%),
-    radial-gradient(circle at 90% 8%, hsla(33, 94%, 53%, 0.08), transparent 20%),
-    radial-gradient(circle at 50% 100%, hsla(33, 94%, 53%, 0.05), transparent 24%);
-}
+/* Legacy utility kept for any leftover refs — no gradient mesh anymore */
+.bg-mesh { background: hsl(var(--background)); }
 
 @media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-
-  *,
-  *::before,
-  *::after {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;

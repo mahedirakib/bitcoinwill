@@ -1,5 +1,5 @@
-import { ChevronLeft } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { ScrollText } from 'lucide-react';
 import whitepaperMarkdown from '../../whitepaper.md?raw';
 
 type Block =
@@ -111,7 +111,10 @@ const renderInlineMarkdown = (text: string): ReactNode[] => {
       );
     } else if (token.startsWith('`') && token.endsWith('`')) {
       nodes.push(
-        <code key={`${start}-code`} className="px-1.5 py-0.5 rounded bg-muted font-mono text-[0.9em] text-foreground">
+        <code
+          key={`${start}-code`}
+          className="rounded bg-muted px-1.5 py-0.5 font-mono text-[0.9em] text-foreground"
+        >
           {token.slice(1, -1)}
         </code>,
       );
@@ -130,30 +133,24 @@ const renderInlineMarkdown = (text: string): ReactNode[] => {
 
 const blocks = parseMarkdownBlocks(whitepaperMarkdown);
 
-const Whitepaper = ({ onBack }: { onBack: () => void }) => {
+const Whitepaper = ({ onBack: _onBack }: { onBack: () => void }) => {
   return (
-    <div className="max-w-4xl mx-auto py-12 px-6 space-y-10 animate-in fade-in slide-in-from-bottom-4">
-      <button
-        type="button"
-        onClick={onBack}
-        className="flex items-center gap-2 text-foreground/60 hover:text-primary transition-colors"
-      >
-        <ChevronLeft className="w-4 h-4" /> Back to App
-      </button>
-
-      <header className="space-y-3">
-        <p className="text-[11px] uppercase tracking-[0.2em] text-foreground/50 font-semibold">TIP Protocol Reference</p>
-        <h1 className="text-4xl font-extrabold tracking-tight">TIP Whitepaper</h1>
-        <p className="text-foreground/60">
+    <div className="mx-auto max-w-3xl space-y-6">
+      <header className="space-y-2">
+        <div className="section-eyebrow flex items-center gap-1.5">
+          <ScrollText className="h-3 w-3" /> TIP Protocol Reference
+        </div>
+        <h1 className="text-2xl font-semibold tracking-tight">TIP Whitepaper</h1>
+        <p className="text-sm leading-relaxed text-muted-foreground">
           Canonical technical overview of TIP design goals, threat model, and operational assumptions.
         </p>
       </header>
 
-      <article className="glass p-6 md:p-10 space-y-6 leading-relaxed">
+      <article className="panel space-y-5 px-6 py-6 text-sm leading-relaxed md:px-8 md:py-7">
         {blocks.map((block) => {
           if (block.type === 'h1') {
             return (
-              <h2 key={`h1-${block.text}`} className="text-2xl md:text-3xl font-bold tracking-tight">
+              <h2 key={`h1-${block.text}`} className="text-lg font-semibold tracking-tight">
                 {block.text}
               </h2>
             );
@@ -161,7 +158,7 @@ const Whitepaper = ({ onBack }: { onBack: () => void }) => {
 
           if (block.type === 'h2') {
             return (
-              <h3 key={`h2-${block.text}`} className="text-xl md:text-2xl font-bold tracking-tight pt-2">
+              <h3 key={`h2-${block.text}`} className="text-base font-semibold tracking-tight pt-1">
                 {block.text}
               </h3>
             );
@@ -177,7 +174,10 @@ const Whitepaper = ({ onBack }: { onBack: () => void }) => {
 
           if (block.type === 'ul') {
             return (
-              <ul key={`ul-${block.items[0]?.slice(0, 30) ?? 'empty'}`} className="space-y-2 pl-5 list-disc text-foreground/80">
+              <ul
+                key={`ul-${block.items[0]?.slice(0, 30) ?? 'empty'}`}
+                className="space-y-1.5 list-disc pl-5 text-foreground/80"
+              >
                 {block.items.map((item) => (
                   <li key={`ul-item-${item.slice(0, 50)}`}>{renderInlineMarkdown(item)}</li>
                 ))}
@@ -186,7 +186,10 @@ const Whitepaper = ({ onBack }: { onBack: () => void }) => {
           }
 
           return (
-            <ol key={`ol-${block.items[0]?.slice(0, 30) ?? 'empty'}`} className="space-y-2 pl-5 list-decimal text-foreground/80">
+            <ol
+              key={`ol-${block.items[0]?.slice(0, 30) ?? 'empty'}`}
+              className="space-y-1.5 list-decimal pl-5 text-foreground/80"
+            >
               {block.items.map((item) => (
                 <li key={`ol-item-${item.slice(0, 50)}`}>{renderInlineMarkdown(item)}</li>
               ))}
@@ -195,14 +198,14 @@ const Whitepaper = ({ onBack }: { onBack: () => void }) => {
         })}
       </article>
 
-      <footer className="text-xs text-foreground/50 pt-2">
+      <footer className="border-t border-border pt-4 text-xs text-muted-foreground">
         <a
           href="https://github.com/mahedirakib/bitcoinwill/blob/main/whitepaper.md"
           target="_blank"
           rel="noopener noreferrer"
-          className="underline underline-offset-4 decoration-black/10 hover:text-foreground/80 transition-colors"
+          className="text-foreground underline underline-offset-2 hover:text-foreground/70"
         >
-          View raw markdown on GitHub
+          View raw markdown on GitHub →
         </a>
       </footer>
     </div>

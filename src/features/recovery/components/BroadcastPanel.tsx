@@ -1,4 +1,4 @@
-import { Send, ExternalLink, Key, CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, ExternalLink, Key, Send } from 'lucide-react';
 import type { BroadcastPanelProps } from '../types';
 
 const MAINNET_BROADCAST_CONFIRMATION = 'I UNDERSTAND THIS BROADCASTS ON MAINNET';
@@ -16,105 +16,106 @@ export const BroadcastPanel = ({
   reconstructedKey,
 }: BroadcastPanelProps) => {
   const isMainnet = model.network === 'MAINNET';
-  const canBroadcast = 
+  const canBroadcast =
     rawTxHex.trim().length > 0 &&
     (!isMainnet || broadcastMainnetPhrase === MAINNET_BROADCAST_CONFIRMATION);
 
   return (
-    <section className="space-y-6 print:hidden">
-      <h2 className="text-xl font-bold border-b border-border pb-2 flex items-center gap-2 print:border-gray-300">
-        <Send className="w-5 h-5 text-primary" /> Broadcast Recovery Transaction
+    <section className="space-y-4 print:hidden">
+      <h2 className="flex items-center gap-2 border-b border-border pb-2 text-base font-semibold print:border-gray-300">
+        <Send className="h-4 w-4 text-foreground/70" /> Broadcast recovery transaction
       </h2>
 
       {reconstructedKey && (
-        <div className="p-4 rounded-xl border border-green-500/20 bg-green-500/5 space-y-3">
-          <div className="flex items-center gap-2 text-green-700">
-            <CheckCircle2 className="w-5 h-5" />
-            <span className="font-bold">Private Key Reconstructed</span>
+        <div className="rounded-md border border-success/20 bg-success-bg p-3 space-y-2">
+          <div className="flex items-center gap-2 text-success">
+            <CheckCircle2 className="h-4 w-4" />
+            <span className="text-sm font-semibold">Private key reconstructed</span>
           </div>
-          <p className="text-sm text-green-600/80">
-            You have successfully combined your shares. Use the reconstructed private key 
-            in a wallet like Sparrow to create and sign the recovery transaction, then paste 
-            the signed transaction hex below.
+          <p className="text-sm leading-relaxed text-success">
+            You have successfully combined your shares. Use the reconstructed private key in a wallet like Sparrow to create and sign the recovery transaction, then paste the signed transaction hex below.
           </p>
-          <div className="flex items-center gap-2 p-3 bg-white rounded-lg border border-green-500/20">
-            <Key className="w-4 h-4 text-green-600" />
-            <span className="text-xs font-mono text-foreground/60">
-              {reconstructedKey.slice(0, 16)}...{reconstructedKey.slice(-16)}
+          <div className="flex items-center gap-2 rounded border border-border bg-white px-3 py-2">
+            <Key className="h-3.5 w-3.5 text-success" />
+            <span className="font-mono text-xs text-muted-foreground">
+              {reconstructedKey.slice(0, 16)}…{reconstructedKey.slice(-16)}
             </span>
           </div>
         </div>
       )}
 
-      <p className="text-sm text-foreground/70 leading-relaxed">
+      <p className="text-sm leading-relaxed text-muted-foreground">
         Paste a fully signed raw transaction hex from your wallet, then broadcast it to the selected public explorer.
       </p>
 
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <label htmlFor="raw-transaction-hex" className="text-[10px] font-bold uppercase tracking-widest text-foreground/60">
-            Signed Raw Transaction (Hex)
+      <div className="space-y-1.5">
+        <label htmlFor="raw-transaction-hex" className="field-label">
+          Signed raw transaction (hex)
+        </label>
+        <textarea
+          id="raw-transaction-hex"
+          value={rawTxHex}
+          onChange={(event) => onRawTxHexChange(event.target.value)}
+          placeholder="020000000001…"
+          className="field-input h-36 resize-none"
+        />
+      </div>
+
+      {isMainnet && (
+        <div className="space-y-1.5">
+          <label htmlFor="mainnet-broadcast-phrase" className="field-label text-danger">
+            Mainnet confirmation phrase
           </label>
-          <textarea
-            id="raw-transaction-hex"
-            value={rawTxHex}
-            onChange={(event) => onRawTxHexChange(event.target.value)}
-            placeholder="020000000001..."
-            className="w-full h-36 bg-muted border border-border rounded-xl p-4 font-mono text-xs focus:ring-2 focus:ring-primary/20 transition-all"
+          <div className="rounded-md border border-danger/20 bg-danger/5 px-3 py-2 font-mono text-xs text-danger">
+            {MAINNET_BROADCAST_CONFIRMATION}
+          </div>
+          <input
+            id="mainnet-broadcast-phrase"
+            type="text"
+            value={broadcastMainnetPhrase}
+            onChange={(event) => onBroadcastMainnetPhraseChange(event.target.value)}
+            className="field-input"
+            placeholder="Type phrase exactly"
           />
         </div>
+      )}
 
-        {isMainnet && (
-          <div className="space-y-2">
-            <label htmlFor="mainnet-broadcast-phrase" className="text-[10px] font-bold uppercase tracking-widest text-red-600">
-              Mainnet Confirmation Phrase
-            </label>
-            <div className="p-3 bg-red-500/5 border border-red-500/20 rounded-xl text-xs font-mono text-red-600">
-              {MAINNET_BROADCAST_CONFIRMATION}
-            </div>
-            <input
-              id="mainnet-broadcast-phrase"
-              type="text"
-              value={broadcastMainnetPhrase}
-              onChange={(event) => onBroadcastMainnetPhraseChange(event.target.value)}
-              className="w-full bg-muted border border-border rounded-xl p-3 font-mono text-xs focus:ring-2 focus:ring-red-500/20 transition-all"
-              placeholder="Type phrase exactly"
-            />
-          </div>
-        )}
+      <button
+        type="button"
+        onClick={onBroadcast}
+        disabled={isBroadcasting || !canBroadcast}
+        className={isMainnet ? 'btn-danger' : 'btn-primary'}
+      >
+        {isBroadcasting ? 'Broadcasting…' : 'Broadcast transaction'}
+      </button>
 
-        <button
-          type="button"
-          onClick={onBroadcast}
-          disabled={isBroadcasting || !canBroadcast}
-          className="btn-primary w-full sm:w-auto !text-sm !px-6 !py-3 disabled:opacity-40 disabled:cursor-not-allowed"
+      {broadcastError && (
+        <div
+          role="alert"
+          className="rounded-md border border-danger/20 bg-danger/5 p-3 text-sm text-danger"
         >
-          {isBroadcasting ? 'Broadcasting...' : 'Broadcast Transaction'}
-        </button>
+          {broadcastError}
+        </div>
+      )}
 
-        {broadcastError && (
-          <div role="alert" className="p-4 rounded-xl border border-red-500/20 bg-red-500/5 text-red-600 text-sm font-medium">
-            {broadcastError}
-          </div>
-        )}
-
-        {broadcastResult && (
-          <div className="p-4 rounded-2xl border border-green-500/20 bg-green-500/5 space-y-2">
-            <p className="text-xs font-bold uppercase tracking-widest text-green-700">
-              Broadcast Accepted ({broadcastResult.providerLabel})
-            </p>
-            <p className="font-mono text-[11px] break-all">{broadcastResult.txid}</p>
-            <a
-              href={broadcastResult.explorerTxUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-2 text-xs text-green-700 hover:underline font-semibold"
-            >
-              Open transaction in explorer <ExternalLink className="w-3 h-3" />
-            </a>
-          </div>
-        )}
-      </div>
+      {broadcastResult && (
+        <div className="rounded-md border border-success/20 bg-success-bg p-3 space-y-1.5">
+          <p className="section-eyebrow text-success">
+            Broadcast accepted ({broadcastResult.providerLabel})
+          </p>
+          <p className="break-all font-mono text-[11px] text-foreground">
+            {broadcastResult.txid}
+          </p>
+          <a
+            href={broadcastResult.explorerTxUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-foreground underline underline-offset-2 hover:text-foreground/70"
+          >
+            Open transaction in explorer <ExternalLink className="h-3 w-3" />
+          </a>
+        </div>
+      )}
     </section>
   );
 };

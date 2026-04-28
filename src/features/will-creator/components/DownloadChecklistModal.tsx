@@ -36,13 +36,13 @@ export const DownloadChecklistModal = ({
       }
 
       if (event.key !== 'Tab' || !modalRef.current) return;
-      const focusableElements = modalRef.current.querySelectorAll<HTMLElement>(
+      const focusable = modalRef.current.querySelectorAll<HTMLElement>(
         'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
       );
 
-      if (focusableElements.length === 0) return;
-      const first = focusableElements[0];
-      const last = focusableElements[focusableElements.length - 1];
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
 
       if (event.shiftKey && document.activeElement === first) {
         event.preventDefault();
@@ -65,61 +65,57 @@ export const DownloadChecklistModal = ({
   const allChecked = Object.values(checklist).every(Boolean);
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center p-6 bg-background/85 backdrop-blur-sm animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-foreground/30 p-6">
       <div
         ref={modalRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="download-checklist-title"
         aria-describedby="download-checklist-description"
-        className="glass max-w-2xl w-full p-8 space-y-8 border-primary/20 shadow-2xl animate-in zoom-in-95 duration-300"
+        className="panel w-full max-w-xl p-6 space-y-5 shadow-xl"
       >
-        <div className="space-y-3">
-          <h3 id="download-checklist-title" className="text-3xl font-black tracking-tight">
-            Checklist for Success
+        <div>
+          <h3 id="download-checklist-title" className="text-base font-semibold tracking-tight">
+            Confirm before download
           </h3>
-          <p id="download-checklist-description" className="text-sm text-foreground/70 font-medium">
-            Confirm each safety item before downloading your Recovery Kit.
+          <p id="download-checklist-description" className="mt-1 text-sm text-muted-foreground">
+            Confirm each safety item before downloading your recovery kit.
           </p>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-2">
           {CHECKLIST_ITEMS.map((item) => (
             <label
               key={item.id}
               htmlFor={`checklist-${item.id}`}
-              className="flex items-start gap-3 p-4 rounded-2xl border border-border bg-muted/50 hover:border-primary/20 transition-colors cursor-pointer"
+              className="flex cursor-pointer items-start gap-3 rounded-md border border-border bg-white p-3 transition-colors hover:border-border-strong"
             >
               <input
                 id={`checklist-${item.id}`}
                 type="checkbox"
                 checked={checklist[item.id]}
                 onChange={() => onUpdateChecklist(item.id)}
-                className="mt-1 h-4 w-4 accent-primary"
+                className="mt-0.5 h-4 w-4 accent-foreground"
               />
-              <span className="space-y-1">
-                <span className="block text-sm font-semibold">{item.title}</span>
-                <span className="block text-xs text-foreground/60">{item.detail}</span>
+              <span>
+                <span className="block text-sm font-medium text-foreground">{item.title}</span>
+                <span className="mt-0.5 block text-xs text-muted-foreground">{item.detail}</span>
               </span>
             </label>
           ))}
         </div>
 
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex-1 py-4 rounded-xl border border-border text-sm font-bold hover:bg-muted transition-colors"
-          >
-            Back
+        <div className="flex justify-end gap-2 border-t border-border pt-4">
+          <button type="button" onClick={onClose} className="btn-ghost">
+            Cancel
           </button>
           <button
             type="button"
             onClick={onConfirm}
             disabled={!allChecked}
-            className="flex-1 rounded-xl bg-primary py-4 text-sm font-bold text-primary-foreground transition-[background-color,box-shadow,transform] hover:-translate-y-0.5 hover:bg-[#ff9e18] active:translate-y-0 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40"
+            className="btn-primary"
           >
-            Confirm & Download
+            Confirm and download
           </button>
         </div>
       </div>

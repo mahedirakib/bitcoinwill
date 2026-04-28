@@ -1,4 +1,4 @@
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, ShieldCheck } from 'lucide-react';
 import { calculateTime } from '@/lib/bitcoin/utils';
 import type { PlanInput } from '@/lib/bitcoin/types';
 import type { BitcoinNetwork } from '@/lib/bitcoin/types';
@@ -11,9 +11,8 @@ interface ReviewStepProps {
   onGenerate: () => void;
 }
 
-const summarizePubkey = (value: string): string => (
-  value ? `${value.slice(0, 8)}...${value.slice(-8)}` : 'Generated during export'
-);
+const summarizePubkey = (value: string): string =>
+  value ? `${value.slice(0, 8)}…${value.slice(-8)}` : 'Generated during export';
 
 const formatRecoveryMethod = (input: PlanInput): string => {
   if (input.recovery_method !== 'social') return 'Single beneficiary key';
@@ -21,86 +20,100 @@ const formatRecoveryMethod = (input: PlanInput): string => {
   return `Social recovery (${input.sss_config.threshold}-of-${input.sss_config.total})`;
 };
 
+const Row = ({
+  label,
+  value,
+  mono,
+}: {
+  label: string;
+  value: React.ReactNode;
+  mono?: boolean;
+}) => (
+  <div className="grid grid-cols-[160px_1fr] gap-4 border-t border-border py-3 first:border-t-0">
+    <div className="text-sm text-muted-foreground">{label}</div>
+    <div className={`text-sm text-foreground ${mono ? 'font-mono' : ''}`}>{value}</div>
+  </div>
+);
+
+const SectionLabel = ({ children }: { children: React.ReactNode }) => (
+  <div className="section-eyebrow pt-4 first:pt-0 pb-1">{children}</div>
+);
+
 export const ReviewStep = ({ input, errors, network, onBack, onGenerate }: ReviewStepProps) => {
+  const dot =
+    network === 'mainnet' ? 'bg-danger' : network === 'testnet' ? 'bg-success' : 'bg-muted-foreground';
+
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-500 md:space-y-10">
-      <div className="space-y-3">
-        <h3 className="text-3xl font-black tracking-tight">Final Review</h3>
-        <p className="max-w-2xl font-medium text-foreground/58">
-          Check the essential details now so the generated recovery kit matches the people and timing you expect.
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-semibold tracking-tight">Review and generate</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Confirm everything below. After you generate, you will get a vault address, recovery kit, and beneficiary instructions.
         </p>
       </div>
 
-      <div className="glass space-y-6 p-6 md:p-8">
-        <div className="flex flex-col gap-3 border-b border-border pb-6 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-[11px] font-black uppercase tracking-[0.24em] text-foreground/55">Network</p>
-            <p className="mt-2 text-3xl font-black tracking-tight">{network}</p>
-          </div>
-          <span className="w-fit rounded-xl bg-primary/10 px-3 py-1 text-xs font-black uppercase tracking-widest text-primary">
-            {input.address_type === 'p2tr' ? 'Taproot' : 'P2WSH'}
-          </span>
-        </div>
+      <div className="rounded-md border border-border bg-white px-5 py-4">
+        <SectionLabel>Strategy</SectionLabel>
+        <Row label="Recovery type" value="Timelock" />
+        <Row
+          label="Address format"
+          value={input.address_type === 'p2tr' ? 'Taproot (bc1p…)' : 'P2WSH (bc1q…)'}
+        />
+        <Row
+          label="Network"
+          value={
+            <span className="inline-flex items-center gap-2 capitalize">
+              <span className={`h-1.5 w-1.5 rounded-full ${dot}`} aria-hidden />
+              {network}
+            </span>
+          }
+        />
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-1 rounded-2xl border border-border bg-muted/35 p-4">
-            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-foreground/50">Delay</p>
-            <p className="text-xl font-black [font-variant-numeric:tabular-nums]">
-              {input.locktime_blocks.toLocaleString()} blocks
-            </p>
-            <p className="text-sm text-foreground/62">Approximately {calculateTime(input.locktime_blocks)}</p>
-          </div>
+        <SectionLabel>Keys</SectionLabel>
+        <Row label="Owner key" value={summarizePubkey(input.owner_pubkey)} mono />
+        <Row
+          label={input.recovery_method === 'social' ? 'Beneficiary' : 'Beneficiary key'}
+          value={
+            input.recovery_method === 'social'
+              ? formatRecoveryMethod(input)
+              : summarizePubkey(input.beneficiary_pubkey)
+          }
+          mono={input.recovery_method !== 'social'}
+        />
 
-          <div className="space-y-1 rounded-2xl border border-border bg-muted/35 p-4">
-            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-foreground/50">Recovery Method</p>
-            <p className="text-xl font-black">{formatRecoveryMethod(input)}</p>
-            <p className="text-sm text-foreground/62">
-              {input.recovery_method === 'social'
-                ? 'The beneficiary key is generated when you confirm and then split into recovery shares.'
-                : 'A single beneficiary public key can spend after the delay passes.'}
-            </p>
-          </div>
+        <SectionLabel>Delay</SectionLabel>
+        <Row
+          label="Inactivity period"
+          value={`${input.locktime_blocks.toLocaleString()} blocks (≈ ${calculateTime(input.locktime_blocks)})`}
+        />
+        <Row label="Beneficiary may claim" value="If no spend occurs within the period" />
+      </div>
 
-          <div className="space-y-1 rounded-2xl border border-border bg-muted/35 p-4">
-            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-foreground/50">Owner Public Key</p>
-            <p className="font-mono text-sm font-semibold text-foreground/78">{summarizePubkey(input.owner_pubkey)}</p>
-            <p className="text-sm text-foreground/62">This key can spend immediately.</p>
-          </div>
-
-          <div className="space-y-1 rounded-2xl border border-border bg-muted/35 p-4">
-            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-foreground/50">
-              {input.recovery_method === 'social' ? 'Beneficiary Setup' : 'Beneficiary Public Key'}
-            </p>
-            <p className="font-mono text-sm font-semibold text-foreground/78">
-              {input.recovery_method === 'social'
-                ? formatRecoveryMethod(input)
-                : summarizePubkey(input.beneficiary_pubkey)}
-            </p>
-            <p className="text-sm text-foreground/62">
-              {input.recovery_method === 'social'
-                ? 'Any configured threshold of shares can reconstruct the beneficiary key later.'
-                : 'This key becomes usable only after the delay passes.'}
-            </p>
-          </div>
-        </div>
+      <div className="flex gap-2 rounded-md border border-warning/30 bg-warning-bg p-3 text-xs text-warning">
+        <ShieldCheck className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
+        <p>
+          After generating, download the recovery kit and store it offline. Without it, recovery is significantly harder.
+        </p>
       </div>
 
       {network === 'mainnet' && (
-        <div className="flex gap-4 rounded-2xl border border-red-500/10 bg-red-500/5 p-6 text-sm font-medium text-red-600">
-          <AlertTriangle className="w-6 h-6 flex-shrink-0" />
-          <p><strong>CAUTION:</strong> You are creating a plan on Mainnet. This involves real Bitcoin. Verify all keys carefully.</p>
+        <div className="flex gap-2 rounded-md border border-danger/20 bg-danger/5 p-3 text-xs text-danger">
+          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
+          <p>
+            <strong className="font-semibold">CAUTION:</strong> You are creating a plan on Mainnet. This involves real Bitcoin. Verify all keys carefully.
+          </p>
         </div>
       )}
 
       {errors.global && (
-        <div role="alert" className="p-6 bg-red-500/5 border border-red-500/10 rounded-2xl text-red-500 text-sm font-bold">
+        <div role="alert" className="rounded-md border border-danger/20 bg-danger/5 p-3 text-sm text-danger">
           <p>Error: {errors.global}</p>
         </div>
       )}
 
-      <div className="flex flex-col-reverse gap-3 pt-4 sm:flex-row sm:items-center sm:justify-between">
-        <button type="button" onClick={onBack} className="text-left font-bold text-foreground/60 transition-colors hover:text-foreground/80">Back</button>
-        <button type="button" onClick={onGenerate} className="btn-primary w-full sm:w-auto sm:px-12">Generate Plan</button>
+      <div className="flex items-center justify-between border-t border-border pt-4">
+        <button type="button" onClick={onBack} className="btn-secondary">Back</button>
+        <button type="button" onClick={onGenerate} className="btn-accent">Generate plan</button>
       </div>
     </div>
   );

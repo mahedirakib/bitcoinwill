@@ -32,9 +32,9 @@ export const CopyButton = ({ text, label, onCopy, className = '', ariaLabel }: C
       className={className}
     >
       {hasCopied ? (
-        <Check className="w-5 h-5 text-green-500" />
+        <Check className="h-4 w-4 text-success" />
       ) : (
-        <Copy className="w-5 h-5" />
+        <Copy className="h-4 w-4" />
       )}
     </button>
   );

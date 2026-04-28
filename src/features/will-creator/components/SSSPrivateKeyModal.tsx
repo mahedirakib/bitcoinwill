@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Shield, AlertTriangle, Copy, Check } from 'lucide-react';
+import { AlertTriangle, Check, Copy, Shield } from 'lucide-react';
 import { useToast } from '@/components/Toast';
 
 interface SSSPrivateKeyModalProps {
@@ -19,7 +19,6 @@ export const SSSPrivateKeyModal = ({ privateKey, onConfirm, onCancel }: SSSPriva
         showToast('Clipboard unavailable in this browser context');
         return;
       }
-
       await navigator.clipboard.writeText(privateKey);
       setHasCopied(true);
       showToast('Private key copied to clipboard');
@@ -30,89 +29,85 @@ export const SSSPrivateKeyModal = ({ privateKey, onConfirm, onCancel }: SSSPriva
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
+    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-foreground/30 p-6">
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="sss-private-key-title"
-        className="w-full max-w-2xl bg-background rounded-3xl shadow-2xl border border-border overflow-hidden animate-in zoom-in-95"
+        className="panel w-full max-w-xl overflow-hidden shadow-xl"
       >
-        <div className="p-6 bg-red-500/10 border-b border-red-500/20">
+        <div className="border-b border-border bg-warning-bg px-5 py-4">
           <div className="flex items-center gap-3">
-            <Shield className="w-8 h-8 text-red-500" />
+            <div className="rounded-md bg-warning/10 p-2 text-warning">
+              <Shield className="h-5 w-5" />
+            </div>
             <div>
-              <h2 id="sss-private-key-title" className="text-xl font-bold text-red-700">Critical Security Step</h2>
-              <p className="text-sm text-red-600/80">This private key will be split into shares. Save it now.</p>
+              <h2 id="sss-private-key-title" className="text-base font-semibold text-foreground">
+                Save the beneficiary private key first
+              </h2>
+              <p className="text-sm text-warning">
+                This key will be split into shares. Make a copy before continuing.
+              </p>
             </div>
           </div>
         </div>
 
-        <div className="p-6 space-y-6">
-          <div className="p-4 bg-orange-500/10 border border-orange-500/20 rounded-2xl flex items-start gap-3">
-            <AlertTriangle className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
-            <div className="space-y-2 text-sm text-orange-700">
-              <p className="font-bold">Important Security Information:</p>
-              <ul className="list-disc list-inside space-y-1">
-                <li>This is the <strong>beneficiary private key</strong> that will be split into shares</li>
-                <li>If you lose all shares and don't have this key, the funds cannot be recovered</li>
-                <li>Store this key in a secure location separate from the shares</li>
-                <li>Consider this a &quot;master backup&quot; of the beneficiary access</li>
+        <div className="space-y-5 px-5 py-5">
+          <div className="flex gap-2 rounded-md border border-warning/30 bg-warning-bg p-3 text-xs text-warning">
+            <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+            <div className="space-y-1">
+              <p className="font-semibold">Important</p>
+              <ul className="list-disc list-inside space-y-0.5">
+                <li>This is the <strong className="font-semibold">beneficiary private key</strong> that will be split into shares.</li>
+                <li>If you lose all shares and don't have this key, the funds cannot be recovered.</li>
+                <li>Store it separately from the shares.</li>
               </ul>
             </div>
           </div>
 
-          <div className="space-y-3">
-            <span className="text-sm font-bold">Beneficiary Private Key (hex)</span>
-            <div className="relative">
-              <div className="p-4 bg-muted rounded-2xl font-mono text-xs break-all border border-border">
-                {privateKey}
-              </div>
+          <div className="space-y-2">
+            <span className="field-label">Beneficiary private key (hex)</span>
+            <div className="flex items-start gap-2 rounded-md border border-border bg-muted/40 p-3">
+              <div className="flex-1 break-all font-mono text-xs text-foreground">{privateKey}</div>
               <button
                 type="button"
                 onClick={handleCopy}
-                className="absolute top-2 right-2 p-2 bg-background rounded-xl border border-border hover:bg-muted transition-colors"
-                title="Copy to clipboard"
                 aria-label="Copy beneficiary private key"
+                className="btn-secondary flex-shrink-0 !px-2.5 !py-2"
               >
-                {hasCopied ? (
-                  <Check className="w-4 h-4 text-green-500" />
-                ) : (
-                  <Copy className="w-4 h-4" />
-                )}
+                {hasCopied ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
               </button>
             </div>
           </div>
 
-          <div className="flex items-start gap-3 p-4 bg-muted rounded-xl">
+          <label
+            htmlFor="confirm-backup"
+            className="flex cursor-pointer items-start gap-3 rounded-md border border-border bg-muted/40 p-3"
+          >
             <input
-              type="checkbox"
               id="confirm-backup"
+              type="checkbox"
               checked={hasConfirmed}
               onChange={(e) => setHasConfirmed(e.target.checked)}
-              className="mt-1 w-4 h-4 rounded border-border"
+              className="mt-0.5 h-4 w-4 accent-foreground"
             />
-            <label htmlFor="confirm-backup" className="text-sm text-foreground/80 cursor-pointer">
-              I confirm that I have written down or securely stored this private key. 
-              I understand that if I lose all shares and don't have this key, the funds will be unrecoverable.
-            </label>
-          </div>
+            <span className="text-sm text-foreground">
+              I confirm I have stored this private key. I understand that if I lose all shares and don't have this key, the funds will be unrecoverable.
+            </span>
+          </label>
         </div>
 
-        <div className="p-6 border-t border-border flex justify-between items-center bg-muted/30">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="text-foreground/60 font-bold hover:text-foreground/80 transition-colors"
-          >
+        <div className="flex items-center justify-between border-t border-border bg-muted/20 px-5 py-4">
+          <button type="button" onClick={onCancel} className="btn-ghost">
             Cancel
           </button>
           <button
             type="button"
             onClick={onConfirm}
             disabled={!hasConfirmed}
-            className="btn-primary disabled:opacity-40 disabled:cursor-not-allowed"
+            className="btn-primary"
           >
-            Continue to Split Shares
+            Continue to split shares
           </button>
         </div>
       </div>

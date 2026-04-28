@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState, memo } from 'react';
 import { useSettings } from '@/state/settings';
-import { AlertTriangle, Lock } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import type { BitcoinNetwork } from '@/lib/bitcoin/types';
 
-const CONFIRMATION_PHRASE = "I UNDERSTAND MAINNET IS REAL MONEY";
+const CONFIRMATION_PHRASE = 'I UNDERSTAND MAINNET IS REAL MONEY';
 
 const NetworkSelectorComponent = () => {
   const { network, setNetwork, isMainnetUnlocked, unlockMainnet } = useSettings();
@@ -11,7 +11,7 @@ const NetworkSelectorComponent = () => {
   const [phrase, setPhrase] = useState('');
   const modalRef = useRef<HTMLDivElement | null>(null);
   const phraseInputRef = useRef<HTMLInputElement | null>(null);
-  const lastFocusedElementRef = useRef<HTMLElement | null>(null);
+  const lastFocusedRef = useRef<HTMLElement | null>(null);
 
   const closeModal = () => {
     setShowModal(false);
@@ -30,7 +30,7 @@ const NetworkSelectorComponent = () => {
   useEffect(() => {
     if (!showModal) return;
 
-    lastFocusedElementRef.current =
+    lastFocusedRef.current =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
 
     const previousBodyOverflow = document.body.style.overflow;
@@ -39,19 +39,18 @@ const NetworkSelectorComponent = () => {
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        setShowModal(false);
-        setPhrase('');
+        closeModal();
         return;
       }
 
       if (event.key !== 'Tab' || !modalRef.current) return;
-      const focusableElements = modalRef.current.querySelectorAll<HTMLElement>(
+      const focusable = modalRef.current.querySelectorAll<HTMLElement>(
         'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
       );
 
-      if (focusableElements.length === 0) return;
-      const first = focusableElements[0];
-      const last = focusableElements[focusableElements.length - 1];
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
 
       if (event.shiftKey && document.activeElement === first) {
         event.preventDefault();
@@ -67,7 +66,7 @@ const NetworkSelectorComponent = () => {
       window.clearTimeout(focusTimer);
       window.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = previousBodyOverflow;
-      lastFocusedElementRef.current?.focus();
+      lastFocusedRef.current?.focus();
     };
   }, [showModal]);
 
@@ -79,92 +78,97 @@ const NetworkSelectorComponent = () => {
     }
   };
 
+  const dot =
+    network === 'mainnet'
+      ? 'bg-danger'
+      : network === 'testnet'
+      ? 'bg-success'
+      : 'bg-muted-foreground';
+
   return (
     <div className="relative inline-block">
-      <select 
-        value={network}
-        onChange={handleSelect}
-        name="bitcoin_network"
-        aria-label="Select Bitcoin network"
-        className={`appearance-none cursor-pointer rounded-full border bg-muted py-2 px-4 pr-10 text-[10px] font-black uppercase tracking-[0.15em] transition-[border-color,background-color,color,box-shadow] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 ${
-          network === 'mainnet' 
-            ? 'text-red-700 border-red-600/40 bg-red-100' 
-            : 'text-primary border-border hover:border-primary/30'
-        }`}
-      >
-        <option value="testnet">Testnet</option>
-        <option value="regtest">Regtest</option>
-        <option value="mainnet">Mainnet 🔒</option>
-      </select>
-      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-        <Lock className="w-3 h-3 opacity-30 text-primary" />
+      <div className="relative">
+        <select
+          value={network}
+          onChange={handleSelect}
+          aria-label="Select Bitcoin network"
+          className="appearance-none cursor-pointer rounded-md border border-border bg-white py-1.5 pl-6 pr-7 text-xs font-semibold capitalize text-foreground transition-colors hover:border-border-strong focus:border-foreground focus:outline-none"
+        >
+          <option value="testnet">Testnet</option>
+          <option value="regtest">Regtest</option>
+          <option value="mainnet">Mainnet</option>
+        </select>
+        <span
+          className={`pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 h-1.5 w-1.5 rounded-full ${dot}`}
+          aria-hidden
+        />
+        <svg
+          className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          aria-hidden
+        >
+          <path d="m6 9 6 6 6-6" />
+        </svg>
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-background/80 backdrop-blur-sm animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-foreground/30 p-6">
           <div
             ref={modalRef}
             role="dialog"
             aria-modal="true"
             aria-labelledby="mainnet-warning-title"
-            aria-describedby="mainnet-warning-description"
-            className="glass max-w-lg w-full p-10 space-y-8 border-red-500/10 shadow-2xl shadow-red-500/10 animate-in zoom-in-95 duration-300"
+            className="panel w-full max-w-md p-6 space-y-5 shadow-xl"
           >
-            <div className="flex flex-col items-center text-center space-y-6">
-              <div className="bg-red-50 p-5 rounded-[2rem]">
-                <AlertTriangle className="text-red-500 w-12 h-12 drop-shadow-sm" />
+            <div className="flex items-start gap-3">
+              <div className="rounded-md bg-danger/10 p-2 text-danger">
+                <AlertTriangle className="h-5 w-5" />
               </div>
-              <div className="space-y-2">
-                <h2 id="mainnet-warning-title" className="text-3xl font-black tracking-tight">Serious Risk Ahead</h2>
-                <div id="mainnet-warning-description" className="space-y-4 text-base text-foreground/60 font-medium leading-relaxed">
-                  <p>Mainnet uses <span className="text-red-600 font-bold">real Bitcoin</span>. A single mistake could result in the permanent loss of your funds.</p>
-                  <p>By proceeding, you acknowledge this is a non-custodial tool and you accept all technical risks.</p>
-                </div>
+              <div>
+                <h2 id="mainnet-warning-title" className="text-base font-semibold">
+                  Switch to mainnet?
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Mainnet uses real Bitcoin. Mistakes can cause permanent loss of funds.
+                </p>
               </div>
             </div>
 
-            <div className="space-y-6">
-              <div className="space-y-3">
-                <label htmlFor="mainnet-phrase-input" className="text-[10px] font-black uppercase tracking-[0.2em] opacity-30">
-                  Verification Phrase
-                </label>
-                <div className="p-4 bg-muted rounded-2xl border border-border select-none text-center">
-                  <p className="text-xs font-mono text-primary font-bold">
-                    {CONFIRMATION_PHRASE}
-                  </p>
-                </div>
-                <input 
-                  id="mainnet-phrase-input"
-                  ref={phraseInputRef}
-                  type="text" 
-                  value={phrase}
-                  onChange={(e) => setPhrase(e.target.value)}
-                  autoComplete="off"
-                  autoCorrect="off"
-                  autoCapitalize="characters"
-                  spellCheck={false}
-                  className="w-full rounded-2xl border border-border bg-muted p-5 font-mono text-sm transition-[border-color,box-shadow] focus-visible:outline-none focus-visible:border-red-500/50 focus-visible:ring-4 focus-visible:ring-red-500/5"
-                  placeholder="Type carefully…"
-                />
+            <div className="space-y-2">
+              <label htmlFor="mainnet-phrase" className="field-label">
+                Type the confirmation phrase
+              </label>
+              <div className="rounded-md bg-muted px-3 py-2 text-center font-mono text-xs">
+                {CONFIRMATION_PHRASE}
               </div>
+              <input
+                id="mainnet-phrase"
+                ref={phraseInputRef}
+                type="text"
+                value={phrase}
+                onChange={(e) => setPhrase(e.target.value)}
+                autoComplete="off"
+                spellCheck={false}
+                className="field-input"
+                placeholder="Type carefully…"
+              />
+            </div>
 
-              <div className="flex gap-4">
-                <button 
-                  type="button"
-                  onClick={closeModal}
-                  className="flex-1 py-4 text-sm font-bold text-foreground/40 hover:text-foreground/60 transition-colors"
-                >
-                  Go Back
-                </button>
-                <button 
-                  type="button"
-                  onClick={confirmUnlock}
-                  disabled={phrase !== CONFIRMATION_PHRASE}
-                  className="flex-1 rounded-2xl bg-red-600 py-4 text-sm font-bold text-white shadow-lg shadow-red-600/20 transition-[background-color,box-shadow,transform] hover:-translate-y-0.5 hover:bg-red-500 active:translate-y-0 active:scale-[0.99] disabled:grayscale disabled:opacity-20"
-                >
-                  Unlock Mainnet
-                </button>
-              </div>
+            <div className="flex justify-end gap-2">
+              <button type="button" onClick={closeModal} className="btn-ghost">
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmUnlock}
+                disabled={phrase !== CONFIRMATION_PHRASE}
+                className="btn-danger"
+              >
+                Switch to mainnet
+              </button>
             </div>
           </div>
         </div>

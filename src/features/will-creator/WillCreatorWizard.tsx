@@ -20,6 +20,7 @@ import { DownloadChecklistModal } from './components/DownloadChecklistModal';
 import { HardwareWalletModal } from './components/HardwareWalletModal';
 import { SSSPrivateKeyModal } from './components/SSSPrivateKeyModal';
 import { StepErrorBoundary } from './components/StepErrorBoundary';
+import { StepIndicator } from './components/StepIndicator';
 import type { PlanInput } from '@/lib/bitcoin/types';
 import {
   ChecklistItemId,
@@ -30,13 +31,6 @@ import {
   type Step,
   wizardReducer,
 } from './types';
-
-const STEP_LABELS: Record<Exclude<Step, 'RESULT'>, string> = {
-  TYPE: 'Strategy',
-  KEYS: 'Keys',
-  TIMELOCK: 'Delay',
-  REVIEW: 'Review',
-};
 
 export interface InstructionData {
   plan: PlanInput;
@@ -391,37 +385,27 @@ For support, visit: https://github.com/mahedirakib/bitcoinwill
     setDownloadChecklist(createChecklistState());
   };
 
+  const stepNumber = getStepNumber(state.step);
+
   return (
-    <div className="mx-auto w-full max-w-5xl pb-10 pt-2 md:pb-16 md:pt-4">
+    <div className="mx-auto w-full max-w-3xl">
       {state.step !== 'RESULT' && (
-        <div className="mb-10 space-y-5 md:mb-12">
-          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-            <div className="space-y-2">
-              <p className="text-[11px] font-black uppercase tracking-[0.24em] text-primary">Build The Plan</p>
-              <h2 className="max-w-[12ch] text-3xl font-black tracking-tight md:text-5xl">New Spending Plan</h2>
-              <p className="max-w-2xl text-base font-medium text-foreground/62 md:text-lg">
-                Follow the steps to create a script you can review, export, and keep offline.
-              </p>
-            </div>
-            <div className="flex flex-col items-start gap-2 md:items-end">
-              <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold uppercase tracking-widest text-primary">
-                Step {getStepNumber(state.step)} of 4
-              </span>
-              <p className="text-sm font-semibold text-foreground/48">
-                {STEP_LABELS[state.step as Exclude<Step, 'RESULT'>]}
-              </p>
-            </div>
+        <div className="mb-6 space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <p className="section-eyebrow">Step {stepNumber} of 4</p>
+            <button
+              type="button"
+              onClick={handleCancel}
+              className="text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Cancel
+            </button>
           </div>
-          <div className="h-1.5 overflow-hidden rounded-full bg-muted">
-            <div 
-              className="h-full bg-primary shadow-lg shadow-primary/20 transition-[width] duration-500 ease-out"
-              style={{ width: `${(getStepNumber(state.step) / 4) * 100}%` }}
-            />
-          </div>
+          <StepIndicator current={state.step as Step} />
         </div>
       )}
 
-      <div className="space-y-10">
+      <div className={state.step === 'RESULT' ? '' : 'panel p-6 md:p-8'}>
         {state.step === 'TYPE' && (
           <StepErrorBoundary stepName="Type Selection" onReset={() => dispatch({ type: 'SET_STEP', payload: 'TYPE' })}>
             <TypeStep

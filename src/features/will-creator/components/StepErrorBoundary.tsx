@@ -1,4 +1,5 @@
 import { Component, ErrorInfo, ReactNode } from 'react';
+import { AlertTriangle } from 'lucide-react';
 
 interface StepErrorBoundaryProps {
   stepName: string;
@@ -33,27 +34,26 @@ export class StepErrorBoundary extends Component<StepErrorBoundaryProps, StepErr
   render() {
     if (this.state.hasError) {
       return (
-        <div className="p-8 space-y-6 animate-in fade-in">
-          <div className="p-6 bg-red-500/5 border border-red-500/20 rounded-2xl space-y-4">
-            <h3 className="text-lg font-bold text-red-600">Something went wrong in {this.props.stepName}</h3>
-            <p className="text-sm text-red-600/80">
-              An unexpected error occurred. You can try again or go back to the previous step.
-            </p>
-            {this.state.error && (
-              <div className="p-3 bg-red-500/10 rounded-xl">
-                <code className="text-xs text-red-700 break-all">{this.state.error.message}</code>
-              </div>
-            )}
+        <div className="space-y-4">
+          <div className="flex items-start gap-2 rounded-md border border-danger/20 bg-danger/5 p-4">
+            <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-danger" />
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold text-danger">
+                Something went wrong in {this.props.stepName}
+              </h3>
+              <p className="text-xs text-danger/80">
+                An unexpected error occurred. You can try again or go back to the previous step.
+              </p>
+              {this.state.error && (
+                <pre className="rounded bg-white p-2 font-mono text-[11px] text-danger break-all">
+                  {this.state.error.message}
+                </pre>
+              )}
+            </div>
           </div>
-          <div className="flex gap-4">
-            <button
-              type="button"
-              onClick={this.handleReset}
-              className="btn-primary"
-            >
-              Try Again
-            </button>
-          </div>
+          <button type="button" onClick={this.handleReset} className="btn-primary">
+            Try again
+          </button>
         </div>
       );
     }

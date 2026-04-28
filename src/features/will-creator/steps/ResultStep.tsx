@@ -1,4 +1,4 @@
-import { CheckCircle2, Download, FileText, Printer, QrCode, Users, AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Check, Copy, Download, FileText, Printer, QrCode, Users } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import type { PlanOutput } from '@/lib/bitcoin/types';
 import { CopyButton } from '@/components/CopyButton';
@@ -21,48 +21,51 @@ export const ResultStep = ({
   onDownloadShares,
 }: ResultStepProps) => {
   return (
-    <div className="space-y-12 animate-in zoom-in-95 duration-1000">
-      <div className="text-center space-y-4">
-        <div className="relative inline-block">
-          <div className="absolute inset-0 bg-primary/10 blur-2xl rounded-full" />
-          <CheckCircle2 className="text-primary w-20 h-20 relative drop-shadow-lg" />
-        </div>
-        <h2 className="text-5xl font-black tracking-tight">Plan Secured</h2>
-        <p className="text-foreground/70 text-lg font-medium">Your Vault Address is ready for funding.</p>
-        {result.network === 'mainnet' && (
-          <p className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-600 text-xs font-black uppercase tracking-widest">
-            <AlertTriangle className="w-3 h-3" /> Mainnet Address
-          </p>
-        )}
-        {result.address_type === 'p2tr' && (
-          <p className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-black uppercase tracking-widest">
-            Modern Format
-          </p>
-        )}
+    <div className="space-y-5">
+      {/* Calm success banner */}
+      <div className="flex items-center gap-2 rounded-md border border-success/20 bg-success-bg px-3 py-2.5">
+        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-success text-white">
+          <Check className="h-3 w-3" />
+        </span>
+        <p className="text-sm font-medium text-success">
+          Plan generated. The vault address is unfunded until you send Bitcoin to it.
+        </p>
       </div>
 
-      <div className="grid lg:grid-cols-5 gap-8 items-start">
-        <div className="lg:col-span-3 space-y-6">
-          <div className="glass p-8 space-y-5">
-            <h4 className="font-black text-[10px] uppercase tracking-[0.2em] opacity-60">Vault Address ({result.network})</h4>
-            <div className="flex gap-3">
-              <div className="flex-1 p-5 bg-muted border border-border rounded-2xl font-mono text-xs break-all leading-relaxed shadow-inner">
-                {result.address}
-              </div>
-              <CopyButton
-                text={result.address}
-                label="Address"
-                onCopy={onCopyToClipboard}
-                ariaLabel="Copy vault address"
-                className="p-4 bg-white border border-border rounded-2xl hover:bg-muted transition-colors group shadow-sm"
-              />
-            </div>
-          </div>
+      {result.network === 'mainnet' && (
+        <div className="flex gap-2 rounded-md border border-danger/20 bg-danger/5 px-3 py-2.5 text-xs text-danger">
+          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
+          <p>This is a <strong className="font-semibold">Mainnet</strong> address. Verify everything before funding.</p>
+        </div>
+      )}
 
-          <div className="glass p-8 space-y-4">
-            <h4 className="font-black text-[10px] uppercase tracking-[0.2em] opacity-60">Witness Script</h4>
-            <div className="flex gap-3">
-              <pre className="flex-1 p-5 bg-muted border border-border rounded-2xl text-[10px] font-mono overflow-x-auto opacity-80 leading-relaxed shadow-inner">
+      {/* Vault address — primary artifact */}
+      <div className="panel p-5">
+        <div className="section-eyebrow mb-2">Vault address</div>
+        <div className="flex items-center gap-3 rounded-md border border-border bg-muted/40 px-3 py-3">
+          <div className="flex-1 break-all font-mono text-sm text-foreground">{result.address}</div>
+          <CopyButton
+            text={result.address}
+            label="Address"
+            onCopy={onCopyToClipboard}
+            ariaLabel="Copy vault address"
+            className="btn-secondary !px-3 !py-2"
+          />
+        </div>
+        <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs text-muted-foreground">
+          <div><span className="text-foreground/40">Format:</span> {result.address_type === 'p2tr' ? 'P2TR (Taproot)' : 'P2WSH'}</div>
+          <div><span className="text-foreground/40">Network:</span> <span className="capitalize">{result.network}</span></div>
+        </div>
+      </div>
+
+      {/* Two-column: details + QR / actions */}
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <div className="space-y-4">
+          {/* Witness Script */}
+          <div className="panel p-5">
+            <div className="section-eyebrow mb-2">Witness script</div>
+            <div className="flex items-start gap-3 rounded-md border border-border bg-muted/40 px-3 py-3">
+              <pre className="flex-1 overflow-x-auto whitespace-pre-wrap break-all font-mono text-[11px] leading-relaxed text-foreground">
                 {result.script_asm}
               </pre>
               <CopyButton
@@ -70,118 +73,115 @@ export const ResultStep = ({
                 label="Script"
                 onCopy={onCopyToClipboard}
                 ariaLabel="Copy witness script hex"
-                className="p-4 bg-white border border-border rounded-2xl h-fit hover:bg-muted transition-colors group shadow-sm"
+                className="btn-secondary flex-shrink-0 !px-3 !py-2"
               />
             </div>
           </div>
 
+          {/* Social recovery shares */}
           {result.social_recovery_kit && (
-            <div className="glass p-8 space-y-6 border-orange-500/20 bg-orange-500/5">
-              <div className="flex items-center gap-2">
-                <Users className="w-5 h-5 text-orange-500" />
-                <h4 className="font-black text-[10px] uppercase tracking-[0.2em] opacity-60">Social Recovery Shares</h4>
+            <div className="panel p-5">
+              <div className="mb-3 flex items-center gap-2">
+                <Users className="h-4 w-4 text-muted-foreground" />
+                <div className="section-eyebrow">Social recovery shares</div>
               </div>
-              
-              <div className="p-4 rounded-xl bg-orange-500/10 text-sm text-orange-700 space-y-2">
-                <p className="font-bold">
-                  {result.social_recovery_kit.config.threshold}-of-{result.social_recovery_kit.config.total} Configuration
+
+              <div className="rounded-md border border-border bg-muted/40 p-3 text-sm">
+                <p className="font-semibold">
+                  {result.social_recovery_kit.config.threshold}-of-{result.social_recovery_kit.config.total} configuration
                 </p>
-                <p className="text-xs">
-                  Distribute these shares to trusted people. Any {result.social_recovery_kit.config.threshold} shares can reconstruct the beneficiary key.
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Distribute these shares to trusted people. Any {result.social_recovery_kit.config.threshold} can reconstruct the beneficiary key.
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 {result.social_recovery_kit.shares.map((share) => (
-                  <div key={share.index} className="space-y-3 p-4 bg-white rounded-xl border border-orange-500/20">
+                  <div key={share.index} className="rounded-md border border-border bg-white p-3 space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-bold">Share {share.index}</span>
-                      <div className="flex gap-2">
-                        <CopyButton
-                          text={share.share}
-                          label={`Share ${share.index}`}
-                          onCopy={onCopyToClipboard}
-                          className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors"
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="bg-white p-3 rounded-lg border border-border inline-block">
-                      <QRCodeSVG
-                        value={share.share}
-                        size={120}
-                        bgColor="#ffffff"
-                        fgColor="#000000"
-                        level="H"
+                      <span className="text-sm font-semibold">Share {share.index}</span>
+                      <CopyButton
+                        text={share.share}
+                        label={`Share ${share.index}`}
+                        onCopy={onCopyToClipboard}
+                        className="btn-ghost !px-2 !py-1"
                       />
                     </div>
-                    
-                    <div className="p-2 bg-muted rounded-lg font-mono text-[9px] break-all text-foreground/60">
-                      {share.share.slice(0, 32)}...{share.share.slice(-32)}
+                    <div className="rounded border border-border bg-white p-2">
+                      <QRCodeSVG value={share.share} size={108} bgColor="#ffffff" fgColor="#111111" level="H" />
+                    </div>
+                    <div className="rounded bg-muted px-2 py-1 font-mono text-[10px] break-all text-muted-foreground">
+                      {share.share.slice(0, 28)}…{share.share.slice(-28)}
                     </div>
                   </div>
                 ))}
               </div>
 
-              <div className="flex gap-3">
+              <div className="mt-3 flex flex-wrap gap-2">
                 <button
                   type="button"
                   onClick={() => onPrintShares(result)}
-                  className="flex-1 py-3 px-4 bg-orange-500 text-white rounded-xl text-sm font-bold hover:bg-orange-600 transition-colors flex items-center justify-center gap-2"
+                  className="btn-secondary"
                 >
-                  <Printer className="w-4 h-4" />
-                  Print Share Cards
+                  <Printer className="h-4 w-4" /> Print share cards
                 </button>
                 <button
                   type="button"
                   onClick={() => onDownloadShares(result)}
-                  className="flex-1 py-3 px-4 bg-muted text-foreground rounded-xl text-sm font-bold hover:bg-muted/80 transition-colors flex items-center justify-center gap-2"
+                  className="btn-secondary"
                 >
-                  <Download className="w-4 h-4" />
-                  Download All
+                  <Download className="h-4 w-4" /> Download all
                 </button>
               </div>
 
-              <div className="p-4 rounded-xl bg-muted/50 text-xs space-y-2">
-                <p className="font-bold text-foreground/70">Distribution Tips:</p>
-                <ul className="space-y-1 text-foreground/50 list-disc list-inside">
-                  <li>Print cards and give to different trusted people</li>
-                  <li>Or scan QR codes to share via Signal/WhatsApp</li>
-                  <li>Never store all shares in one location</li>
-                  <li>Consider geographic distribution</li>
+              <div className="mt-3 rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground space-y-1">
+                <p className="font-semibold text-foreground">Distribution tips:</p>
+                <ul className="list-disc list-inside space-y-0.5">
+                  <li>Print cards and give to different trusted people.</li>
+                  <li>Or scan QR codes to share via Signal / WhatsApp.</li>
+                  <li>Never store all shares in one location.</li>
+                  <li>Consider geographic distribution.</li>
                 </ul>
               </div>
             </div>
           )}
         </div>
 
-        <div className="lg:col-span-2 space-y-4 pt-4">
-          <div className="glass p-6 space-y-4">
-            <h4 className="font-black text-[10px] uppercase tracking-[0.2em] opacity-60 flex items-center gap-2">
-              <QrCode className="w-3 h-3" /> Scan to Fund
-            </h4>
-            <div className="bg-white p-4 rounded-xl inline-block">
-              <QRCodeSVG
-                value={result.address}
-                size={160}
-                bgColor="#ffffff"
-                fgColor="#000000"
-                level="M"
-                includeMargin={false}
-              />
+        <div className="space-y-3">
+          <div className="panel p-5">
+            <div className="section-eyebrow mb-2 flex items-center gap-1.5">
+              <QrCode className="h-3 w-3" /> Scan to fund
             </div>
-            <p className="text-[10px] text-foreground/60 text-center">
-              Scan with your mobile wallet
-            </p>
+            <div className="flex justify-center rounded-md border border-border bg-white p-3">
+              <QRCodeSVG value={result.address} size={160} bgColor="#ffffff" fgColor="#111111" level="M" />
+            </div>
+            <p className="mt-2 text-center text-[11px] text-muted-foreground">Scan with your mobile wallet.</p>
           </div>
 
-          <button type="button" onClick={onOpenDownloadChecklist} className="w-full btn-primary !bg-foreground !text-background flex items-center justify-center gap-3">
-            <Download className="w-6 h-6" /> Download Recovery Kit
+          <button type="button" onClick={onOpenDownloadChecklist} className="btn-primary w-full">
+            <Download className="h-4 w-4" /> Download recovery kit
           </button>
-          <button type="button" onClick={onViewInstructions} className="w-full btn-secondary flex items-center justify-center gap-3 shadow-sm">
-            <FileText className="w-6 h-6 text-primary" /> View Instructions
+          <button type="button" onClick={onViewInstructions} className="btn-secondary w-full">
+            <FileText className="h-4 w-4" /> View instructions
+          </button>
+          <button
+            type="button"
+            onClick={() => onCopyToClipboard(result.address, 'Address')}
+            className="btn-ghost w-full"
+          >
+            <Copy className="h-4 w-4" /> Copy address
           </button>
         </div>
+      </div>
+
+      <div className="panel p-5">
+        <div className="text-sm font-semibold">Next steps</div>
+        <ul className="mt-2 space-y-2 text-sm text-muted-foreground">
+          <li>• Verify the vault address on a second device or block explorer.</li>
+          <li>• Send a small test amount before any real funding.</li>
+          <li>• Store the recovery kit on durable offline media.</li>
+          <li>• Share beneficiary instructions through a separate channel.</li>
+        </ul>
       </div>
     </div>
   );

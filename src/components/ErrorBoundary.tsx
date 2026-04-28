@@ -17,7 +17,7 @@ interface State {
 
 export class ErrorBoundary extends Component<Props, State> {
   public state: State = {
-    hasError: false
+    hasError: false,
   };
 
   public static getDerivedStateFromError(_: Error): State {
@@ -25,41 +25,47 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("Uncaught error:", error, errorInfo);
+    console.error('Uncaught error:', error, errorInfo);
   }
 
   public render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-background flex items-center justify-center p-6 text-center">
-          <div className="glass max-w-md p-8 space-y-6 border-red-500/20">
-            <div className="flex flex-col items-center gap-4">
-              <div className="bg-red-500/10 p-4 rounded-full">
-                <AlertTriangle className="text-red-500 w-12 h-12" />
+        <div className="flex min-h-screen items-center justify-center bg-background p-6">
+          <div className="panel w-full max-w-md p-6 space-y-5 text-center">
+            <div className="flex flex-col items-center gap-3">
+              <div className="rounded-md bg-danger/10 p-2 text-danger">
+                <AlertTriangle className="h-6 w-6" />
               </div>
-              <h1 className="text-2xl font-bold">Something went wrong</h1>
-              <p className="text-foreground/60 text-sm">
+              <h1 className="text-base font-semibold tracking-tight">Something went wrong</h1>
+              <p className="text-sm text-muted-foreground">
                 An unexpected error occurred. No funds are at risk, but the interface needs to restart.
               </p>
             </div>
-            
-            <div className="flex gap-4">
-              <button 
+
+            <div className="flex justify-center gap-2">
+              <button
+                type="button"
                 onClick={() => window.location.assign(withBase())}
-                className="flex-1 bg-primary text-primary-foreground py-3 rounded-xl font-bold flex items-center justify-center gap-2"
+                className="btn-primary"
               >
-                <Home className="w-4 h-4" /> Home
+                <Home className="h-4 w-4" /> Home
               </button>
-              <button 
+              <button
+                type="button"
                 onClick={() => window.location.reload()}
-                className="flex-1 bg-white/5 border border-white/10 py-3 rounded-xl font-bold flex items-center justify-center gap-2"
+                className="btn-secondary"
               >
-                <RefreshCcw className="w-4 h-4" /> Reset
+                <RefreshCcw className="h-4 w-4" /> Reset
               </button>
             </div>
-            
-            <p className="text-[10px] text-foreground/40">
-              Need help? Check the <a href={withBase('learn')} className="underline">Learning Center</a>.
+
+            <p className="text-xs text-muted-foreground">
+              Need help? Check the{' '}
+              <a href={withBase('learn')} className="text-foreground underline underline-offset-2">
+                learning center
+              </a>
+              .
             </p>
           </div>
         </div>

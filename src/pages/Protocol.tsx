@@ -1,131 +1,107 @@
-import { ChevronLeft, FileCode, Shield, Zap, AlertCircle, HelpCircle, Clock, CheckCircle, XCircle, Lock } from 'lucide-react';
+import { AlertCircle, CheckCircle, Clock, Cpu, FileCode, HelpCircle, Lock, Shield, XCircle, Zap } from 'lucide-react';
 import diagram from '@/assets/diagram.svg';
 
-const Protocol = ({ onBack, onOpenWhitepaper }: { onBack: () => void; onOpenWhitepaper: () => void }) => {
-  return (
-    <div className="max-w-4xl mx-auto py-12 px-6 space-y-16 animate-in fade-in slide-in-from-bottom-4">
-      <button
-        type="button"
-        onClick={onBack}
-        className="flex items-center gap-2 text-foreground/60 hover:text-primary transition-colors"
-      >
-        <ChevronLeft className="w-4 h-4" /> Back to App
-      </button>
+interface ProtocolProps {
+  onBack: () => void;
+  onOpenWhitepaper: () => void;
+}
 
-      <header className="space-y-4">
-        <h1 className="text-4xl font-extrabold tracking-tight">Protocol Specification</h1>
-        <p className="text-xl text-foreground/60">
+const Section = ({
+  icon: Icon,
+  title,
+  children,
+}: {
+  icon: typeof Clock;
+  title: string;
+  children: React.ReactNode;
+}) => (
+  <section className="space-y-2">
+    <h2 className="flex items-center gap-2 text-sm font-semibold tracking-tight">
+      <Icon className="h-4 w-4 text-foreground/70" />
+      {title}
+    </h2>
+    <div className="space-y-2 text-sm leading-relaxed text-foreground/80">{children}</div>
+  </section>
+);
+
+const Protocol = ({ onBack: _onBack, onOpenWhitepaper }: ProtocolProps) => {
+  return (
+    <div className="mx-auto max-w-3xl space-y-8">
+      <header className="space-y-2">
+        <div className="section-eyebrow flex items-center gap-1.5">
+          <Cpu className="h-3 w-3" /> Protocol
+        </div>
+        <h1 className="text-2xl font-semibold tracking-tight">Protocol specification</h1>
+        <p className="text-sm leading-relaxed text-muted-foreground">
           A transparent look at TIP and how Bitcoin Will implements it.
         </p>
       </header>
 
-      {/* TIP Overview Section */}
-      <section className="space-y-6">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-            <HelpCircle className="w-5 h-5 text-primary" />
-          </div>
-          <h2 className="text-2xl font-bold">What is TIP?</h2>
-        </div>
-        <div className="space-y-4 text-foreground/70 leading-relaxed">
-          <p>TIP stands for <strong>TimeLock Inheritance Protocol</strong>. It is a Bitcoin-native way to plan inheritance using Bitcoin timelocks and spending conditions.</p>
-          <p>TIP is not a new blockchain. It is not a token. It is not a company or custody service.</p>
-          <p>TIP is a practical pattern for creating a future spending plan that can only be executed after a chosen time, using Bitcoin's existing script capabilities.</p>
-        </div>
-      </section>
+      <Section icon={HelpCircle} title="What is TIP?">
+        <p>
+          TIP stands for <strong className="font-semibold">Time-Locked Inheritance Protocol</strong>. It is a Bitcoin-native way to plan inheritance using Bitcoin timelocks and spending conditions.
+        </p>
+        <p>TIP is not a new blockchain. It is not a token. It is not a company or custody service.</p>
+        <p>
+          TIP is a practical pattern for creating a future spending plan that can only be executed after a chosen time, using Bitcoin's existing script capabilities.
+        </p>
+      </Section>
 
-      <section className="space-y-6">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-            <Clock className="w-5 h-5 text-primary" />
-          </div>
-          <h2 className="text-2xl font-bold">Why TIP exists</h2>
-        </div>
-        <div className="space-y-4 text-foreground/70 leading-relaxed">
-          <p>Bitcoin is unforgiving. If a person dies or becomes unable to access their keys, Bitcoin can be lost forever.</p>
-          <p>Most inheritance solutions try to solve this by adding a trusted third party, such as a custodian, an account system, or a company that holds secrets. That introduces new risks.</p>
-          <p>TIP exists to provide a trust-minimized option: a way to plan ahead while keeping control in the hands of the Bitcoin owner.</p>
-        </div>
-      </section>
+      <Section icon={Clock} title="Why TIP exists">
+        <p>Bitcoin is unforgiving. If a person dies or becomes unable to access their keys, Bitcoin can be lost forever.</p>
+        <p>
+          Most inheritance solutions add a trusted third party — a custodian, account system, or company holding secrets. That introduces new risks.
+        </p>
+        <p>TIP exists to provide a trust-minimized option: a way to plan ahead while keeping control in the hands of the Bitcoin owner.</p>
+      </Section>
 
-      <section className="space-y-6">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-            <Shield className="w-5 h-5 text-primary" />
-          </div>
-          <h2 className="text-2xl font-bold">How TIP works (high level)</h2>
-        </div>
-        <div className="space-y-6">
-          <p className="text-foreground/70 leading-relaxed">
-            TIP uses relative timelocks (CSV) to create a spending path that is not valid until a chosen number of blocks has elapsed since funding confirmation.
-          </p>
-          
-          <div className="glass p-8 space-y-0">
+      <Section icon={Shield} title="How TIP works (high level)">
+        <p>
+          TIP uses relative timelocks (CSV) to create a spending path that is not valid until a chosen number of blocks has elapsed since funding confirmation.
+        </p>
+
+        <div className="panel mt-3 p-5">
+          <ol className="space-y-3">
             {[
-              {
-                num: '1',
-                title: 'You choose a timeline and beneficiaries or a recovery plan.',
-              },
-              {
-                num: '2',
-                title: 'Bitcoin Will generates a TIP spending plan and script conditions.',
-              },
-              {
-                num: '3',
-                title: 'Funds are arranged so they can only be moved according to that plan.',
-              },
-              {
-                num: '4',
-                title: 'Before the timelock expires, the future-spend path is not valid.',
-              },
-              {
-                num: '5',
-                title: 'After the timelock expires, the future-spend path becomes valid and can be used.',
-              },
-            ].map((step, i, arr) => (
-              <div key={step.num} className="flex gap-4">
-                <div className="flex flex-col items-center">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <span className="text-primary font-bold text-sm">{step.num}</span>
-                  </div>
-                  {i < arr.length - 1 && (
-                    <div className="w-px h-full bg-border my-2" />
-                  )}
-                </div>
-                <div className="pb-8 flex-1">
-                  <p className="text-foreground/80 leading-relaxed">{step.title}</p>
-                </div>
-              </div>
+              'You choose a timeline and beneficiaries or a recovery plan.',
+              'Bitcoin Will generates a TIP spending plan and script conditions.',
+              'Funds are arranged so they can only be moved according to that plan.',
+              'Before the timelock expires, the future-spend path is not valid.',
+              'After the timelock expires, the future-spend path becomes valid and can be used.',
+            ].map((step, i) => (
+              <li key={step} className="flex items-start gap-3">
+                <span className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border border-border bg-white text-xs font-semibold text-foreground">
+                  {i + 1}
+                </span>
+                <span className="text-sm text-foreground/80">{step}</span>
+              </li>
             ))}
-          </div>
+          </ol>
+        </div>
 
-          <div className="glass p-6 border-l-4 border-l-primary">
-            <p className="text-foreground/70 leading-relaxed">
-              All rules are enforced by the Bitcoin network itself. Bitcoin Will is not trusted.
-            </p>
+        <div className="rounded-md border border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
+          All rules are enforced by the Bitcoin network itself. Bitcoin Will is not trusted.
+        </div>
+      </Section>
+
+      <section className="space-y-3 border-t border-border pt-6">
+        <h2 className="flex items-center gap-2 text-sm font-semibold tracking-tight">
+          <Zap className="h-4 w-4 text-foreground/70" /> Technical implementation
+        </h2>
+
+        <div>
+          <h3 className="text-sm font-semibold">Logic flow</h3>
+          <div className="panel mt-2 flex justify-center p-6">
+            <img src={diagram} alt="Bitcoin Will logic diagram" className="h-auto max-w-full" loading="lazy" />
           </div>
         </div>
-      </section>
 
-      {/* Technical Specification Section */}
-      <section className="space-y-6 pt-8 border-t border-border">
-        <h2 className="text-2xl font-bold flex items-center gap-2">
-          <Zap className="text-primary w-6 h-6" /> Technical Implementation
-        </h2>
-        
-        <section className="space-y-6">
-          <h3 className="text-xl font-bold">Logic Flow</h3>
-          <div className="glass p-8 flex justify-center bg-white/5">
-            <img src={diagram} alt="Bitcoin Will Logic Diagram" className="max-w-full h-auto" loading="lazy" />
-          </div>
-        </section>
-
-        <div className="grid md:grid-cols-2 gap-8">
-          <section className="glass p-6 space-y-4 border-white/5">
-            <h3 className="text-lg font-bold flex items-center gap-2">
-              <FileCode className="text-primary w-5 h-5" /> The Script
+        <div className="grid gap-3 md:grid-cols-2">
+          <div className="panel p-5 space-y-2">
+            <h3 className="flex items-center gap-2 text-sm font-semibold">
+              <FileCode className="h-4 w-4 text-foreground/70" /> The script
             </h3>
-            <pre className="bg-black/40 p-4 rounded-xl text-[10px] font-mono text-foreground/70 overflow-x-auto leading-relaxed">
+            <pre className="overflow-x-auto rounded-md bg-muted/60 p-3 font-mono text-[11px] leading-relaxed text-foreground">
 {`OP_IF
   <owner_pubkey> OP_CHECKSIG
 OP_ELSE
@@ -134,34 +110,30 @@ OP_ELSE
   <beneficiary_pubkey> OP_CHECKSIG
 OP_ENDIF`}
             </pre>
-            <p className="text-xs text-foreground/50 italic">
-              Compatible with SegWit P2WSH (v0) outputs.
+            <p className="text-xs text-muted-foreground">
+              Compatible with SegWit P2WSH (v0) and Taproot (P2TR) outputs.
             </p>
-          </section>
+          </div>
 
-          <section className="glass p-6 space-y-4 border-white/5">
-            <h3 className="text-lg font-bold flex items-center gap-2">
-              <Shield className="text-primary w-5 h-5" /> Security Properties
+          <div className="panel p-5 space-y-2">
+            <h3 className="flex items-center gap-2 text-sm font-semibold">
+              <Shield className="h-4 w-4 text-foreground/70" /> Security properties
             </h3>
-            <ul className="space-y-3 text-sm text-foreground/70">
-              <li>• <strong>Non-Custodial:</strong> No private keys are ever requested or generated.</li>
-              <li>• <strong>Stateless:</strong> No user data is stored on any server.</li>
-              <li>• <strong>Deterministic:</strong> Fixed inputs yield a fixed, auditable output.</li>
+            <ul className="space-y-1.5 text-sm text-foreground/80">
+              <li>• <strong className="font-semibold">Non-custodial:</strong> no private keys are requested or generated.</li>
+              <li>• <strong className="font-semibold">Stateless:</strong> no user data stored on any server.</li>
+              <li>• <strong className="font-semibold">Deterministic:</strong> fixed inputs yield a fixed, auditable output.</li>
             </ul>
-          </section>
+          </div>
         </div>
       </section>
 
-      {/* What it does/doesn't do */}
-      <div className="grid md:grid-cols-2 gap-8">
-        <section className="glass p-6 space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-              <CheckCircle className="w-5 h-5 text-primary" />
-            </div>
-            <h3 className="text-xl font-bold">What Bitcoin Will does</h3>
-          </div>
-          <ul className="space-y-2 text-sm text-foreground/70">
+      <div className="grid gap-3 md:grid-cols-2">
+        <div className="panel p-5 space-y-2">
+          <h3 className="flex items-center gap-2 text-sm font-semibold">
+            <CheckCircle className="h-4 w-4 text-success" /> What Bitcoin Will does
+          </h3>
+          <ul className="space-y-1.5 text-sm text-foreground/80">
             {[
               'Generates TIP-compatible Bitcoin scripts and a readable spending plan',
               'Helps users choose time parameters and understand tradeoffs',
@@ -170,86 +142,70 @@ OP_ENDIF`}
               'Does not store user data on any server',
               'Does not see private keys',
             ].map((item) => (
-              <li key={item} className="flex items-start gap-3">
-                <CheckCircle className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+              <li key={item} className="flex items-start gap-2">
+                <CheckCircle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-success" />
                 <span>{item}</span>
               </li>
             ))}
           </ul>
-        </section>
+        </div>
 
-        <section className="glass p-6 space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center">
-              <XCircle className="w-5 h-5 text-red-500" />
-            </div>
-            <h3 className="text-xl font-bold">What it does NOT do</h3>
-          </div>
-          <ul className="space-y-2 text-sm text-foreground/70">
+        <div className="panel p-5 space-y-2">
+          <h3 className="flex items-center gap-2 text-sm font-semibold">
+            <XCircle className="h-4 w-4 text-danger" /> What it does NOT do
+          </h3>
+          <ul className="space-y-1.5 text-sm text-foreground/80">
             {[
-              'A wallet',
-              'A custodian',
-              'A legal will',
-              'A monitoring service that checks whether someone is alive',
-              'A guarantee against user error',
+              'Act as a wallet',
+              'Act as a custodian',
+              'Act as a legal will',
+              'Monitor whether someone is alive',
+              'Guarantee against user error',
             ].map((item) => (
-              <li key={item} className="flex items-start gap-3">
-                <XCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+              <li key={item} className="flex items-start gap-2">
+                <XCircle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-danger" />
                 <span>{item}</span>
               </li>
             ))}
           </ul>
-        </section>
+        </div>
       </div>
 
-      {/* Security Model */}
-      <section className="glass p-6 space-y-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-            <Lock className="w-5 h-5 text-primary" />
-          </div>
-          <h3 className="text-xl font-bold">Security Model</h3>
-        </div>
-        <div className="space-y-4 text-foreground/70 text-sm">
-          <p>Bitcoin Will is designed to minimize trust and data exposure.</p>
-          
-          <div className="font-semibold text-foreground/90">Core properties:</div>
-          <ul className="space-y-2">
-            {[
-              'No server-side plan storage (session drafts may be cached locally in your browser)',
-              'Client-side only',
-              'Outputs are inspectable and verifiable',
-              'Open-source and reviewable',
-            ].map((item) => (
-              <li key={item} className="flex items-start gap-3">
-                <CheckCircle className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
+      <div className="panel p-5 space-y-2">
+        <h3 className="flex items-center gap-2 text-sm font-semibold">
+          <Lock className="h-4 w-4 text-foreground/70" /> Security model
+        </h3>
+        <p className="text-sm text-foreground/80">Bitcoin Will is designed to minimize trust and data exposure.</p>
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Core properties</p>
+        <ul className="space-y-1.5 text-sm text-foreground/80">
+          {[
+            'No server-side plan storage (session drafts may be cached locally in your browser)',
+            'Client-side only',
+            'Outputs are inspectable and verifiable',
+            'Open-source and reviewable',
+          ].map((item) => (
+            <li key={item} className="flex items-start gap-2">
+              <CheckCircle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-success" />
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
 
-      {/* Limitations */}
-      <section className="space-y-4">
-        <h2 className="text-2xl font-bold flex items-center gap-2">
-          <AlertCircle className="text-yellow-500 w-6 h-6" /> Key Limitations
-        </h2>
-        <div className="grid gap-4 text-sm text-foreground/70">
-          <p><strong>1. No Monitoring:</strong> The app does not watch the blockchain for you. Your heir must use the Recovery Kit manually.</p>
-          <p><strong>2. Not a Legal Will:</strong> This is a technical primitive. It does not replace legal inheritance laws.</p>
-          <p><strong>3. Irreversibility:</strong> Bitcoin scripts are final. Test with small amounts on Testnet first.</p>
-        </div>
-      </section>
+      <Section icon={AlertCircle} title="Key limitations">
+        <p><strong className="font-semibold">No monitoring:</strong> the app does not watch the blockchain for you. Your heir must use the recovery kit manually.</p>
+        <p><strong className="font-semibold">Not a legal will:</strong> this is a technical primitive. It does not replace legal inheritance laws.</p>
+        <p><strong className="font-semibold">Irreversibility:</strong> Bitcoin scripts are final. Test with small amounts on Testnet first.</p>
+      </Section>
 
-      <footer className="pt-8 border-t border-white/5 text-center flex flex-col items-center gap-2">
-        <p className="text-xs text-foreground/30">TIP Protocol v1.0.0 • Last Updated Feb 2026</p>
+      <footer className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-4 text-xs text-muted-foreground">
+        <p>TIP Protocol v1.0.0 · Last updated Feb 2026</p>
         <button
           type="button"
           onClick={onOpenWhitepaper}
-          className="text-xs text-foreground/40 hover:text-primary transition-colors underline underline-offset-4 decoration-white/10"
+          className="text-foreground underline underline-offset-2 hover:text-foreground/70"
         >
-          TIP Whitepaper
+          Read the whitepaper →
         </button>
       </footer>
     </div>

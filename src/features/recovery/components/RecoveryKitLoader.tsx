@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronLeft, FileText, Users, Key } from 'lucide-react';
+import { ChevronLeft, FileText, Key, Users } from 'lucide-react';
 import {
   buildInstructions,
   validateAndNormalizeRecoveryKit,
@@ -11,7 +11,11 @@ interface ExtendedRecoveryKitLoaderProps extends RecoveryKitLoaderProps {
   onSocialRecovery?: () => void;
 }
 
-export const RecoveryKitLoader = ({ onLoad, onBack, onSocialRecovery }: ExtendedRecoveryKitLoaderProps) => {
+export const RecoveryKitLoader = ({
+  onLoad,
+  onBack,
+  onSocialRecovery,
+}: ExtendedRecoveryKitLoaderProps) => {
   const [jsonInput, setJsonInput] = useState('');
   const { showToast } = useToast();
 
@@ -21,10 +25,9 @@ export const RecoveryKitLoader = ({ onLoad, onBack, onSocialRecovery }: Extended
       const normalized = validateAndNormalizeRecoveryKit(parsed);
       const model = buildInstructions(normalized.plan, normalized.result, normalized.created_at);
       onLoad(model);
-      showToast("Instructions Loaded Successfully");
+      showToast('Instructions loaded successfully');
     } catch (error) {
-      const message = (error as Error).message;
-      showToast(message || "Error parsing JSON");
+      showToast((error as Error).message || 'Error parsing JSON');
     }
   };
 
@@ -41,45 +44,49 @@ export const RecoveryKitLoader = ({ onLoad, onBack, onSocialRecovery }: Extended
       setJsonInput(fileContents);
       loadRecoveryKit(fileContents);
     } catch (error) {
-      const message = (error as Error).message;
-      showToast(message || "Error reading Recovery Kit file");
+      showToast((error as Error).message || 'Error reading Recovery Kit file');
     } finally {
       event.target.value = '';
     }
   };
 
   return (
-    <div className="max-w-2xl mx-auto py-20 px-6 space-y-8 animate-in fade-in">
-      <button type="button" onClick={onBack} className="flex items-center gap-2 text-foreground/60 hover:text-primary">
-        <ChevronLeft className="w-4 h-4" /> Back
+    <div className="mx-auto max-w-2xl space-y-6">
+      <button
+        type="button"
+        onClick={onBack}
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ChevronLeft className="h-4 w-4" /> Back
       </button>
-      
-      <div className="text-center space-y-4">
-        <div className="relative inline-block">
-          <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full" />
-          <FileText className="w-16 h-16 text-primary relative" />
+
+      <div className="space-y-1">
+        <div className="section-eyebrow flex items-center gap-1.5">
+          <FileText className="h-3 w-3" /> Recovery
         </div>
-        <h1 className="text-3xl font-bold">Recovery Options</h1>
-        <p className="text-foreground/70">Choose how you want to access the vault.</p>
+        <h1 className="text-xl font-semibold tracking-tight">Recovery options</h1>
+        <p className="text-sm text-muted-foreground">Choose how you want to access the vault.</p>
       </div>
 
-      <div className="grid gap-4">
-        <div className="p-6 rounded-2xl border border-border bg-muted/30 space-y-4">
+      <div className="space-y-3">
+        <div className="panel space-y-3 p-5">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-primary/10 rounded-xl">
-              <Key className="w-6 h-6 text-primary" />
+            <div className="rounded-md bg-muted p-2 text-foreground/70">
+              <Key className="h-4 w-4" />
             </div>
             <div>
-              <h3 className="font-bold">I have the Recovery Kit</h3>
-              <p className="text-sm text-foreground/60">Paste the JSON or choose the exported recovery kit file</p>
+              <h3 className="text-sm font-semibold">I have the recovery kit</h3>
+              <p className="text-xs text-muted-foreground">
+                Paste the JSON, or choose the exported recovery kit file.
+              </p>
             </div>
           </div>
 
           <label
             htmlFor="recovery-kit-file"
-            className="flex items-center justify-center w-full py-3 rounded-xl border border-dashed border-primary/30 text-sm font-bold text-primary hover:bg-primary/5 transition-colors cursor-pointer"
+            className="flex w-full cursor-pointer items-center justify-center rounded-md border border-dashed border-border-strong bg-muted/40 py-3 text-sm font-medium text-foreground transition-colors hover:bg-muted"
           >
-            Choose Recovery Kit File
+            Choose recovery kit file
             <input
               id="recovery-kit-file"
               type="file"
@@ -89,44 +96,44 @@ export const RecoveryKitLoader = ({ onLoad, onBack, onSocialRecovery }: Extended
             />
           </label>
 
-          <p className="text-xs text-center text-foreground/50 uppercase tracking-[0.2em]">or paste it below</p>
-          
-          <label htmlFor="recovery-kit-json" className="sr-only">Recovery kit JSON</label>
+          <p className="text-center section-eyebrow">or paste it below</p>
+
+          <label htmlFor="recovery-kit-json" className="sr-only">
+            Recovery kit JSON
+          </label>
           <textarea
             id="recovery-kit-json"
-            className="w-full h-32 bg-background border border-border rounded-xl p-4 font-mono text-xs focus:ring-2 focus:ring-primary/20 transition-all"
+            className="field-input h-32 resize-none"
             placeholder='{"version": "0.1.0", "plan": {...}, "result": {...}}'
             value={jsonInput}
             onChange={(e) => setJsonInput(e.target.value)}
           />
-          <button 
+          <button
             type="button"
             onClick={handleJsonUpload}
             disabled={!jsonInput.trim()}
-            className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="btn-primary w-full"
           >
-            Load Instructions
+            Load instructions
           </button>
         </div>
 
         {onSocialRecovery && (
-          <div className="p-6 rounded-2xl border border-orange-500/20 bg-orange-500/5 space-y-4">
+          <div className="panel space-y-3 p-5">
             <div className="flex items-center gap-3">
-              <div className="p-3 bg-orange-500/10 rounded-xl">
-                <Users className="w-6 h-6 text-orange-500" />
+              <div className="rounded-md bg-muted p-2 text-foreground/70">
+                <Users className="h-4 w-4" />
               </div>
               <div>
-                <h3 className="font-bold">I have Social Recovery Shares</h3>
-                <p className="text-sm text-foreground/60">Combine shares to reconstruct the private key</p>
+                <h3 className="text-sm font-semibold">I have social recovery shares</h3>
+                <p className="text-xs text-muted-foreground">
+                  Combine shares to reconstruct the private key.
+                </p>
               </div>
             </div>
-            
-            <button 
-              type="button"
-              onClick={onSocialRecovery}
-              className="w-full py-3 bg-orange-500 text-white rounded-xl font-bold hover:bg-orange-600 transition-colors"
-            >
-              Start Share Recovery
+
+            <button type="button" onClick={onSocialRecovery} className="btn-secondary w-full">
+              Start share recovery
             </button>
           </div>
         )}

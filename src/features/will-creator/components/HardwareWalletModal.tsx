@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AlertTriangle, ChevronRight, HelpCircle, Shield, Wallet } from 'lucide-react';
+import { AlertTriangle, ChevronRight, Shield, Wallet } from 'lucide-react';
 import {
   SUPPORTED_WALLETS,
   type HardwareWalletType,
@@ -17,7 +17,6 @@ export const HardwareWalletModal = ({ onConnect, onClose }: HardwareWalletModalP
   const handleConnect = async (type: HardwareWalletType) => {
     setLoading(true);
     setError(null);
-    
     try {
       await onConnect(type);
       onClose();
@@ -29,84 +28,80 @@ export const HardwareWalletModal = ({ onConnect, onClose }: HardwareWalletModalP
   };
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center p-6 bg-background/85 backdrop-blur-sm animate-in fade-in duration-300">
-      <div className="glass max-w-md w-full p-8 space-y-6 border-primary/20 shadow-2xl animate-in zoom-in-95 duration-300">
-        <div className="flex items-start gap-4">
-          <div className="p-3 rounded-xl bg-primary/10">
-            <Wallet className="w-6 h-6 text-primary" />
+    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-foreground/30 p-6">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="hw-wallet-title"
+        className="panel w-full max-w-md p-6 space-y-5 shadow-xl"
+      >
+        <div className="flex items-start gap-3">
+          <div className="rounded-md bg-muted p-2 text-foreground">
+            <Wallet className="h-5 w-5" />
           </div>
-          <div className="space-y-1">
-            <h3 className="text-2xl font-black tracking-tight">Connect Hardware Wallet</h3>
-            <p className="text-sm text-foreground/70">
-              Select your device to automatically fill the public key.
+          <div>
+            <h3 id="hw-wallet-title" className="text-base font-semibold">Connect hardware wallet</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Select your device to fill the public key automatically.
             </p>
           </div>
         </div>
 
         {error && (
-          <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 text-sm flex items-start gap-3">
-            <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+          <div className="flex items-start gap-2 rounded-md border border-danger/20 bg-danger/5 p-3 text-sm text-danger">
+            <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />
             <p>{error}</p>
           </div>
         )}
 
-        <div className="space-y-3">
-          {SUPPORTED_WALLETS.filter(w => w.supported).map((wallet) => (
+        <div className="space-y-2">
+          {SUPPORTED_WALLETS.filter((w) => w.supported).map((wallet) => (
             <button
               key={wallet.type}
               type="button"
               onClick={() => handleConnect(wallet.type)}
               disabled={loading}
-              className="group w-full rounded-xl border-2 border-border p-4 text-left transition-[border-color,background-color,transform] hover:-translate-y-0.5 hover:border-primary/30 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 disabled:opacity-50"
+              className="group flex w-full items-center gap-3 rounded-md border border-border bg-white px-3 py-3 text-left transition-colors hover:border-border-strong hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              <div className="flex items-center gap-4">
-                <div className="p-2 rounded-lg bg-muted group-hover:bg-primary/10 transition-colors">
-                  <Wallet className="w-5 h-5 text-foreground/60 group-hover:text-primary" />
-                </div>
-                <div className="flex-1">
-                  <span className="font-bold block">{wallet.label}</span>
-                  <p className="text-xs text-foreground/60">{wallet.description}</p>
-                </div>
-                {loading ? (
-                  <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <ChevronRight className="w-5 h-5 text-foreground/30 group-hover:text-primary transition-colors" />
-                )}
+              <div className="rounded-md bg-muted p-2 text-foreground/70">
+                <Wallet className="h-4 w-4" />
               </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-semibold">{wallet.label}</div>
+                <p className="text-xs text-muted-foreground">{wallet.description}</p>
+              </div>
+              {loading ? (
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-foreground border-t-transparent" />
+              ) : (
+                <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+              )}
             </button>
           ))}
         </div>
 
-        <div className="p-4 rounded-xl bg-green-500/5 border border-green-500/10 text-xs space-y-2">
-          <div className="flex items-center gap-2 text-green-600 font-bold">
-            <Shield className="w-4 h-4" />
-            <span>Why use a hardware wallet?</span>
+        <div className="rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground space-y-2">
+          <div className="flex items-center gap-2 text-foreground">
+            <Shield className="h-3.5 w-3.5" />
+            <span className="font-semibold">Why use a hardware wallet?</span>
           </div>
-          <ul className="space-y-1 text-foreground/60 list-disc list-inside pl-1">
+          <ul className="list-disc list-inside space-y-0.5">
             <li>Private keys never leave the device</li>
             <li>Verify addresses on the device screen</li>
             <li>Protection against malware and keyloggers</li>
           </ul>
         </div>
 
-        <div className="p-4 rounded-xl bg-muted/50 text-xs text-foreground/60 space-y-2">
-          <p className="font-bold flex items-center gap-2">
-            <HelpCircle className="w-3.5 h-3.5" />
-            Requirements
-          </p>
-          <ul className="space-y-1 list-disc list-inside">
+        <div className="rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground space-y-1.5">
+          <p className="font-semibold text-foreground">Requirements</p>
+          <ul className="list-disc list-inside space-y-0.5">
             <li>Use Chrome, Edge, or Brave browser</li>
             <li>Connect device via USB cable</li>
             <li>Unlock device and approve the connection</li>
           </ul>
         </div>
 
-        <div className="flex gap-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex-1 py-4 rounded-xl border border-border text-sm font-bold hover:bg-muted transition-colors"
-          >
+        <div className="flex justify-end">
+          <button type="button" onClick={onClose} className="btn-ghost">
             Cancel
           </button>
         </div>

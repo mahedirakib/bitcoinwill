@@ -22,7 +22,7 @@ export const KeyboardShortcutsHelp = () => {
         const target = e.target as HTMLElement;
         if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
           e.preventDefault();
-          setIsVisible(prev => !prev);
+          setIsVisible((prev) => !prev);
         }
       }
 
@@ -38,22 +38,25 @@ export const KeyboardShortcutsHelp = () => {
   if (!isVisible) return null;
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-background/90 backdrop-blur-sm">
-      <div className="glass max-w-md w-full p-8 space-y-6 animate-in zoom-in-95">
-        <div className="flex items-center gap-3">
-          <Keyboard className="w-6 h-6 text-primary" />
-          <h3 className="text-xl font-black">Keyboard Shortcuts</h3>
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-foreground/30 p-6">
+      <div className="panel w-full max-w-md p-6 space-y-5 shadow-xl">
+        <div className="flex items-center gap-2">
+          <Keyboard className="h-4 w-4 text-foreground/70" />
+          <h3 className="text-base font-semibold">Keyboard shortcuts</h3>
         </div>
 
-        <div className="space-y-3">
+        <div className="divide-y divide-border">
           {SHORTCUTS.map((shortcut) => (
-            <div key={shortcut.description} className="flex items-center justify-between py-2">
-              <span className="text-sm text-foreground/70">{shortcut.description}</span>
+            <div
+              key={shortcut.description}
+              className="flex items-center justify-between py-2.5 first:pt-0"
+            >
+              <span className="text-sm text-foreground/80">{shortcut.description}</span>
               <div className="flex gap-1">
                 {shortcut.keys.map((key) => (
                   <kbd
                     key={`${shortcut.description}-${key}`}
-                    className="px-2 py-1 bg-muted rounded text-xs font-mono font-bold border border-border"
+                    className="rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[11px] font-semibold text-foreground"
                   >
                     {key}
                   </kbd>
@@ -66,7 +69,7 @@ export const KeyboardShortcutsHelp = () => {
         <button
           type="button"
           onClick={() => setIsVisible(false)}
-          className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-bold"
+          className="btn-secondary w-full"
         >
           Close
         </button>

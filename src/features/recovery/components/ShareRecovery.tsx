@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Shield, Users, Lock, Unlock, AlertTriangle, ChevronRight, Trash2, Key } from 'lucide-react';
+import { AlertTriangle, ChevronRight, Key, Lock, Trash2, Unlock, Users } from 'lucide-react';
 import { collectUniqueValidShares, combineShares } from '@/lib/bitcoin/sss';
 import { useToast } from '@/components/Toast';
 
@@ -18,7 +18,7 @@ export const ShareRecovery = ({ onKeyReconstructed, onCancel }: ShareRecoveryPro
 
   const updateShare = (index: number, value: string) => {
     const trimmed = value.trim();
-    setShares(prev => {
+    setShares((prev) => {
       const next = [...prev];
       next[index] = trimmed;
       return next;
@@ -27,13 +27,13 @@ export const ShareRecovery = ({ onKeyReconstructed, onCancel }: ShareRecoveryPro
 
   const addShareInput = () => {
     if (shares.length < 5) {
-      setShares(prev => [...prev, '']);
+      setShares((prev) => [...prev, '']);
     }
   };
 
   const removeShareInput = (index: number) => {
     if (shares.length > 2) {
-      setShares(prev => prev.filter((_, i) => i !== index));
+      setShares((prev) => prev.filter((_, i) => i !== index));
     }
   };
 
@@ -66,33 +66,33 @@ export const ShareRecovery = ({ onKeyReconstructed, onCancel }: ShareRecoveryPro
 
   if (reconstructedKey) {
     return (
-      <div className="max-w-2xl mx-auto py-12 px-6 space-y-8 animate-in fade-in zoom-in-95">
-        <div className="text-center space-y-4">
-          <div className="relative inline-block">
-            <div className="absolute inset-0 bg-green-500/20 blur-2xl rounded-full" />
-            <Unlock className="w-16 h-16 text-green-500 relative" />
-          </div>
-          <h2 className="text-3xl font-bold">Key Reconstructed</h2>
-          <p className="text-foreground/60">
-            Your private key has been recovered from the shares. Store it securely.
+      <div className="mx-auto max-w-2xl space-y-6">
+        <div className="flex items-center gap-2 rounded-md border border-success/20 bg-success-bg px-3 py-2.5">
+          <Unlock className="h-4 w-4 text-success" />
+          <p className="text-sm font-medium text-success">Key reconstructed.</p>
+        </div>
+
+        <div>
+          <h2 className="text-lg font-semibold tracking-tight">Private key recovered</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Store it securely — anyone with this key can claim the funds.
           </p>
         </div>
 
-        <div className="p-6 rounded-2xl bg-red-500/10 border border-red-500/20 space-y-4">
-          <div className="flex items-center gap-2 text-red-700">
-            <AlertTriangle className="w-5 h-5" />
-            <span className="font-bold">Security Warning</span>
+        <div className="rounded-md border border-danger/20 bg-danger/5 p-4 space-y-3">
+          <div className="flex items-center gap-2 text-danger">
+            <AlertTriangle className="h-4 w-4" />
+            <span className="text-sm font-semibold">Security warning</span>
           </div>
-          <p className="text-sm text-red-600/80">
-            This is your beneficiary private key. Anyone with this key can claim the funds. 
-            Write it down or save it to a password manager before continuing.
+          <p className="text-sm text-danger/80">
+            This is your beneficiary private key. Write it down or save it to a password manager before continuing.
           </p>
 
-          <div className="space-y-3">
-            <span className="text-sm font-bold text-foreground/70">Private Key (hex)</span>
+          <div className="space-y-1.5">
+            <span className="field-label">Private key (hex)</span>
             <div className="relative">
-              <div 
-                className="p-4 bg-muted rounded-xl font-mono text-xs break-all border border-border"
+              <div
+                className="break-all rounded-md border border-border bg-muted/40 p-3 font-mono text-xs text-foreground"
                 style={{ filter: showKey ? 'none' : 'blur(8px)' }}
               >
                 {reconstructedKey}
@@ -100,7 +100,7 @@ export const ShareRecovery = ({ onKeyReconstructed, onCancel }: ShareRecoveryPro
               <button
                 type="button"
                 onClick={() => setShowKey(!showKey)}
-                className="absolute top-2 right-2 px-3 py-1.5 bg-background border border-border rounded-lg text-xs font-bold hover:bg-muted transition-colors"
+                className="absolute right-2 top-2 rounded-md border border-border bg-white px-2.5 py-1 text-xs font-medium text-foreground hover:bg-muted"
               >
                 {showKey ? 'Hide' : 'Reveal'}
               </button>
@@ -108,21 +108,10 @@ export const ShareRecovery = ({ onKeyReconstructed, onCancel }: ShareRecoveryPro
           </div>
         </div>
 
-        <div className="flex gap-4">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="flex-1 py-3 px-4 rounded-xl border border-border font-bold hover:bg-muted transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={handleConfirm}
-            className="flex-1 py-3 px-4 bg-primary text-primary-foreground rounded-xl font-bold hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
-          >
-            Continue to Claim
-            <ChevronRight className="w-4 h-4" />
+        <div className="flex justify-between gap-2 border-t border-border pt-4">
+          <button type="button" onClick={onCancel} className="btn-secondary">Cancel</button>
+          <button type="button" onClick={handleConfirm} className="btn-primary">
+            Continue to claim <ChevronRight className="h-4 w-4" />
           </button>
         </div>
       </div>
@@ -130,129 +119,106 @@ export const ShareRecovery = ({ onKeyReconstructed, onCancel }: ShareRecoveryPro
   }
 
   return (
-    <div className="max-w-2xl mx-auto py-12 px-6 space-y-8 animate-in fade-in slide-in-from-bottom-8">
-      <div className="text-center space-y-4">
-        <div className="relative inline-block">
-          <div className="absolute inset-0 bg-orange-500/20 blur-2xl rounded-full" />
-          <Users className="w-16 h-16 text-orange-500 relative" />
+    <div className="mx-auto max-w-2xl space-y-6">
+      <div>
+        <div className="section-eyebrow flex items-center gap-1.5">
+          <Users className="h-3 w-3" /> Social recovery
         </div>
-        <h2 className="text-3xl font-bold">Social Recovery</h2>
-        <p className="text-foreground/60">
-          Combine your shares to reconstruct the beneficiary private key.
+        <h2 className="text-lg font-semibold tracking-tight">Combine shares</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Enter your shares to reconstruct the beneficiary private key. Reconstruction happens locally — shares are never sent anywhere.
         </p>
       </div>
 
-      <div className="p-6 rounded-2xl bg-orange-500/5 border border-orange-500/10 space-y-4">
-        <div className="flex items-center gap-2 text-orange-700">
-          <Shield className="w-5 h-5" />
-          <span className="font-bold">How it works</span>
-        </div>
-        <p className="text-sm text-orange-600/80">
-          Enter your shares below. You need enough shares to meet the threshold 
-          (e.g., 2 shares for a 2-of-3 setup). The private key is reconstructed locally 
-          in your browser — shares are never sent to any server.
+      <div className="rounded-md border border-border bg-muted/40 p-3 text-sm leading-relaxed text-muted-foreground">
+        <p>
+          You need enough shares to meet the threshold (e.g., 2 shares for a 2-of-3 setup). The private key is reconstructed locally in your browser.
         </p>
       </div>
 
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <span className="font-bold">Share Configuration</span>
-          <div className="flex gap-2">
+      <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-white p-3">
+        <span className="text-sm font-semibold">Share configuration</span>
+        <div className="flex gap-1">
+          {([2, 3] as const).map((t) => (
             <button
+              key={t}
               type="button"
-              onClick={() => setThreshold(2)}
-              className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${
-                threshold === 2 
-                  ? 'bg-orange-500 text-white' 
-                  : 'bg-muted hover:bg-muted/80'
+              onClick={() => setThreshold(t)}
+              className={`rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
+                threshold === t
+                  ? 'border-foreground bg-foreground text-white'
+                  : 'border-border bg-white text-foreground hover:border-border-strong'
               }`}
             >
-              2-of-3
+              {t === 2 ? '2-of-3' : '3-of-5'}
             </button>
-            <button
-              type="button"
-              onClick={() => setThreshold(3)}
-              className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${
-                threshold === 3 
-                  ? 'bg-orange-500 text-white' 
-                  : 'bg-muted hover:bg-muted/80'
-              }`}
-            >
-              3-of-5
-            </button>
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          {shares.map((share, index) => (
-            <div key={index} className="flex gap-2">
-              <div className="flex-1 relative">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                  <Key className="w-4 h-4 text-foreground/30" />
-                  <span className="text-xs font-bold text-foreground/40">Share {index + 1}</span>
-                </div>
-                <input
-                  type="text"
-                  value={share}
-                  onChange={(e) => updateShare(index, e.target.value)}
-                  placeholder="Paste share hex..."
-                  className="w-full pl-20 pr-4 py-3 bg-muted border border-border rounded-xl font-mono text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
-                />
-              </div>
-              {shares.length > 2 && (
-                <button
-                  type="button"
-                  onClick={() => removeShareInput(index)}
-                  className="p-3 text-foreground/40 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-colors"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </button>
-              )}
-            </div>
           ))}
         </div>
-
-        {shares.length < 5 && (
-          <button
-            type="button"
-            onClick={addShareInput}
-            className="w-full py-3 border-2 border-dashed border-border rounded-xl text-sm font-bold text-foreground/60 hover:border-orange-500/50 hover:text-orange-600 transition-colors"
-          >
-            + Add Another Share Input
-          </button>
-        )}
-
-        <div className="flex items-center gap-2 text-sm">
-          <div className={`w-2 h-2 rounded-full ${canCombine ? 'bg-green-500' : 'bg-foreground/20'}`} />
-          <span className={canCombine ? 'text-green-600' : 'text-foreground/50'}>
-            {recoverableShares.length} of {threshold} required unique shares entered
-          </span>
-        </div>
       </div>
 
-      <div className="flex gap-4 pt-4">
+      <div className="space-y-2">
+        {shares.map((share, index) => (
+          <div key={index} className="flex gap-2">
+            <div className="relative flex-1">
+              <div className="pointer-events-none absolute left-3 top-1/2 flex -translate-y-1/2 items-center gap-1.5">
+                <Key className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-xs font-semibold text-muted-foreground">Share {index + 1}</span>
+              </div>
+              <input
+                type="text"
+                value={share}
+                onChange={(e) => updateShare(index, e.target.value)}
+                placeholder="Paste share hex…"
+                className="field-input pl-[5.5rem]"
+              />
+            </div>
+            {shares.length > 2 && (
+              <button
+                type="button"
+                onClick={() => removeShareInput(index)}
+                aria-label={`Remove share ${index + 1}`}
+                className="rounded-md border border-border bg-white px-2.5 text-muted-foreground transition-colors hover:border-danger/30 hover:text-danger"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {shares.length < 5 && (
         <button
           type="button"
-          onClick={onCancel}
-          className="flex-1 py-3 px-4 rounded-xl border border-border font-bold hover:bg-muted transition-colors"
+          onClick={addShareInput}
+          className="w-full rounded-md border border-dashed border-border-strong bg-muted/40 py-2.5 text-sm font-medium text-foreground/70 transition-colors hover:border-foreground/40 hover:text-foreground"
         >
-          Cancel
+          + Add another share input
         </button>
+      )}
+
+      <div className="flex items-center gap-2 text-sm">
+        <div className={`h-1.5 w-1.5 rounded-full ${canCombine ? 'bg-success' : 'bg-muted-foreground'}`} />
+        <span className={canCombine ? 'text-success' : 'text-muted-foreground'}>
+          {recoverableShares.length} of {threshold} required unique shares entered
+        </span>
+      </div>
+
+      <div className="flex justify-between gap-2 border-t border-border pt-4">
+        <button type="button" onClick={onCancel} className="btn-secondary">Cancel</button>
         <button
           type="button"
           onClick={handleCombine}
           disabled={!canCombine || isCombining}
-          className="flex-1 py-3 px-4 bg-orange-500 text-white rounded-xl font-bold hover:bg-orange-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          className="btn-primary"
         >
           {isCombining ? (
             <>
-              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              Combining...
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+              Combining…
             </>
           ) : (
             <>
-              <Lock className="w-4 h-4" />
-              Reconstruct Key
+              <Lock className="h-4 w-4" /> Reconstruct key
             </>
           )}
         </button>

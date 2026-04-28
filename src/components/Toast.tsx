@@ -38,13 +38,11 @@ export const ToastProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           role="status"
           aria-live="polite"
           aria-atomic="true"
-          className="fixed bottom-12 left-1/2 -translate-x-1/2 z-[200] animate-in slide-in-from-bottom-4 fade-in duration-500"
+          className="fixed bottom-6 left-1/2 z-[200] -translate-x-1/2"
         >
-          <div className="glass px-6 py-3 border-primary/20 flex items-center gap-3 text-sm font-black uppercase tracking-widest shadow-xl shadow-primary/5">
-            <div className="bg-primary/10 p-1 rounded-full">
-              <Check className="text-primary w-4 h-4" />
-            </div>
-            {message}
+          <div className="flex items-center gap-2 rounded-md border border-border bg-white px-3 py-2 text-sm font-medium shadow-md">
+            <Check className="h-3.5 w-3.5 text-success" />
+            <span className="text-foreground">{message}</span>
           </div>
         </div>
       )}

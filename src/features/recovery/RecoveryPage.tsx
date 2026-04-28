@@ -166,7 +166,7 @@ const RecoveryPage = ({ initialData, onBack }: RecoveryPageProps) => {
           />
         </>
       ) : (
-        <div className="p-4 rounded-2xl border border-orange-500/20 bg-orange-500/5 text-sm text-orange-700 leading-relaxed print:hidden">
+        <div className="rounded-md border border-warning/30 bg-warning-bg p-3 text-sm leading-relaxed text-warning print:hidden">
           Regtest is local-only. For live status, query your own node or local Esplora instance.
         </div>
       )}
