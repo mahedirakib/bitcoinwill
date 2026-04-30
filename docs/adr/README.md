@@ -27,13 +27,13 @@ An Architecture Decision Record captures:
 - **Deprecated:** Decision was accepted but is no longer relevant
 - **Superseded:** Decision replaced by a newer ADR
 
-## Contributing
+## Maintaining ADRs
 
 When making significant architectural decisions:
 
 1. Create a new ADR using the format: `NNN-title-in-kebab-case.md`
 2. Use the template below
-3. Submit for review via pull request
+3. Submit for review through the private repository workflow
 4. Update this index
 
 ## ADR Template

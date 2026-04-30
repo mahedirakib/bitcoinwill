@@ -139,8 +139,8 @@ export const connectTrezor = async (
     lazyLoad: true,
     manifest: {
       appName: 'Bitcoin Will',
-      email: 'github.com/mahedirakib/bitcoinwill',
-      appUrl: 'https://github.com/mahedirakib/bitcoinwill',
+      email: 'maintainer@bitcoinwill.local',
+      appUrl: window.location.origin,
     },
   });
 

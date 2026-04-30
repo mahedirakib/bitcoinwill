@@ -5,12 +5,12 @@ All notable changes to the Bitcoin Will project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## Unreleased
 
 ### Added
 - No changes yet.
 
-## [1.0.0] - 2026-02-17
+## 1.0.0 - 2026-02-17
 
 ### Added
 - Live vault status checks via public explorer APIs with provider fallback (Mempool.space / Blockstream.info).
@@ -27,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Expanded automated coverage to 127 tests across Bitcoin logic, safety, and explorer integration.
 - Release QA checklist completed for creation flow, safety, portability, and print path.
 
-## [0.1.0] - 2026-02-08
+## 0.1.0 - 2026-02-08
 
 ### Added
 - **MVP Release** - Initial functional version of Bitcoin Will.
@@ -82,7 +82,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `bitcoinjs-lib` for Bitcoin operations.
 - ESLint + TypeScript strict mode.
 - Static build output for easy hosting.
-
-[Unreleased]: https://github.com/mahedirakib/bitcoinwill/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/mahedirakib/bitcoinwill/releases/tag/v1.0.0
-[0.1.0]: https://github.com/mahedirakib/bitcoinwill/releases/tag/v0.1.0

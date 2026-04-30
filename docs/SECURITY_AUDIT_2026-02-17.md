@@ -65,4 +65,4 @@ Based on:
 - Existing CI secret scanning and recurring security workflow
 - Expanded test coverage for Bitcoin logic and explorer integration
 
-This release is approved as `v1.0.0` for production deployment, with ongoing community review encouraged through standard GitHub issue/PR workflows.
+This release is approved as `v1.0.0` for production deployment, with ongoing review encouraged through private maintainer, security, and release workflows.

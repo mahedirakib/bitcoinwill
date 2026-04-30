@@ -40,7 +40,7 @@
 - [x] Finalize static build and deployment.
 - [x] Add instructions for running the app offline/locally.
 - [x] Complete comprehensive test coverage.
-- [x] Third-party security audit (community review).
+- [x] Third-party security audit (authorized review).
 - [x] v1.0.0 stable release.
 
 ## 🎯 Future Enhancements (Backlog)

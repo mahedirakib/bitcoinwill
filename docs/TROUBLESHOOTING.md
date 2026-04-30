@@ -34,7 +34,7 @@ Common issues and their solutions when using Bitcoin Will.
 **Solution:**
 - Check that both public keys are valid
 - Try refreshing the page
-- If problem persists, open an issue on GitHub
+- If problem persists, report it through the private support or maintainer channel
 
 ## Recovery Issues
 
@@ -132,14 +132,14 @@ Common issues and their solutions when using Bitcoin Will.
 - Disable browser extensions (especially ad blockers)
 - Use modern browser (Chrome, Firefox, Safari, Edge)
 
-### GitHub Pages Shows `main.tsx` or `logo.png` 404
+### Static Hosting Shows `main.tsx` or `logo.png` 404
 
 **Problem:** The site loads a source `index.html` that references `/src/main.tsx`, which only works in Vite dev mode.
 
 **Solution:**
-1. In GitHub repo settings, open **Settings -> Pages**
-2. Set **Source** to **GitHub Actions**
-3. Re-run or push to trigger the **Deploy to GitHub Pages** workflow
+1. In your hosting or repository settings, confirm the deployed source is the built `dist/` output.
+2. For GitHub Pages, set **Source** to **GitHub Actions**.
+3. Re-run or push to trigger the deployment workflow.
 4. Wait for deploy success, then hard refresh the site (`Ctrl+Shift+R` or `Cmd+Shift+R`)
 
 **Note:** `lockdown-install.js: SES Removing unpermitted intrinsics` is typically from a browser extension and is usually unrelated to this deployment issue.
@@ -174,11 +174,11 @@ Common issues and their solutions when using Bitcoin Will.
 
 If your issue is not covered here:
 
-1. Check [GitHub Issues](https://github.com/mahedirakib/bitcoinwill/issues)
-2. Open a new issue with:
+1. Check the private issue tracker or support channel.
+2. Open a new private issue or task with:
    - What you were trying to do
    - What happened
    - Error messages (if any)
    - Steps to reproduce
 
-**Never share private keys or sensitive data in public issues!**
+**Never share private keys or sensitive data in any issue or support request.**

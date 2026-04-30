@@ -346,9 +346,9 @@ RECOVERY PROCESS:
 To claim funds, the beneficiary needs:
 1. ${config.threshold} shares (including this one or others)
 2. The Recovery Kit JSON file
-3. Access to the Bitcoin Will app (self-host or use GitHub Pages)
+3. Access to the Bitcoin Will app (self-host or use the maintainer-provided deployment)
 
-For support, visit: https://github.com/mahedirakib/bitcoinwill
+For support, contact the Bitcoin Will maintainer.
 `;
 
     const blob = new Blob([content], { type: 'text/plain' });

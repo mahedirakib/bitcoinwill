@@ -4,7 +4,7 @@
 Bitcoin Will is designed as a **stateless, client-side utility**. 
 - **Non-Custodial:** We never touch your private keys.
 - **Privacy-First:** We never store your public keys or plan data on any server.
-- **Open Source:** Every line of code is auditable.
+- **Private Source:** Code is auditable by authorized maintainers, reviewers, and security auditors.
 
 ## 🕵️ Threat Model
 
@@ -32,7 +32,7 @@ Bitcoin Will is designed as a **stateless, client-side utility**.
 - Use a hardware wallet to manage your keys.
 
 ## 🚩 Reporting a Security Issue
-If you find a vulnerability, please report it via GitHub private vulnerability reporting.
+If you find a vulnerability, please report it through the private repository's vulnerability reporting flow or directly to the maintainers.
 
 ## 📋 Recent Audit
 - See [`docs/SECURITY_AUDIT_2026-02-17.md`](./docs/SECURITY_AUDIT_2026-02-17.md) for the latest third-party tooling results and release hardening summary.

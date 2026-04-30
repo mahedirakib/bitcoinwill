@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-proprietary-lightgrey.svg" alt="License"></a>
   <img src="https://img.shields.io/badge/status-stable-success" alt="Status">
   <img src="https://img.shields.io/badge/tests-197%20passing-brightgreen" alt="Tests">
   <img src="https://img.shields.io/badge/typescript-5.6-blue" alt="TypeScript">
@@ -78,7 +78,7 @@ Bitcoin Will is a **stateless, client-side utility** that implements the TimeLoc
 - **100% client-side** - No server, no database, no accounts
 - **No private keys** - Only public keys handled
 - **Works offline** - Air-gap compatible
-- **Open source** - Fully auditable code
+- **Private source** - Auditable by authorized maintainers and reviewers
 
 ---
 
@@ -99,8 +99,8 @@ Bitcoin Will is a **stateless, client-side utility** that implements the TimeLoc
 ### Run Locally
 
 ```bash
-# Clone the repository
-git clone https://github.com/mahedirakib/bitcoinwill.git
+# Clone the private repository
+git clone <private-repository-url>
 cd bitcoinwill
 
 # Install dependencies
@@ -133,7 +133,7 @@ npm run preview
 
 ### For Developers
 - **[Architecture](./docs/ARCHITECTURE.md)** - System design and data flow
-- **[Contributing](./CONTRIBUTING.md)** - How to contribute code
+- **[Contributing](./CONTRIBUTING.md)** - Internal development workflow
 - **[Testing](./TESTING.md)** - Testing strategy and patterns
 - **[AGENTS.md](./AGENTS.md)** - Guide for AI agents working on this codebase ⭐
 
@@ -213,19 +213,18 @@ See [AGENTS.md](./AGENTS.md) for detailed patterns and constraints.
 - **Deterministic:** Same inputs always produce same outputs
 - **Audited:** Third-party security audit completed
 
-Report security issues via GitHub private vulnerability reporting.
+Report security issues through the private repository's vulnerability reporting flow or directly to the maintainers.
 
 ---
 
 ## 🤝 Contributing
 
-We welcome contributions! See [CONTRIBUTING.md](./CONTRIBUTING.md) for:
+Bitcoin Will is now a private-source project. Authorized maintainers can use [CONTRIBUTING.md](./CONTRIBUTING.md) for:
 - Development setup
 - Code guidelines
 - Testing requirements
-- Pull request process
 
-### What We're Looking For
+### Current Priorities
 - Bug fixes for Bitcoin logic
 - Test coverage improvements
 - Documentation enhancements
@@ -235,7 +234,7 @@ We welcome contributions! See [CONTRIBUTING.md](./CONTRIBUTING.md) for:
 
 ## 📜 License
 
-MIT License - See [LICENSE](./LICENSE) for details.
+Proprietary software - See [LICENSE](./LICENSE) for details.
 
 ---
 
@@ -243,7 +242,7 @@ MIT License - See [LICENSE](./LICENSE) for details.
 
 - Built with [bitcoinjs-lib](https://github.com/bitcoinjs/bitcoinjs-lib)
 - Inspired by the Bitcoin community's commitment to self-custody
-- Thanks to all contributors and auditors
+- Thanks to all authorized reviewers and auditors
 
 ---
 

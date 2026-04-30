@@ -1,20 +1,20 @@
-# Contributing to Bitcoin Will
+# Internal Development Guide
 
-Thank you for your interest in contributing to Bitcoin Will! This document provides guidelines and instructions for contributing to this open-source Bitcoin inheritance tool.
+Bitcoin Will is a private-source Bitcoin inheritance tool. This document is for authorized maintainers and reviewers working in the private repository.
 
 ## Table of Contents
 
 - [Code of Conduct](#code-of-conduct)
 - [Getting Started](#getting-started)
 - [Development Setup](#development-setup)
-- [Contributing Guidelines](#contributing-guidelines)
+- [Development Guidelines](#development-guidelines)
 - [Testing](#testing)
 - [Security](#security)
 - [Questions](#questions)
 
 ## Code of Conduct
 
-This project is committed to providing a welcoming and inclusive experience for everyone. We expect contributors to:
+This project is committed to providing a respectful and security-focused development environment. We expect authorized contributors to:
 
 - Be respectful and constructive in all interactions
 - Focus on what's best for the Bitcoin community
@@ -29,17 +29,13 @@ This project is committed to providing a welcoming and inclusive experience for 
 - Git
 - Basic understanding of Bitcoin, React, and TypeScript
 
-### Fork and Clone
+### Clone
 
-1. Fork the repository on GitHub
-2. Clone your fork locally:
+1. Confirm you have access to the private repository.
+2. Clone the repository locally:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/bitcoinwill.git
+   git clone <private-repository-url>
    cd bitcoinwill
-   ```
-3. Add the upstream repository:
-   ```bash
-   git remote add upstream https://github.com/mahedirakib/bitcoinwill.git
    ```
 
 ## Development Setup
@@ -63,7 +59,7 @@ npm run lint
 
 The app will be available at `http://localhost:5173`.
 
-## Contributing Guidelines
+## Development Guidelines
 
 ### What We're Looking For
 
@@ -81,7 +77,7 @@ The app will be available at `http://localhost:5173`.
 - Analytics or tracking code
 - Breaking changes to the Recovery Kit format
 
-### Pull Request Process
+### Change Review Process
 
 1. **Create a branch** from `main` with a descriptive name:
    ```bash
@@ -109,11 +105,11 @@ The app will be available at `http://localhost:5173`.
    - PROTOCOL.md for Bitcoin logic changes
    - This file for process changes
 
-5. **Submit a Pull Request**:
+5. **Submit for review**:
    - Provide a clear description of the changes
-   - Reference any related issues
+   - Reference any related private issues or tasks
    - Include screenshots for UI changes
-   - Ensure CI checks pass
+   - Ensure CI checks pass before merge
 
 ### Commit Message Format
 
@@ -187,9 +183,9 @@ describe('buildPlan', () => {
 
 ### Reporting Vulnerabilities
 
-**DO NOT** open public issues for security vulnerabilities.
+**DO NOT** disclose security vulnerabilities through external channels.
 
-Instead, use GitHub private vulnerability reporting.
+Instead, use the private repository's vulnerability reporting flow or contact the maintainers directly.
 
 Include:
 - Description of the vulnerability
@@ -207,12 +203,12 @@ Include:
 
 ## Questions?
 
-- **General questions:** Open a [GitHub Discussion](https://github.com/mahedirakib/bitcoinwill/discussions)
-- **Bug reports:** Open an [Issue](https://github.com/mahedirakib/bitcoinwill/issues)
-- **Feature requests:** Open an [Issue](https://github.com/mahedirakib/bitcoinwill/issues) with the `enhancement` label
+- **General questions:** Ask in the private maintainer channel.
+- **Bug reports:** Open a private issue or task.
+- **Feature requests:** Open a private issue or task with the `enhancement` label.
 
 ## Recognition
 
-Contributors will be recognized in our README.md and release notes.
+Authorized contributors may be recognized in private release notes when appropriate.
 
-Thank you for helping make Bitcoin inheritance accessible to everyone! 🧡
+Thank you for helping make Bitcoin inheritance safer and easier to maintain.

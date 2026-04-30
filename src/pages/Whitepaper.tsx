@@ -199,14 +199,7 @@ const Whitepaper = ({ onBack: _onBack }: { onBack: () => void }) => {
       </article>
 
       <footer className="border-t border-border pt-4 text-xs text-muted-foreground">
-        <a
-          href="https://github.com/mahedirakib/bitcoinwill/blob/main/whitepaper.md"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-foreground underline underline-offset-2 hover:text-foreground/70"
-        >
-          View raw markdown on GitHub →
-        </a>
+        This whitepaper is bundled with the private application release.
       </footer>
     </div>
   );

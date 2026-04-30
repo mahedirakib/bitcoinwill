@@ -47,8 +47,8 @@ We will have **zero backend infrastructure:**
 | User accounts | No accounts needed |
 | Data persistence | Recovery Kit JSON download |
 | Analytics | None (privacy-preserving) |
-| Error tracking | GitHub Issues |
-| Updates | GitHub releases, changelog |
+| Error tracking | Private issue tracker |
+| Updates | Private releases, changelog |
 
 ## Alternatives Considered
 
@@ -66,7 +66,7 @@ We will have **zero backend infrastructure:**
 Since we're fully static:
 
 1. **Primary:** Cloudflare Pages (CDN, free, reliable)
-2. **Mirror:** GitHub Pages (free, version-controlled)
+2. **Mirror:** GitHub Pages for private repositories when available
 3. **Offline:** User downloads repo, opens index.html
 
 ## Related

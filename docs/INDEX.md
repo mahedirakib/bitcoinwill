@@ -22,7 +22,7 @@ Welcome to the Bitcoin Will documentation. This page serves as a central hub to 
 ### 👨‍💻 I'm a Developer
 
 **Getting started with development:**
-- [Contributing](../CONTRIBUTING.md) - Setup, guidelines, and PR process
+- [Contributing](../CONTRIBUTING.md) - Internal setup, guidelines, and review process
 - [Testing](../TESTING.md) - Testing strategy and how to write tests
 - [Architecture](./ARCHITECTURE.md) - System design and code organization
 
@@ -56,7 +56,7 @@ Welcome to the Bitcoin Will documentation. This page serves as a central hub to 
 |----------|-------------|----------|
 | [README](../README.md) | Project overview, quick start, features | Everyone |
 | [AGENTS.md](../AGENTS.md) | AI agent development guide | AI Agents, Developers |
-| [CONTRIBUTING](../CONTRIBUTING.md) | How to contribute code | Developers |
+| [CONTRIBUTING](../CONTRIBUTING.md) | Internal development workflow | Developers |
 | [TESTING](../TESTING.md) | Testing strategy and patterns | Developers |
 
 ### User Guides
@@ -90,7 +90,7 @@ Welcome to the Bitcoin Will documentation. This page serves as a central hub to 
 | Document | Description | Audience |
 |----------|-------------|----------|
 | [Changelog](../CHANGELOG.md) | Version history | Everyone |
-| [TODO](../TODO.md) | Future plans and roadmap | Contributors |
+| [TODO](../TODO.md) | Future plans and roadmap | Maintainers |
 | [Deployment](../DEPLOYMENT.md) | Deployment instructions | Maintainers |
 | [Release Checklist](../RELEASE_CHECKLIST.md) | Release process | Maintainers |
 
@@ -130,12 +130,12 @@ Records of significant architectural decisions:
 See [Recovery Guide](./RECOVERY_GUIDE.md) for detailed steps.
 
 **Contributing code:**
-1. Fork and clone
+1. Clone the private repository
 2. `npm install`
 3. `npm run dev`
 4. Make changes
 5. `npm run ready-check`
-6. Submit PR
+6. Submit for review
 
 See [Contributing](../CONTRIBUTING.md) for details.
 
@@ -172,9 +172,9 @@ See [Glossary](./GLOSSARY.md) for full definitions.
 
 ## 📞 Getting Help
 
-- **General questions:** Open a [GitHub Discussion](https://github.com/mahedirakib/bitcoinwill/discussions)
-- **Bug reports:** [Open an Issue](https://github.com/mahedirakib/bitcoinwill/issues)
-- **Security issues:** Use GitHub private vulnerability reporting (do not open public issues)
+- **General questions:** Ask in the private maintainer channel.
+- **Bug reports:** Open a private issue or task.
+- **Security issues:** Use the private vulnerability reporting flow or contact maintainers directly.
 
 ---
 
@@ -183,12 +183,12 @@ See [Glossary](./GLOSSARY.md) for full definitions.
 This documentation is continuously updated. Last major revision: 2026-02-18
 
 To suggest documentation improvements:
-1. Open an issue describing the improvement
-2. Or submit a PR with your changes
+1. Open a private issue or task describing the improvement
+2. Or submit a review request with your changes
 3. Follow the [Contributing](../CONTRIBUTING.md) guidelines
 
 ---
 
 <p align="center">
-  <strong>Can't find what you need?</strong> Try the search function or open an issue.
+  <strong>Can't find what you need?</strong> Try the search function or ask in the private maintainer channel.
 </p>
