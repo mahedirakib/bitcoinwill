@@ -63,7 +63,13 @@ export const InstructionsView = ({
             {[
               { title: 'Confirm funds', desc: 'Check the vault address on a blockchain explorer to ensure it still holds a balance.' },
               { title: 'Verify confirmation', desc: `Find the last funding transaction. Ensure it has at least ${model.locktimeBlocks} confirmations before attempting to claim.` },
-              { title: 'Prepare wallet', desc: 'Use an advanced Bitcoin wallet (e.g., Sparrow Wallet) that supports P2WSH scripts and custom descriptors.' },
+              {
+                title: 'Prepare wallet',
+                desc:
+                  model.addressType === 'p2tr'
+                    ? 'Use an advanced Bitcoin wallet (e.g., Sparrow Wallet) that supports Taproot script-path spends and custom descriptors.'
+                    : 'Use an advanced Bitcoin wallet (e.g., Sparrow Wallet) that supports P2WSH scripts and custom descriptors.',
+              },
               { title: 'Construct spend', desc: 'Construct a transaction spending from the vault address. You must provide your signature and the witness script listed below.' },
               { title: 'Broadcast', desc: 'Once signed and valid, broadcast the transaction to the network to move the funds to an address you control.' },
             ].map((step, i) => (
@@ -84,6 +90,7 @@ export const InstructionsView = ({
           <h2 className="border-b border-border pb-2 text-base font-semibold print:border-gray-300">Technical details</h2>
           <div className="grid gap-4">
             <DataRow label="Network" value={model.network} />
+            <DataRow label="Address format" value={model.addressType === 'p2tr' ? 'P2TR (Taproot)' : 'P2WSH (SegWit v0)'} />
             <DataRow label="Vault address" value={model.address} copyable />
             <DataRow label="Beneficiary pubkey" value={model.beneficiaryPubkey} />
             <DataRow label="Witness script (hex)" value={model.witnessScriptHex} copyable mono />

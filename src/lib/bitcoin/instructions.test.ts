@@ -155,6 +155,7 @@ describe('Instructions Module', () => {
     const mockInstructionModel: InstructionModel = {
       network: 'TESTNET',
       address: 'tb1qxyz123',
+      addressType: 'p2wsh',
       ownerPubkey: '02e9634f19b165239105436a5c17e3371901c5651581452a329978747474747474',
       beneficiaryPubkey: '03e9634f19b165239105436a5c17e3371901c5651581452a329978747474747474',
       locktimeBlocks: 144,
