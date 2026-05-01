@@ -1,4 +1,4 @@
-import { PlanInput, PlanOutput } from './types';
+import { PlanInput, PlanOutput, AddressType } from './types';
 import { calculateTime } from './utils';
 import { buildPlan } from './planEngine';
 import { bytesToHex } from './hex';
@@ -16,6 +16,8 @@ export interface InstructionModel {
   network: string;
   /** The vault address where funds are held */
   address: string;
+  /** Address type — determines spending mechanics (P2WSH witness vs Taproot tapscript) */
+  addressType: AddressType;
   /** Owner's public key (for reference) */
   ownerPubkey: string;
   /** Beneficiary's public key (required for claiming) */
@@ -168,6 +170,7 @@ export const buildInstructions = (plan: PlanInput, result: PlanOutput, createdAt
   return {
     network: plan.network.toUpperCase(),
     address: result.address,
+    addressType: result.address_type,
     ownerPubkey: plan.owner_pubkey,
     beneficiaryPubkey: plan.beneficiary_pubkey,
     locktimeBlocks: plan.locktime_blocks,
@@ -198,21 +201,24 @@ export const buildInstructions = (plan: PlanInput, result: PlanOutput, createdAt
  * downloadTxt('beneficiary-instructions.txt', txt);
  */
 export const generateInstructionTxt = (m: InstructionModel): string => {
+  const walletNote =
+    m.addressType === 'p2tr'
+      ? 'An Advanced Wallet: Tools like Sparrow Wallet that support Taproot script-path spends and custom descriptors.'
+      : 'An Advanced Wallet: Tools like Sparrow Wallet or Electrum that support "Custom Scripts" or "P2WSH" spending.';
   return `
 BENEFICIARY INSTRUCTIONS (BITCOIN WILL)
 Generated on: ${m.createdAt}
 --------------------------------------------------
 
 WHAT THIS IS
-This document contains the technical details required to claim funds 
+This document contains the technical details required to claim funds
 from a Bitcoin Will "Dead Man's Switch" vault.
 
 WHAT YOU NEED
-1. Your Private Key: You must hold the private key corresponding to 
+1. Your Private Key: You must hold the private key corresponding to
    the Beneficiary Public Key listed below.
 2. This Instruction Set: Specifically the Witness Script or Descriptor.
-3. An Advanced Wallet: Tools like Sparrow Wallet or Electrum that 
-   support "Custom Scripts" or "P2WSH" spending.
+3. ${walletNote}
 
 WHEN YOU CAN CLAIM
 Delay: ${m.locktimeBlocks} blocks (Approx. ${m.locktimeApprox})
