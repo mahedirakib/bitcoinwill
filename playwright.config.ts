@@ -1,5 +1,10 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const e2eHost = '127.0.0.1';
+const e2ePort = Number.parseInt(process.env.E2E_PORT ?? '5174', 10);
+const baseURL = `http://${e2eHost}:${e2ePort}`;
+const reuseExistingServer = process.env.PLAYWRIGHT_REUSE_SERVER === '1';
+
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
@@ -8,7 +13,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
   use: {
-    baseURL: 'http://localhost:5173',
+    baseURL,
     trace: 'on-first-retry',
   },
   projects: [
@@ -22,8 +27,8 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:5173',
-    reuseExistingServer: !process.env.CI,
+    command: `npm run dev -- --host ${e2eHost} --port ${e2ePort} --strictPort`,
+    url: baseURL,
+    reuseExistingServer,
   },
 });

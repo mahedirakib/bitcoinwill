@@ -185,8 +185,7 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorW
       }
 
       const result = buildPlan(planInput);
-      dispatch({ type: 'SET_RESULT', payload: result });
-      dispatch({ type: 'SET_STEP', payload: 'RESULT' });
+      dispatch({ type: 'SET_COMPLETED_PLAN', payload: { input: planInput, result } });
       clearDraftState();
     } catch (e) {
       dispatch({ type: 'SET_ERRORS', payload: { global: (e as Error).message } });
@@ -211,8 +210,7 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorW
 
       setPendingSSSKey(null);
       setPendingSSSConfig(null);
-      dispatch({ type: 'SET_RESULT', payload: result });
-      dispatch({ type: 'SET_STEP', payload: 'RESULT' });
+      dispatch({ type: 'SET_COMPLETED_PLAN', payload: { input: planInput, result } });
       clearDraftState();
     } catch (e) {
       dispatch({ type: 'SET_ERRORS', payload: { global: (e as Error).message } });

@@ -1,8 +1,8 @@
 import { test, expect, type Page } from '@playwright/test';
 
 const startWizard = async (page: Page) => {
-  await page.goto('/');
-  await page.getByRole('link', { name: /Create Spending Plan/i }).click();
+  await page.goto('/create');
+  await expect(page.getByText('Choose your inheritance strategy')).toBeVisible();
 };
 
 const continueFromTypeStep = async (page: Page) => {
@@ -32,21 +32,25 @@ test.describe('Homepage', () => {
   });
 
   test('should have main navigation elements', async ({ page }) => {
-    await expect(page.getByRole('link', { name: /Go to home/i })).toBeVisible();
-    await expect(page.getByRole('link', { name: /Create Spending Plan/i })).toBeVisible();
-    await expect(page.getByRole('link', { name: /Learn How It Works/i })).toBeVisible();
+    const primaryNav = page.getByRole('navigation', { name: 'Primary' });
+    const referenceNav = page.getByRole('navigation', { name: 'Reference' });
+
+    await expect(primaryNav.getByRole('button', { name: 'Home' })).toBeVisible();
+    await expect(primaryNav.getByRole('button', { name: 'Create plan' })).toBeVisible();
+    await expect(primaryNav.getByRole('button', { name: 'Recover' })).toBeVisible();
+    await expect(referenceNav.getByRole('button', { name: 'Learn' })).toBeVisible();
   });
 
   test('should navigate to create wizard when clicking Create link', async ({ page }) => {
-    await page.getByRole('link', { name: /Create Spending Plan/i }).click();
-    await expect(page.getByText('New Spending Plan')).toBeVisible();
+    await page.getByRole('main').getByRole('button', { name: /Create plan/i }).click();
+    await expect(page.getByText('Choose your inheritance strategy')).toBeVisible();
     await expect(page.getByText('Step 1 of 4')).toBeVisible();
   });
 
   test('should display feature cards', async ({ page }) => {
-    await expect(page.getByText('For Holders')).toBeVisible();
-    await expect(page.getByText('Purely Native')).toBeVisible();
-    await expect(page.getByText('Simple Recovery')).toBeVisible();
+    await expect(page.getByText('Not a wallet')).toBeVisible();
+    await expect(page.getByText('Not a legal will')).toBeVisible();
+    await expect(page.getByText('Not a custodian')).toBeVisible();
   });
 });
 
@@ -57,7 +61,7 @@ test.describe('Wizard - Type Step', () => {
 
   test('should display type selection step', async ({ page }) => {
     await expect(page.getByText('Choose your inheritance strategy')).toBeVisible();
-    await expect(page.getByText('Timelock Recovery')).toBeVisible();
+    await expect(page.getByText('Timelock recovery')).toBeVisible();
   });
 
   test('should toggle Taproot address format', async ({ page }) => {
@@ -70,7 +74,7 @@ test.describe('Wizard - Type Step', () => {
 
   test('should proceed to keys step', async ({ page }) => {
     await page.getByRole('button', { name: /Continue/i }).click();
-    await expect(page.getByText('Identify the players')).toBeVisible();
+    await expect(page.getByText('Add public keys')).toBeVisible();
     await expect(page.getByText('Step 2 of 4')).toBeVisible();
   });
 });
@@ -95,7 +99,7 @@ test.describe('Wizard - Keys Step', () => {
     await page.getByRole('button', { name: /Use Sample/i }).first().click();
     await page.getByRole('button', { name: /Use Sample/i }).nth(1).click();
     await page.getByRole('button', { name: /Continue/i }).click();
-    await expect(page.getByText('Set the Delay')).toBeVisible();
+    await expect(page.getByText('Set the delay')).toBeVisible();
   });
 });
 
@@ -106,25 +110,28 @@ test.describe('Wizard - Social Recovery', () => {
     await page.getByRole('button', { name: /2-of-3 Shares/i }).click();
     await page.getByRole('button', { name: /Continue/i }).click();
 
-    await expect(page.getByText('Owner Identification')).toBeVisible();
+    await expect(page.getByText('Add owner public key')).toBeVisible();
     await expect(page.getByLabel(/Owner Public Key/i)).toBeVisible();
     await expect(page.getByLabel(/Beneficiary Public Key/i)).toBeHidden();
 
     await page.getByRole('button', { name: /Use Sample/i }).click();
     await page.getByRole('button', { name: /Continue/i }).click();
-    await expect(page.getByText('Set the Delay')).toBeVisible();
+    await expect(page.getByText('Set the delay')).toBeVisible();
 
     await page.getByRole('button', { name: /Continue/i }).click();
-    await expect(page.getByText('Final Review')).toBeVisible();
+    await expect(page.getByText('Review and generate')).toBeVisible();
 
     await page.getByRole('button', { name: /Generate Plan/i }).click();
-    await expect(page.getByText('Critical Security Step')).toBeVisible();
+    await expect(page.getByText('Save the beneficiary private key first')).toBeVisible();
 
-    await page.getByLabel(/I confirm that I have written down/i).check();
+    await page.getByLabel(/I confirm I have stored this private key/i).check();
     await page.getByRole('button', { name: /Continue to Split Shares/i }).click();
 
-    await expect(page.getByText('Plan Secured')).toBeVisible();
-    await expect(page.getByText('Social Recovery Shares')).toBeVisible();
+    await expect(page.getByText(/Plan generated/i)).toBeVisible();
+    await expect(page.getByText(/Social recovery shares/i)).toBeVisible();
+
+    await page.getByRole('button', { name: /View instructions/i }).click();
+    await expect(page.getByRole('heading', { name: /Beneficiary instructions/i })).toBeVisible();
   });
 });
 
@@ -134,13 +141,13 @@ test.describe('Wizard - Timelock Step', () => {
   });
 
   test('should display timelock slider', async ({ page }) => {
-    await expect(page.getByText('Set the Delay')).toBeVisible();
+    await expect(page.getByText('Set the delay')).toBeVisible();
     await expect(page.getByLabel(/Timelock blocks/i)).toBeVisible();
   });
 
   test('should proceed to review step', async ({ page }) => {
     await page.getByRole('button', { name: /Continue/i }).click();
-    await expect(page.getByText('Final Review')).toBeVisible();
+    await expect(page.getByText('Review and generate')).toBeVisible();
     await expect(page.getByText('Step 4 of 4')).toBeVisible();
   });
 });
@@ -151,28 +158,28 @@ test.describe('Wizard - Review & Generate', () => {
   });
 
   test('should display review information', async ({ page }) => {
-    await expect(page.getByText('Final Review')).toBeVisible();
+    await expect(page.getByText('Review and generate')).toBeVisible();
     await expect(page.getByText('Network').first()).toBeVisible();
-    await expect(page.getByText('Delay').first()).toBeVisible();
+    await expect(page.getByText('Inactivity period').first()).toBeVisible();
   });
 
   test('should generate plan successfully', async ({ page }) => {
     await page.getByRole('button', { name: /Generate Plan/i }).click();
-    await expect(page.getByText('Plan Secured')).toBeVisible();
-    await expect(page.getByRole('heading', { name: /Vault Address \(testnet\)/i })).toBeVisible();
+    await expect(page.getByText(/Plan generated/i)).toBeVisible();
+    await expect(page.getByText('Vault address').first()).toBeVisible();
   });
 });
 
 test.describe('Navigation', () => {
   test('should navigate to Learn page', async ({ page }) => {
     await page.goto('/');
-    await page.getByRole('link', { name: /Learn How It Works/i }).click();
+    await page.getByRole('navigation', { name: 'Reference' }).getByRole('button', { name: 'Learn' }).click();
     await expect(page.getByText('Understanding Bitcoin Will')).toBeVisible();
   });
 
   test('should navigate back from wizard', async ({ page }) => {
     await startWizard(page);
-    await page.getByRole('button', { name: /Cancel/i }).click();
-    await expect(page.getByRole('link', { name: /Create Spending Plan/i })).toBeVisible();
+    await page.getByRole('button', { name: /Cancel/i }).first().click();
+    await expect(page.getByRole('heading', { name: 'Home' })).toBeVisible();
   });
 });

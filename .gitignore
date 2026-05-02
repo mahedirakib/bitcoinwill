@@ -5,6 +5,8 @@
 
 # Testing
 /coverage
+/playwright-report
+/test-results
 
 # Production
 /dist

@@ -19,6 +19,7 @@ export type WizardAction =
   | { type: 'SET_STEP'; payload: Step }
   | { type: 'UPDATE_INPUT'; payload: Partial<PlanInput> }
   | { type: 'SET_RESULT'; payload: PlanOutput }
+  | { type: 'SET_COMPLETED_PLAN'; payload: { input: PlanInput; result: PlanOutput } }
   | { type: 'SET_ERRORS'; payload: Record<string, string> };
 
 export interface ChecklistItem {
@@ -89,6 +90,14 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
     case 'SET_STEP': return { ...state, step: action.payload, errors: {} };
     case 'UPDATE_INPUT': return { ...state, input: { ...state.input, ...action.payload } };
     case 'SET_RESULT': return { ...state, result: action.payload };
+    case 'SET_COMPLETED_PLAN':
+      return {
+        ...state,
+        step: 'RESULT',
+        input: action.payload.input,
+        result: action.payload.result,
+        errors: {},
+      };
     case 'SET_ERRORS': return { ...state, errors: action.payload };
     default: return state;
   }
