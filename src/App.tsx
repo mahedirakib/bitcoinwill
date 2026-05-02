@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, lazy, Suspense, startTransition } from 'react'
-import DevPlayground from './components/DevPlayground'
+import { DevPlayground } from './components/DevPlayground'
 import type { InstructionData } from './features/will-creator/WillCreatorWizard'
 import { SettingsProvider } from './state/settings'
 import { ErrorBoundary } from './components/ErrorBoundary'

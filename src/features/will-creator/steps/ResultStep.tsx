@@ -93,6 +93,9 @@ export const ResultStep = ({
                 <p className="mt-1 text-xs text-muted-foreground">
                   Distribute these shares to trusted people. Any {result.social_recovery_kit.config.threshold} can reconstruct the beneficiary key.
                 </p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  The Recovery Kit download does not include these shares. Print or download the share cards separately.
+                </p>
               </div>
 
               <div className="mt-3 grid gap-3 sm:grid-cols-2">

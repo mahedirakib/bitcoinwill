@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { buildPlan } from '@/lib/bitcoin/planEngine';
-import { PlanInput, PlanOutput } from '@/lib/bitcoin/types';
+import type { PlanInput, PlanOutput } from '@/lib/bitcoin/types';
 
-const DevPlayground = () => {
+export const DevPlayground = () => {
   const [input, setInput] = useState<PlanInput>({
     network: 'testnet',
     inheritance_type: 'timelock_recovery',
@@ -84,5 +84,3 @@ const DevPlayground = () => {
     </div>
   );
 };
-
-export default DevPlayground;

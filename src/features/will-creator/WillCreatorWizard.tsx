@@ -11,6 +11,7 @@ import { parseWizardDraft } from './draftState';
 import { splitPrivateKey } from '@/lib/bitcoin/sss';
 import { bytesToHex, hexToBytes } from '@/lib/bitcoin/hex';
 import { connectHardwareWallet, type HardwareWalletType } from '@/lib/bitcoin/hardwareWallet';
+import { createRecoveryKitExport, stripRecoveryKitSecrets } from './recoveryKit';
 import { TypeStep } from './steps/TypeStep';
 import { KeysStep } from './steps/KeysStep';
 import { TimelockStep } from './steps/TimelockStep';
@@ -97,7 +98,7 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorW
     const dataToSave = {
       step: state.step,
       input: state.input,
-      result: state.result,
+      result: state.result ? stripRecoveryKitSecrets(state.result) : null,
       timestamp: new Date().toISOString(),
     };
     try {
@@ -229,12 +230,7 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorW
 
   const handleDownload = () => {
     if (!state.result) return;
-    const exportData = {
-      version: '0.1.0',
-      created_at: new Date().toISOString(),
-      plan: state.input,
-      result: state.result,
-    };
+    const exportData = createRecoveryKitExport(state.input, state.result);
     downloadJson(`recovery-kit-${state.result.address.slice(0, 8)}.json`, exportData);
     showToast("Recovery Kit Downloaded");
   };

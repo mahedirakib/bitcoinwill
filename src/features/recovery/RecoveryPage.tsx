@@ -9,18 +9,16 @@ import { downloadTxt } from '@/lib/utils/download';
 import type { BitcoinNetwork } from '@/lib/bitcoin/types';
 import { useToast } from '@/components/Toast';
 import { supportsPublicExplorerNetwork } from '@/lib/bitcoin/explorer';
-import {
-  useVaultStatus,
-  useCheckInPlan,
-  useTransactionBroadcast,
-  RecoveryKitLoader,
-  InstructionsView,
-  VaultStatusPanel,
-  CheckInPanel,
-  BroadcastPanel,
-  ShareRecovery,
-} from '@/features/recovery';
-import type { RecoveryPageProps } from '@/features/recovery';
+import { useVaultStatus } from './hooks/useVaultStatus';
+import { useCheckInPlan } from './hooks/useCheckInPlan';
+import { useTransactionBroadcast } from './hooks/useTransactionBroadcast';
+import { RecoveryKitLoader } from './components/RecoveryKitLoader';
+import { InstructionsView } from './components/InstructionsView';
+import { VaultStatusPanel } from './components/VaultStatusPanel';
+import { CheckInPanel } from './components/CheckInPanel';
+import { BroadcastPanel } from './components/BroadcastPanel';
+import { ShareRecovery } from './components/ShareRecovery';
+import type { RecoveryPageProps } from './types';
 
 const RecoveryPage = ({ initialData, onBack }: RecoveryPageProps) => {
   const [model, setModel] = useState<InstructionModel | null>(null);

@@ -24,5 +24,3 @@ export const PageLoading = () => (
     <p className="text-sm text-muted-foreground">Loading…</p>
   </div>
 );
-
-export default Loading;

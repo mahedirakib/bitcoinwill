@@ -4,10 +4,10 @@ import {
   isBitcoinNetwork,
   type BitcoinNetwork,
   type PlanInput,
+  type PlanOutput,
 } from '@/lib/bitcoin/types';
 import { normalizePubkeyHex } from './safety';
-
-import type { PlanOutput } from '@/lib/bitcoin/types';
+import { stripRecoveryKitSecrets } from './recoveryKit';
 
 export type WizardDraftStep = 'TYPE' | 'KEYS' | 'TIMELOCK' | 'REVIEW' | 'RESULT';
 
@@ -126,7 +126,7 @@ export const parseWizardDraft = (
   };
 
   if (parsed.result && isValidPlanOutput(parsed.result)) {
-    restored.result = parsed.result as PlanOutput;
+    restored.result = stripRecoveryKitSecrets(parsed.result as PlanOutput);
   }
 
   return restored;

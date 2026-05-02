@@ -273,6 +273,28 @@ describe('Instructions Module', () => {
       expect(normalized.result.descriptor).toBe(result.descriptor);
     });
 
+    it('drops social recovery share material from imported recovery kits', () => {
+      const result = buildPlan(canonicalPlanInput);
+      const kit = {
+        plan: canonicalPlanInput,
+        result: {
+          ...result,
+          social_recovery_kit: {
+            config: { threshold: 2, total: 3 },
+            shares: [
+              { index: 1, share: 'a'.repeat(80) },
+              { index: 2, share: 'b'.repeat(80) },
+            ],
+            instructions: ['Keep shares separate from the Recovery Kit.'],
+          },
+        },
+      };
+
+      const normalized = validateAndNormalizeRecoveryKit(kit);
+
+      expect(normalized.result.social_recovery_kit).toBeUndefined();
+    });
+
     it('rejects kit missing required fields', () => {
       expect(() => validateAndNormalizeRecoveryKit({})).toThrow('missing plan or result');
     });
