@@ -7,6 +7,9 @@ export const hexToBytes = (hex: string): Uint8Array => {
   if (normalized.length % 2 !== 0) {
     throw new Error('Hex string must have an even length.');
   }
+  if (!/^[0-9a-f]*$/.test(normalized)) {
+    throw new Error('Invalid hex string.');
+  }
 
   const output = new Uint8Array(normalized.length / 2);
   for (let i = 0; i < normalized.length; i += 2) {

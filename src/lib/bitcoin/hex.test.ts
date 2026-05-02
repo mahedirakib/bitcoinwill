@@ -62,7 +62,9 @@ describe('hex', () => {
       expect(() => hexToBytes('gggg')).toThrow('Invalid hex string.');
     });
 
-
+    it('throws error on partially parseable invalid hex pairs', () => {
+      expect(() => hexToBytes('1g')).toThrow('Invalid hex string.');
+    });
 
     it('throws error on empty invalid hex in middle', () => {
       expect(() => hexToBytes('de  ad')).toThrow('Invalid hex string.');

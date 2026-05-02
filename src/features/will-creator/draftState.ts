@@ -120,12 +120,14 @@ export const parseWizardDraft = (
     }
   }
 
+  const input = sanitizePlanInput(parsed.input, fallbackNetwork);
+  const restoresSocialResult = parsed.step === 'RESULT' && input.recovery_method === 'social';
   const restored: RestoredWizardDraft = {
-    step: parsed.step,
-    input: sanitizePlanInput(parsed.input, fallbackNetwork),
+    step: restoresSocialResult ? 'REVIEW' : parsed.step,
+    input,
   };
 
-  if (parsed.result && isValidPlanOutput(parsed.result)) {
+  if (!restoresSocialResult && parsed.result && isValidPlanOutput(parsed.result)) {
     restored.result = stripRecoveryKitSecrets(parsed.result as PlanOutput);
   }
 

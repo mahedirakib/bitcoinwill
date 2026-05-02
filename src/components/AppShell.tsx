@@ -174,6 +174,7 @@ export const AppShell = ({ active, onNavigate, topbar, children }: AppShellProps
       {/* Mobile drawer */}
       {mobileOpen && (
         <div
+          id="mobile-navigation"
           ref={drawerRef}
           className="fixed inset-0 z-50 flex lg:hidden"
           role="dialog"

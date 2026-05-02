@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import * as ecc from 'tiny-secp256k1';
 import type { InstructionModel } from '@/lib/bitcoin/instructions';
 import {
   buildInstructions,
@@ -9,6 +10,7 @@ import { downloadTxt } from '@/lib/utils/download';
 import type { BitcoinNetwork } from '@/lib/bitcoin/types';
 import { useToast } from '@/components/Toast';
 import { supportsPublicExplorerNetwork } from '@/lib/bitcoin/explorer';
+import { bytesToHex, hexToBytes } from '@/lib/bitcoin/hex';
 import { useVaultStatus } from './hooks/useVaultStatus';
 import { useCheckInPlan } from './hooks/useCheckInPlan';
 import { useTransactionBroadcast } from './hooks/useTransactionBroadcast';
@@ -19,6 +21,15 @@ import { CheckInPanel } from './components/CheckInPanel';
 import { BroadcastPanel } from './components/BroadcastPanel';
 import { ShareRecovery } from './components/ShareRecovery';
 import type { RecoveryPageProps } from './types';
+
+const privateKeyMatchesBeneficiary = (privateKeyHex: string, beneficiaryPubkey: string): boolean => {
+  try {
+    const publicKey = ecc.pointFromScalar(hexToBytes(privateKeyHex), true);
+    return publicKey ? bytesToHex(publicKey) === beneficiaryPubkey.toLowerCase() : false;
+  } catch {
+    return false;
+  }
+};
 
 const RecoveryPage = ({ initialData, onBack }: RecoveryPageProps) => {
   const [model, setModel] = useState<InstructionModel | null>(null);
@@ -77,14 +88,25 @@ const RecoveryPage = ({ initialData, onBack }: RecoveryPageProps) => {
   }, [vaultIdentifier, clearVaultStatus, clearBroadcastState]);
 
   const handleLoadModel = (loadedModel: InstructionModel) => {
+    if (
+      reconstructedKey &&
+      !privateKeyMatchesBeneficiary(reconstructedKey, loadedModel.beneficiaryPubkey)
+    ) {
+      setReconstructedKey(null);
+      showToast('Reconstructed key does not match this Recovery Kit beneficiary key.');
+    }
     setModel(loadedModel);
   };
 
   const handleKeyReconstructed = (privateKeyHex: string) => {
+    if (model && !privateKeyMatchesBeneficiary(privateKeyHex, model.beneficiaryPubkey)) {
+      showToast('Reconstructed key does not match this Recovery Kit beneficiary key.');
+      setShowShareRecovery(false);
+      return;
+    }
+
     setReconstructedKey(privateKeyHex);
-    showToast('Private key reconstructed. Proceed to claim.');
-    // Note: We still need the recovery kit to get the vault details
-    // The beneficiary should load the recovery kit OR enter vault details manually
+    showToast(model ? 'Private key verified against the Recovery Kit.' : 'Private key reconstructed. Load the Recovery Kit to verify it.');
     setShowShareRecovery(false);
   };
 

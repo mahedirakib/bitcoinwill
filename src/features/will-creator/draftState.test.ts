@@ -144,6 +144,37 @@ describe('wizard draft restore helpers', () => {
 
     const restored = parseWizardDraft(payload, 'testnet');
 
-    expect(restored?.result?.social_recovery_kit).toBeUndefined();
+    expect(restored?.step).toBe('REVIEW');
+    expect(restored?.result).toBeUndefined();
+  });
+
+  it('does not restore stripped social recovery results as completed plans', () => {
+    const payload = JSON.stringify({
+      step: 'RESULT',
+      input: {
+        network: 'testnet',
+        inheritance_type: 'timelock_recovery',
+        owner_pubkey: '02aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+        beneficiary_pubkey: '03bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+        locktime_blocks: 144,
+        recovery_method: 'social',
+        sss_config: { threshold: 2, total: 3 },
+      },
+      result: {
+        descriptor: 'tr(abc,{def})',
+        script_asm: 'OP_IF OP_CHECKSIG OP_ENDIF',
+        script_hex: '51ac68',
+        address: 'tb1pexamplevaultaddress000000000000000000000000000000000000',
+        witness_script: '51ac68',
+        network: 'testnet',
+        address_type: 'p2tr',
+        human_explanation: ['Vault Address: tb1pexamplevaultaddress000000000000000000000000000000000000'],
+      },
+    });
+
+    const restored = parseWizardDraft(payload, 'testnet');
+
+    expect(restored?.step).toBe('REVIEW');
+    expect(restored?.result).toBeUndefined();
   });
 });

@@ -106,6 +106,9 @@ const AppContent = () => {
 
   const navigateTo = (view: AppView, action: 'push' | 'replace' = 'push') => {
     historyActionRef.current = action
+    if (view !== 'instructions') {
+      setInstructionData(undefined)
+    }
     preloadView(view)
     startTransition(() => {
       setActiveView(view)
@@ -113,7 +116,13 @@ const AppContent = () => {
   }
 
   useEffect(() => {
-    const handlePopstate = () => setActiveView(viewFromPath(window.location.pathname))
+    const handlePopstate = () => {
+      const nextView = viewFromPath(window.location.pathname)
+      if (nextView !== 'instructions') {
+        setInstructionData(undefined)
+      }
+      setActiveView(nextView)
+    }
     window.addEventListener('popstate', handlePopstate)
     return () => window.removeEventListener('popstate', handlePopstate)
   }, [])

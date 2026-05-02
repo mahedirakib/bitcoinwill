@@ -94,6 +94,10 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorW
 
   useEffect(() => {
     if (!hasRestored) return;
+    if (state.step === 'RESULT') {
+      clearDraftState();
+      return;
+    }
 
     const dataToSave = {
       step: state.step,
@@ -360,7 +364,7 @@ For support, contact the Bitcoin Will maintainer.
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
     
     showToast('Shares downloaded');
   };
