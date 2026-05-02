@@ -17,10 +17,13 @@ export const buildTaprootPlan = (input: PlanInput): PlanOutput => {
   validatePlanInput(input);
   
   const network = getNetworkParams(input.network);
-  const ownerPub = hexToBytes(input.owner_pubkey);
-  const beneficiaryPub = hexToBytes(input.beneficiary_pubkey);
-  
-  // Build the tapscript (same logic as P2WSH but for Taproot leaf)
+  // BIP342 tapscript pubkeys must be 32-byte x-only. Strip the parity prefix
+  // from the compressed (33-byte) form. A 33-byte push would be treated as an
+  // "unknown public key type" by OP_CHECKSIG, which returns success without
+  // verifying the signature — making the vault spendable by anyone.
+  const ownerPub = hexToBytes(input.owner_pubkey).slice(1);
+  const beneficiaryPub = hexToBytes(input.beneficiary_pubkey).slice(1);
+
   const tapscript = script.compile([
     script.OPS.OP_IF,
       ownerPub,
