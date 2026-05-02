@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
+import { script } from 'bitcoinjs-lib';
 import { buildTaprootPlan } from './taproot';
 import { PlanInput } from './types';
+import { hexToBytes } from './hex';
 
 const TEST_OWNER_KEY = '02e9634f19b165239105436a5c17e3371901c5651581452a329978747474747474';
 const TEST_BENEFICIARY_KEY = '03e9634f19b165239105436a5c17e3371901c5651581452a329978747474747474';
@@ -119,6 +121,37 @@ describe('Taproot (P2TR) Plan Generation', () => {
     expect(plan.human_explanation[0]).toContain('Vault Address:');
     expect(plan.human_explanation[1]).toContain('Owner');
     expect(plan.human_explanation[2]).toContain('Beneficiary');
+  });
+
+  it('should push 32-byte x-only pubkeys into the tapscript leaf (BIP342)', () => {
+    // Tapscript leaves must use x-only (32-byte) pubkeys per BIP342.
+    // 33-byte compressed keys are treated as "unknown public key type" and
+    // OP_CHECKSIG would succeed without verifying the signature, allowing
+    // anyone to drain the vault.
+    const input: PlanInput = {
+      network: 'testnet',
+      inheritance_type: 'timelock_recovery',
+      owner_pubkey: TEST_OWNER_KEY,
+      beneficiary_pubkey: TEST_BENEFICIARY_KEY,
+      locktime_blocks: 144,
+    };
+
+    const plan = buildTaprootPlan(input);
+    const decoded = script.decompile(hexToBytes(plan.script_hex));
+    expect(decoded).not.toBeNull();
+
+    const pubkeyPushes = (decoded ?? []).filter(
+      (op): op is Uint8Array => op instanceof Uint8Array && op.length >= 32,
+    );
+    expect(pubkeyPushes.length).toBe(2);
+    pubkeyPushes.forEach((pk) => {
+      expect(pk.length).toBe(32);
+    });
+
+    const ownerXOnly = TEST_OWNER_KEY.slice(2);
+    const beneficiaryXOnly = TEST_BENEFICIARY_KEY.slice(2);
+    expect(plan.script_hex).toContain(ownerXOnly);
+    expect(plan.script_hex).toContain(beneficiaryXOnly);
   });
 
   it('should produce different addresses than P2WSH', async () => {

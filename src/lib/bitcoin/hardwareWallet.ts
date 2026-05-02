@@ -1,4 +1,5 @@
 import { Buffer } from 'buffer';
+import * as ecc from 'tiny-secp256k1';
 import type { BitcoinNetwork } from './types';
 import { bytesToHex } from './hex';
 
@@ -108,6 +109,21 @@ const encodeBip32Path = (path: string): Buffer => {
   return encodedPath;
 };
 
+// Ledger's GET_WALLET_PUBLIC_KEY APDU returns the SEC1 uncompressed (65-byte)
+// form. Compress it so downstream validation (which requires 33-byte 02/03
+// compressed keys) accepts it.
+export const parseLedgerPublicKeyResponse = (response: Uint8Array): string => {
+  const publicKeyLength = response[0];
+  const pubkeyEnd = 1 + publicKeyLength;
+  let pubkeyBytes: Uint8Array = response.slice(1, pubkeyEnd);
+
+  if (pubkeyBytes.length === 65 && pubkeyBytes[0] === 0x04) {
+    pubkeyBytes = ecc.pointCompress(pubkeyBytes, true);
+  }
+
+  return bytesToHex(pubkeyBytes);
+};
+
 const getLedgerWalletPublicKey = async (
   transport: LedgerTransportLike,
   path: string,
@@ -120,11 +136,8 @@ const getLedgerWalletPublicKey = async (
     encodeBip32Path(path),
   );
 
-  const publicKeyLength = response[0];
-  const addressLengthOffset = 1 + publicKeyLength;
-
   return {
-    publicKey: bytesToHex(response.slice(1, addressLengthOffset)),
+    publicKey: parseLedgerPublicKeyResponse(response),
     path: `m/${path}`,
   };
 };
