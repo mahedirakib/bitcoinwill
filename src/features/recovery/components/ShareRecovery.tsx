@@ -1,7 +1,12 @@
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { AlertTriangle, ChevronRight, Key, Lock, Trash2, Unlock, Users } from 'lucide-react';
 import { collectUniqueValidShares, combineShares } from '@/lib/bitcoin/sss';
 import { useToast } from '@/components/Toast';
+
+interface ShareInput {
+  id: number;
+  value: string;
+}
 
 interface ShareRecoveryProps {
   onKeyReconstructed: (privateKeyHex: string) => void;
@@ -10,32 +15,38 @@ interface ShareRecoveryProps {
 
 export const ShareRecovery = ({ onKeyReconstructed, onCancel }: ShareRecoveryProps) => {
   const { showToast } = useToast();
-  const [shares, setShares] = useState<string[]>(['', '']);
+  const idCounterRef = useRef(0);
+  const [shareInputs, setShareInputs] = useState<ShareInput[]>(() => [
+    { id: idCounterRef.current++, value: '' },
+    { id: idCounterRef.current++, value: '' },
+  ]);
   const [threshold, setThreshold] = useState<2 | 3>(2);
   const [isCombining, setIsCombining] = useState(false);
   const [reconstructedKey, setReconstructedKey] = useState<string | null>(null);
   const [showKey, setShowKey] = useState(false);
 
-  const updateShare = (index: number, value: string) => {
+  const shares = shareInputs.map((input) => input.value);
+
+  const updateShare = useCallback((id: number, value: string) => {
     const trimmed = value.trim();
-    setShares((prev) => {
-      const next = [...prev];
-      next[index] = trimmed;
-      return next;
+    setShareInputs((prev) =>
+      prev.map((input) => (input.id === id ? { ...input, value: trimmed } : input))
+    );
+  }, []);
+
+  const addShareInput = useCallback(() => {
+    setShareInputs((prev) => {
+      if (prev.length >= 5) return prev;
+      return [...prev, { id: idCounterRef.current++, value: '' }];
     });
-  };
+  }, []);
 
-  const addShareInput = () => {
-    if (shares.length < 5) {
-      setShares((prev) => [...prev, '']);
-    }
-  };
-
-  const removeShareInput = (index: number) => {
-    if (shares.length > 2) {
-      setShares((prev) => prev.filter((_, i) => i !== index));
-    }
-  };
+  const removeShareInput = useCallback((id: number) => {
+    setShareInputs((prev) => {
+      if (prev.length <= 2) return prev;
+      return prev.filter((input) => input.id !== id);
+    });
+  }, []);
 
   const recoverableShares = collectUniqueValidShares(shares);
   const canCombine = recoverableShares.length >= threshold;
@@ -157,8 +168,8 @@ export const ShareRecovery = ({ onKeyReconstructed, onCancel }: ShareRecoveryPro
       </div>
 
       <div className="space-y-2">
-        {shares.map((share, index) => (
-          <div key={index} className="flex gap-2">
+        {shareInputs.map((input, index) => (
+          <div key={input.id} className="flex gap-2">
             <div className="relative flex-1">
               <div className="pointer-events-none absolute left-3 top-1/2 flex -translate-y-1/2 items-center gap-1.5">
                 <Key className="h-3.5 w-3.5 text-muted-foreground" />
@@ -166,16 +177,16 @@ export const ShareRecovery = ({ onKeyReconstructed, onCancel }: ShareRecoveryPro
               </div>
               <input
                 type="text"
-                value={share}
-                onChange={(e) => updateShare(index, e.target.value)}
+                value={input.value}
+                onChange={(e) => updateShare(input.id, e.target.value)}
                 placeholder="Paste share hex…"
                 className="field-input pl-[5.5rem]"
               />
             </div>
-            {shares.length > 2 && (
+            {shareInputs.length > 2 && (
               <button
                 type="button"
-                onClick={() => removeShareInput(index)}
+                onClick={() => removeShareInput(input.id)}
                 aria-label={`Remove share ${index + 1}`}
                 className="rounded-md border border-border bg-white px-2.5 text-muted-foreground transition-colors hover:border-danger/30 hover:text-danger"
               >
@@ -186,7 +197,7 @@ export const ShareRecovery = ({ onKeyReconstructed, onCancel }: ShareRecoveryPro
         ))}
       </div>
 
-      {shares.length < 5 && (
+      {shareInputs.length < 5 && (
         <button
           type="button"
           onClick={addShareInput}

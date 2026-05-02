@@ -118,6 +118,8 @@ const AppContent = () => {
     return () => window.removeEventListener('popstate', handlePopstate)
   }, [])
 
+  const meta = TITLES[activeView as NavView] ?? TITLES.home
+
   useEffect(() => {
     const currentPath = normalizeAppPath(window.location.pathname)
     const nextPath = pathFromView(activeView)
@@ -133,11 +135,13 @@ const AppContent = () => {
       }
     }
     historyActionRef.current = 'push'
-  }, [activeView])
+
+    // Update document title
+    const title = meta.title
+    document.title = title === 'Home' ? 'Bitcoin Will' : `${title} · Bitcoin Will`
+  }, [activeView, meta.title])
 
   if (activeView === 'dev' && DEV_VIEW_ENABLED) return <DevPlayground />
-
-  const meta = TITLES[activeView as NavView] ?? TITLES.home
 
   return (
     <AppShell

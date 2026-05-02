@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState, useEffect, useRef, type ReactNode } from 'react';
 import {
   Home as HomeIcon,
   Plus,
@@ -49,6 +49,8 @@ const REFERENCE: { id: NavView; label: string; icon: typeof HomeIcon }[] = [
 export const AppShell = ({ active, onNavigate, topbar, children }: AppShellProps) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { network } = useSettings();
+  const drawerRef = useRef<HTMLDivElement>(null);
+  const lastFocusedRef = useRef<HTMLElement | null>(null);
 
   const navItem = (item: { id: NavView; label: string; icon: typeof HomeIcon }) => {
     const Icon = item.icon;
@@ -73,6 +75,55 @@ export const AppShell = ({ active, onNavigate, topbar, children }: AppShellProps
       </button>
     );
   };
+
+  useEffect(() => {
+    if (!mobileOpen) return;
+
+    lastFocusedRef.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+
+    const previousBodyOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const focusTimer = window.setTimeout(() => {
+      const firstFocusable = drawerRef.current?.querySelector<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      );
+      firstFocusable?.focus();
+    }, 0);
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setMobileOpen(false);
+        return;
+      }
+
+      if (event.key !== 'Tab' || !drawerRef.current) return;
+      const focusable = drawerRef.current.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      );
+
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.clearTimeout(focusTimer);
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = previousBodyOverflow;
+      lastFocusedRef.current?.focus();
+    };
+  }, [mobileOpen]);
 
   const sidebarContent = (
     <>
@@ -122,7 +173,13 @@ export const AppShell = ({ active, onNavigate, topbar, children }: AppShellProps
 
       {/* Mobile drawer */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-50 flex lg:hidden" role="dialog" aria-modal="true">
+        <div
+          ref={drawerRef}
+          className="fixed inset-0 z-50 flex lg:hidden"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Navigation menu"
+        >
           <div
             className="absolute inset-0 bg-foreground/30"
             onClick={() => setMobileOpen(false)}
@@ -150,6 +207,8 @@ export const AppShell = ({ active, onNavigate, topbar, children }: AppShellProps
               type="button"
               onClick={() => setMobileOpen(true)}
               aria-label="Open menu"
+              aria-expanded={mobileOpen}
+              aria-controls="mobile-navigation"
               className="rounded-md p-1.5 text-foreground/70 hover:bg-muted hover:text-foreground lg:hidden"
             >
               <Menu className="h-5 w-5" />

@@ -147,10 +147,10 @@ const Whitepaper = ({ onBack: _onBack }: { onBack: () => void }) => {
       </header>
 
       <article className="panel space-y-5 px-6 py-6 text-sm leading-relaxed md:px-8 md:py-7">
-        {blocks.map((block) => {
+        {blocks.map((block, blockIndex) => {
           if (block.type === 'h1') {
             return (
-              <h2 key={`h1-${block.text}`} className="text-lg font-semibold tracking-tight">
+              <h2 key={`h1-${blockIndex}`} className="text-lg font-semibold tracking-tight">
                 {block.text}
               </h2>
             );
@@ -158,7 +158,7 @@ const Whitepaper = ({ onBack: _onBack }: { onBack: () => void }) => {
 
           if (block.type === 'h2') {
             return (
-              <h3 key={`h2-${block.text}`} className="text-base font-semibold tracking-tight pt-1">
+              <h3 key={`h2-${blockIndex}`} className="text-base font-semibold tracking-tight pt-1">
                 {block.text}
               </h3>
             );
@@ -166,7 +166,7 @@ const Whitepaper = ({ onBack: _onBack }: { onBack: () => void }) => {
 
           if (block.type === 'paragraph') {
             return (
-              <p key={`p-${block.text.slice(0, 50)}`} className="text-foreground/80">
+              <p key={`p-${blockIndex}`} className="text-foreground/80">
                 {renderInlineMarkdown(block.text)}
               </p>
             );
@@ -175,11 +175,11 @@ const Whitepaper = ({ onBack: _onBack }: { onBack: () => void }) => {
           if (block.type === 'ul') {
             return (
               <ul
-                key={`ul-${block.items[0]?.slice(0, 30) ?? 'empty'}`}
+                key={`ul-${blockIndex}`}
                 className="space-y-1.5 list-disc pl-5 text-foreground/80"
               >
-                {block.items.map((item) => (
-                  <li key={`ul-item-${item.slice(0, 50)}`}>{renderInlineMarkdown(item)}</li>
+                {block.items.map((item, itemIndex) => (
+                  <li key={`ul-item-${blockIndex}-${itemIndex}`}>{renderInlineMarkdown(item)}</li>
                 ))}
               </ul>
             );
@@ -187,11 +187,11 @@ const Whitepaper = ({ onBack: _onBack }: { onBack: () => void }) => {
 
           return (
             <ol
-              key={`ol-${block.items[0]?.slice(0, 30) ?? 'empty'}`}
+              key={`ol-${blockIndex}`}
               className="space-y-1.5 list-decimal pl-5 text-foreground/80"
             >
-              {block.items.map((item) => (
-                <li key={`ol-item-${item.slice(0, 50)}`}>{renderInlineMarkdown(item)}</li>
+              {block.items.map((item, itemIndex) => (
+                <li key={`ol-item-${blockIndex}-${itemIndex}`}>{renderInlineMarkdown(item)}</li>
               ))}
             </ol>
           );
