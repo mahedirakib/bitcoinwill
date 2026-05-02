@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { AlertTriangle, Check, Copy, Shield } from 'lucide-react';
 import { useToast } from '@/components/Toast';
 
@@ -12,6 +12,15 @@ export const SSSPrivateKeyModal = ({ privateKey, onConfirm, onCancel }: SSSPriva
   const { showToast } = useToast();
   const [hasCopied, setHasCopied] = useState(false);
   const [hasConfirmed, setHasConfirmed] = useState(false);
+  const timerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current !== null) {
+        window.clearTimeout(timerRef.current);
+      }
+    };
+  }, []);
 
   const handleCopy = async () => {
     try {
@@ -22,7 +31,13 @@ export const SSSPrivateKeyModal = ({ privateKey, onConfirm, onCancel }: SSSPriva
       await navigator.clipboard.writeText(privateKey);
       setHasCopied(true);
       showToast('Private key copied to clipboard');
-      setTimeout(() => setHasCopied(false), 2000);
+      if (timerRef.current !== null) {
+        window.clearTimeout(timerRef.current);
+      }
+      timerRef.current = window.setTimeout(() => {
+        setHasCopied(false);
+        timerRef.current = null;
+      }, 2000);
     } catch {
       showToast('Failed to copy to clipboard');
     }

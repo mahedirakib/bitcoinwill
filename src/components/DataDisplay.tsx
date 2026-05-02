@@ -1,5 +1,5 @@
 import { Copy, Check } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 interface StatusCardProps {
   label: string;
@@ -26,13 +26,28 @@ interface DataRowProps {
 
 export const DataRow = ({ label, value, copyable, mono }: DataRowProps) => {
   const [copied, setCopied] = useState(false);
+  const timerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current !== null) {
+        window.clearTimeout(timerRef.current);
+      }
+    };
+  }, []);
 
   const handleCopy = () => {
     navigator.clipboard
       .writeText(value)
       .then(() => {
         setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
+        if (timerRef.current !== null) {
+          window.clearTimeout(timerRef.current);
+        }
+        timerRef.current = window.setTimeout(() => {
+          setCopied(false);
+          timerRef.current = null;
+        }, 2000);
       })
       .catch(() => setCopied(false));
   };
