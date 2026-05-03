@@ -109,7 +109,7 @@ export const BroadcastPanel = ({
           <a
             href={broadcastResult.explorerTxUrl}
             target="_blank"
-            rel="noreferrer"
+            rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 text-xs font-medium text-foreground underline underline-offset-2 hover:text-foreground/70"
           >
             Open transaction in explorer <ExternalLink className="h-3 w-3" />
