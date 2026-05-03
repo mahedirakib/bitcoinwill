@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useRef, useState } from 'react';
 import { BitcoinNetwork, isBitcoinNetwork } from '@/lib/bitcoin/types';
 
 interface SettingsContextType {
@@ -24,9 +24,10 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   });
 
   const [isMainnetUnlocked, setIsMainnetUnlocked] = useState(false);
+  const isMainnetUnlockedRef = useRef(false);
 
   const setNetwork = (n: BitcoinNetwork) => {
-    if (n === 'mainnet' && !isMainnetUnlocked) return;
+    if (n === 'mainnet' && !isMainnetUnlockedRef.current) return;
     setNetworkState(n);
     if (n !== 'mainnet') {
       try {
@@ -37,7 +38,10 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
-  const unlockMainnet = () => setIsMainnetUnlocked(true);
+  const unlockMainnet = () => {
+    isMainnetUnlockedRef.current = true;
+    setIsMainnetUnlocked(true);
+  };
 
   return (
     <SettingsContext.Provider value={{ network, setNetwork, isMainnetUnlocked, unlockMainnet }}>

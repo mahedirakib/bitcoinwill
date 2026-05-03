@@ -1,5 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 
+const MAINNET_CONFIRMATION_PHRASE = 'I UNDERSTAND MAINNET IS REAL MONEY';
+
 const startWizard = async (page: Page) => {
   await page.goto('/create');
   await expect(page.getByText('Choose your inheritance strategy')).toBeVisible();
@@ -51,6 +53,17 @@ test.describe('Homepage', () => {
     await expect(page.getByText('Not a wallet')).toBeVisible();
     await expect(page.getByText('Not a legal will')).toBeVisible();
     await expect(page.getByText('Not a custodian')).toBeVisible();
+  });
+
+  test('should switch to mainnet after confirmation phrase', async ({ page }) => {
+    await page.getByLabel('Select Bitcoin network').selectOption('mainnet');
+    await expect(page.getByRole('dialog', { name: 'Switch to mainnet?' })).toBeVisible();
+
+    await page.getByLabel('Type the confirmation phrase').fill(MAINNET_CONFIRMATION_PHRASE);
+    await page.getByRole('button', { name: 'Switch to mainnet' }).click();
+
+    await expect(page.getByLabel('Select Bitcoin network')).toHaveValue('mainnet');
+    await expect(page.getByText('Live')).toBeVisible();
   });
 });
 
