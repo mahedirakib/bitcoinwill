@@ -104,7 +104,10 @@ export const TypeStep = ({ input, errors, dispatch, onCancel, onNext }: TypeStep
           onChange={() =>
             dispatch({
               type: 'UPDATE_INPUT',
-              payload: { recovery_method: input.recovery_method === 'social' ? 'single' : 'social' },
+              payload:
+                input.recovery_method === 'social'
+                  ? { recovery_method: 'single', sss_config: undefined }
+                  : { recovery_method: 'social' },
             })
           }
           ariaLabel="Toggle social recovery"

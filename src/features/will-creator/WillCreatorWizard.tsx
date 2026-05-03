@@ -10,6 +10,7 @@ import { normalizePubkeyHex, usesDisallowedSampleKey } from './safety';
 import { parseWizardDraft } from './draftState';
 import { splitPrivateKey } from '@/lib/bitcoin/sss';
 import { bytesToHex, hexToBytes } from '@/lib/bitcoin/hex';
+import { generateSecp256k1PrivateKey } from '@/lib/bitcoin/keygen';
 import { connectHardwareWallet, type HardwareWalletType } from '@/lib/bitcoin/hardwareWallet';
 import { createRecoveryKitExport, stripRecoveryKitSecrets } from './recoveryKit';
 import { TypeStep } from './steps/TypeStep';
@@ -175,8 +176,7 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorW
           throw new Error('SSS configuration not set');
         }
 
-        const randomBytes = crypto.getRandomValues(new Uint8Array(32));
-        const privateKey = randomBytes;
+        const privateKey = generateSecp256k1PrivateKey();
         const publicKey = ecc.pointFromScalar(privateKey, true);
         
         if (!publicKey) {

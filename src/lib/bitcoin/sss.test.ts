@@ -54,6 +54,15 @@ describe('Shamir Secret Sharing', () => {
         splitPrivateKey('abcd1234', { threshold: 2, total: 3 })
       ).rejects.toThrow('Invalid private key');
     });
+
+    it('should reject unsupported runtime SSS configurations', async () => {
+      await expect(
+        splitPrivateKey(
+          TEST_PRIVATE_KEY,
+          { threshold: 2, total: 5 } as unknown as Parameters<typeof splitPrivateKey>[1],
+        ),
+      ).rejects.toThrow('Invalid SSS configuration');
+    });
   });
 
   describe('combineShares', () => {

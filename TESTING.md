@@ -82,7 +82,7 @@ describe('buildPlan', () => {
 - Instructions: 90%+ coverage
 - UI components: 70%+ coverage
 
-Current automated suite: **127 tests** across critical Bitcoin and recovery modules.
+Current automated suite: **215 unit tests** across critical Bitcoin and recovery modules, plus **36 Playwright e2e tests** for the main user flows.
 
 ## Manual Testing
 

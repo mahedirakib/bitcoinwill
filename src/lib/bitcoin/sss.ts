@@ -45,6 +45,10 @@ export interface SocialRecoveryKit {
 const normalizeShareHex = (shareHex: string): string =>
   shareHex.trim().toLowerCase();
 
+const isSupportedSSSConfig = (config: SSSConfig): boolean =>
+  (config.threshold === 2 && config.total === 3) ||
+  (config.threshold === 3 && config.total === 5);
+
 /**
  * Get available SSS configurations for UI display.
  */
@@ -73,6 +77,10 @@ export const splitPrivateKey = async (
   privateKeyHex: string,
   config: SSSConfig
 ): Promise<SocialRecoveryKit> => {
+  if (!isSupportedSSSConfig(config)) {
+    throw new Error('Invalid SSS configuration: supported values are 2-of-3 and 3-of-5');
+  }
+
   // Validate private key
   if (!/^[0-9a-fA-F]{64}$/.test(privateKeyHex)) {
     throw new Error('Invalid private key: must be 64 hex characters (32 bytes)');

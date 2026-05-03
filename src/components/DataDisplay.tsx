@@ -36,20 +36,25 @@ export const DataRow = ({ label, value, copyable, mono }: DataRowProps) => {
     };
   }, []);
 
-  const handleCopy = () => {
-    navigator.clipboard
-      .writeText(value)
-      .then(() => {
-        setCopied(true);
-        if (timerRef.current !== null) {
-          window.clearTimeout(timerRef.current);
-        }
-        timerRef.current = window.setTimeout(() => {
-          setCopied(false);
-          timerRef.current = null;
-        }, 2000);
-      })
-      .catch(() => setCopied(false));
+  const handleCopy = async () => {
+    try {
+      if (!navigator.clipboard?.writeText) {
+        setCopied(false);
+        return;
+      }
+
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      if (timerRef.current !== null) {
+        window.clearTimeout(timerRef.current);
+      }
+      timerRef.current = window.setTimeout(() => {
+        setCopied(false);
+        timerRef.current = null;
+      }, 2000);
+    } catch {
+      setCopied(false);
+    }
   };
 
   return (

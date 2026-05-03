@@ -11,7 +11,7 @@
 <p align="center">
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-proprietary-lightgrey.svg" alt="License"></a>
   <img src="https://img.shields.io/badge/status-stable-success" alt="Status">
-  <img src="https://img.shields.io/badge/tests-204%20passing-brightgreen" alt="Tests">
+  <img src="https://img.shields.io/badge/tests-215%20unit%20passing-brightgreen" alt="Tests">
   <img src="https://img.shields.io/badge/typescript-5.6-blue" alt="TypeScript">
   <img src="https://img.shields.io/badge/react-18-61DAFB?logo=react" alt="React">
 </p>
