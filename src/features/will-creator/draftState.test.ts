@@ -1,7 +1,18 @@
 import { describe, expect, it } from 'vitest';
+import { buildPlan } from '@/lib/bitcoin/planEngine';
 import { parseWizardDraft } from './draftState';
 
 describe('wizard draft restore helpers', () => {
+  const canonicalInput = {
+    network: 'testnet' as const,
+    inheritance_type: 'timelock_recovery' as const,
+    owner_pubkey: '02e9634f19b165239105436a5c17e3371901c5651581452a329978747474747474',
+    beneficiary_pubkey: '03e9634f19b165239105436a5c17e3371901c5651581452a329978747474747474',
+    locktime_blocks: 144,
+    address_type: 'p2tr' as const,
+    recovery_method: 'single' as const,
+  };
+
   it('returns null for malformed JSON payloads', () => {
     expect(parseWizardDraft('{this-is-not-json', 'testnet')).toBeNull();
   });
@@ -169,6 +180,49 @@ describe('wizard draft restore helpers', () => {
         network: 'testnet',
         address_type: 'p2tr',
         human_explanation: ['Vault Address: tb1pexamplevaultaddress000000000000000000000000000000000000'],
+      },
+    });
+
+    const restored = parseWizardDraft(payload, 'testnet');
+
+    expect(restored?.step).toBe('REVIEW');
+    expect(restored?.result).toBeUndefined();
+  });
+
+  it('restores canonical completed single-key draft results', () => {
+    const result = buildPlan(canonicalInput);
+    const payload = JSON.stringify({
+      step: 'RESULT',
+      input: canonicalInput,
+      result,
+    });
+
+    const restored = parseWizardDraft(payload, 'testnet');
+
+    expect(restored?.step).toBe('RESULT');
+    expect(restored?.result?.address).toBe(result.address);
+  });
+
+  it('falls back to review when a completed draft result is missing', () => {
+    const payload = JSON.stringify({
+      step: 'RESULT',
+      input: canonicalInput,
+    });
+
+    const restored = parseWizardDraft(payload, 'testnet');
+
+    expect(restored?.step).toBe('REVIEW');
+    expect(restored?.result).toBeUndefined();
+  });
+
+  it('falls back to review when a completed draft result is tampered', () => {
+    const result = buildPlan(canonicalInput);
+    const payload = JSON.stringify({
+      step: 'RESULT',
+      input: canonicalInput,
+      result: {
+        ...result,
+        address: 'tb1qnottherealvaultaddressxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
       },
     });
 

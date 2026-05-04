@@ -14,6 +14,7 @@
  */
 
 import { split, combine } from 'shamir-secret-sharing';
+import * as ecc from 'tiny-secp256k1';
 import { bytesToHex, hexToBytes } from './hex';
 
 export type SSSThreshold = 2 | 3;
@@ -49,6 +50,9 @@ const isSupportedSSSConfig = (config: SSSConfig): boolean =>
   (config.threshold === 2 && config.total === 3) ||
   (config.threshold === 3 && config.total === 5);
 
+const isValidPrivateKeyBytes = (keyBytes: Uint8Array): boolean =>
+  keyBytes.length === 32 && ecc.isPrivate(keyBytes);
+
 /**
  * Get available SSS configurations for UI display.
  */
@@ -81,12 +85,14 @@ export const splitPrivateKey = async (
     throw new Error('Invalid SSS configuration: supported values are 2-of-3 and 3-of-5');
   }
 
-  // Validate private key
   if (!/^[0-9a-fA-F]{64}$/.test(privateKeyHex)) {
     throw new Error('Invalid private key: must be 64 hex characters (32 bytes)');
   }
 
   const secret = hexToBytes(privateKeyHex);
+  if (!isValidPrivateKeyBytes(secret)) {
+    throw new Error('Invalid private key: must be a valid secp256k1 scalar');
+  }
   
   // Generate shares (library expects: secret, total_shares, threshold)
   const shares = await split(secret, config.total, config.threshold);
@@ -118,6 +124,9 @@ export const combineShares = async (shares: string[]): Promise<string> => {
 
   const shareBuffers = shares.map((share) => hexToBytes(normalizeShareHex(share)));
   const secret = await combine(shareBuffers);
+  if (!isValidPrivateKeyBytes(secret)) {
+    throw new Error('Shares did not reconstruct a valid private key');
+  }
   
   return bytesToHex(secret);
 };
@@ -150,9 +159,11 @@ const generateInstructions = (config: SSSConfig): string[] => {
  * Validate a share format.
  */
 export const validateShare = (shareHex: string): boolean => {
+  const normalized = normalizeShareHex(shareHex);
+
   // Shares are typically longer than the secret (contain metadata)
   // Minimum: 64 hex chars, but typically 70-80+ chars
-  return /^[0-9a-f]{64,}$/.test(normalizeShareHex(shareHex));
+  return normalized.length >= 64 && normalized.length % 2 === 0 && /^[0-9a-f]+$/.test(normalized);
 };
 
 /**

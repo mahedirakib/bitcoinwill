@@ -6,6 +6,7 @@ import {
   type PlanInput,
   type PlanOutput,
 } from '@/lib/bitcoin/types';
+import { buildPlan } from '@/lib/bitcoin/planEngine';
 import { normalizePubkeyHex } from './safety';
 import { stripRecoveryKitSecrets } from './recoveryKit';
 
@@ -82,6 +83,22 @@ const isValidPlanOutput = (value: unknown): value is PlanOutput => {
   return true;
 };
 
+const resultMatchesPlan = (input: PlanInput, result: PlanOutput): boolean => {
+  try {
+    const canonical = buildPlan(input);
+    return (
+      result.address === canonical.address &&
+      result.script_hex === canonical.script_hex &&
+      result.witness_script === canonical.witness_script &&
+      result.descriptor === canonical.descriptor &&
+      result.network === canonical.network &&
+      result.address_type === canonical.address_type
+    );
+  } catch {
+    return false;
+  }
+};
+
 const parseTimestamp = (value: unknown): Date | null => {
   if (typeof value !== 'string') return null;
   const date = new Date(value);
@@ -122,13 +139,21 @@ export const parseWizardDraft = (
 
   const input = sanitizePlanInput(parsed.input, fallbackNetwork);
   const restoresSocialResult = parsed.step === 'RESULT' && input.recovery_method === 'social';
+  const restoredResult =
+    !restoresSocialResult &&
+    parsed.result &&
+    isValidPlanOutput(parsed.result) &&
+    resultMatchesPlan(input, parsed.result)
+      ? stripRecoveryKitSecrets(parsed.result)
+      : undefined;
+
   const restored: RestoredWizardDraft = {
-    step: restoresSocialResult ? 'REVIEW' : parsed.step,
+    step: parsed.step === 'RESULT' && !restoredResult ? 'REVIEW' : parsed.step,
     input,
   };
 
-  if (!restoresSocialResult && parsed.result && isValidPlanOutput(parsed.result)) {
-    restored.result = stripRecoveryKitSecrets(parsed.result as PlanOutput);
+  if (restoredResult) {
+    restored.result = restoredResult;
   }
 
   return restored;

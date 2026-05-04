@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import * as ecc from 'tiny-secp256k1';
-import { parseLedgerPublicKeyResponse } from './hardwareWallet';
+import { formatPublicKey, parseLedgerPublicKeyResponse } from './hardwareWallet';
 import { validatePubkey } from './validation';
 import { hexToBytes } from './hex';
 
@@ -35,5 +35,32 @@ describe('parseLedgerPublicKeyResponse', () => {
 
     expect(result).toBe(COMPRESSED_PUBKEY);
     expect(validatePubkey(result)).toBe(true);
+  });
+
+  it('rejects an empty Ledger response', () => {
+    expect(() => parseLedgerPublicKeyResponse(new Uint8Array())).toThrow('missing public key length');
+  });
+
+  it('rejects a truncated Ledger response', () => {
+    const response = new Uint8Array([33, 0x02]);
+    expect(() => parseLedgerPublicKeyResponse(response)).toThrow('truncated public key');
+  });
+
+  it('rejects invalid public key bytes', () => {
+    const response = new Uint8Array(34);
+    response[0] = 33;
+    response[1] = 0x02;
+
+    expect(() => parseLedgerPublicKeyResponse(response)).toThrow('Invalid public key format');
+  });
+});
+
+describe('formatPublicKey', () => {
+  it('normalizes valid hardware wallet public keys', () => {
+    expect(formatPublicKey(` ${COMPRESSED_PUBKEY.toUpperCase()} `)).toBe(COMPRESSED_PUBKEY);
+  });
+
+  it('rejects malformed hardware wallet public keys', () => {
+    expect(() => formatPublicKey('02'.padEnd(66, '0'))).toThrow('Invalid public key format');
   });
 });

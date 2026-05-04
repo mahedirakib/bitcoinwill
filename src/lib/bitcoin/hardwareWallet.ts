@@ -2,6 +2,7 @@ import { Buffer } from 'buffer';
 import * as ecc from 'tiny-secp256k1';
 import type { BitcoinNetwork } from './types';
 import { bytesToHex } from './hex';
+import { validatePubkey } from './validation';
 
 export type HardwareWalletType = 'trezor' | 'ledger' | 'coldcard';
 
@@ -113,15 +114,23 @@ const encodeBip32Path = (path: string): Buffer => {
 // form. Compress it so downstream validation (which requires 33-byte 02/03
 // compressed keys) accepts it.
 export const parseLedgerPublicKeyResponse = (response: Uint8Array): string => {
+  if (response.length === 0) {
+    throw new Error('Invalid Ledger response: missing public key length');
+  }
+
   const publicKeyLength = response[0];
   const pubkeyEnd = 1 + publicKeyLength;
+  if (response.length < pubkeyEnd) {
+    throw new Error('Invalid Ledger response: truncated public key');
+  }
+
   let pubkeyBytes: Uint8Array = response.slice(1, pubkeyEnd);
 
   if (pubkeyBytes.length === 65 && pubkeyBytes[0] === 0x04) {
     pubkeyBytes = ecc.pointCompress(pubkeyBytes, true);
   }
 
-  return bytesToHex(pubkeyBytes);
+  return formatPublicKey(bytesToHex(pubkeyBytes));
 };
 
 const getLedgerWalletPublicKey = async (
@@ -177,7 +186,7 @@ export const connectTrezor = async (
   }
 
   return {
-    publicKey: result.payload.publicKey,
+    publicKey: formatPublicKey(result.payload.publicKey),
     path: result.payload.serializedPath,
     fingerprint: result.payload.fingerprint?.toString(16),
   };
@@ -236,9 +245,9 @@ export const connectHardwareWallet = async (
  * Format public key for display
  */
 export const formatPublicKey = (pubkey: string): string => {
-  // Ensure it starts with 02 or 03 and is 66 chars
-  if (pubkey.length !== 66 || !/^(02|03)/.test(pubkey)) {
+  const normalized = pubkey.trim().toLowerCase();
+  if (!validatePubkey(normalized)) {
     throw new Error('Invalid public key format from hardware wallet');
   }
-  return pubkey;
+  return normalized;
 };

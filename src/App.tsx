@@ -230,7 +230,7 @@ const AppContent = () => {
   )
 }
 
-const App = () => (
+export const App = () => (
   <ErrorBoundary>
     <ToastProvider>
       <SettingsProvider>
@@ -240,5 +240,3 @@ const App = () => (
     </ToastProvider>
   </ErrorBoundary>
 )
-
-export default App

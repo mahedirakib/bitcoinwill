@@ -55,6 +55,12 @@ describe('Shamir Secret Sharing', () => {
       ).rejects.toThrow('Invalid private key');
     });
 
+    it('should reject invalid secp256k1 private key scalars', async () => {
+      await expect(
+        splitPrivateKey('0'.repeat(64), { threshold: 2, total: 3 })
+      ).rejects.toThrow('valid secp256k1 scalar');
+    });
+
     it('should reject unsupported runtime SSS configurations', async () => {
       await expect(
         splitPrivateKey(
@@ -134,6 +140,10 @@ describe('Shamir Secret Sharing', () => {
 
     it('should reject non-hex shares', () => {
       expect(validateShare('ghijklmnop')).toBe(false);
+    });
+
+    it('should reject odd-length hex shares', () => {
+      expect(validateShare(`${'a'.repeat(64)}f`)).toBe(false);
     });
   });
 
