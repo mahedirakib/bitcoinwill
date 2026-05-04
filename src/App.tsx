@@ -8,7 +8,6 @@ import { KeyboardShortcutsHelp } from './components/KeyboardShortcutsHelp'
 import { PageLoading } from './components/Loading'
 import { AppShell, type NavView } from './components/AppShell'
 import { Home } from './pages/Home'
-import type { PlanInput, PlanOutput } from './lib/bitcoin/types'
 
 type AppView = NavView | 'dev'
 const DEV_VIEW_ENABLED = import.meta.env.DEV
@@ -165,7 +164,7 @@ const AppContent = () => {
           <WillCreatorWizard
             onCancel={() => navigateTo('home', 'replace')}
             onViewInstructions={(data) => {
-              setInstructionData(data as { plan: PlanInput; result: PlanOutput; created_at?: string })
+              setInstructionData(data)
               navigateTo('instructions')
             }}
           />

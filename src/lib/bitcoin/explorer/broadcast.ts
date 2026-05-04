@@ -68,7 +68,7 @@ export const broadcastTransaction = async ({
         usedFallbackProvider: index > 0,
       };
     } catch (error) {
-      lastError = error as Error;
+      lastError = error instanceof Error ? error : new Error(String(error));
     }
   }
 

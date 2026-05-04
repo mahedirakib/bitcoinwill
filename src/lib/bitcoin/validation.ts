@@ -67,6 +67,13 @@ export const validatePlanInput = (input: PlanInput): void => {
     throw new Error('Invalid address type. Supported values: p2wsh, p2tr.');
   }
 
+  if (typeof input.owner_pubkey !== 'string' || typeof input.beneficiary_pubkey !== 'string') {
+    throw new Error(
+      'Invalid public key format.\n\n' +
+      'Public keys must be strings. Expected format: 66-character hexadecimal string starting with "02" or "03"'
+    );
+  }
+
   if (!validatePubkey(input.owner_pubkey)) {
     throw new Error(
       'Invalid Owner Public Key.\n\n' +

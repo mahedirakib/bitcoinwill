@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, memo } from 'react';
+import React, { useEffect, useRef, useState, memo, useCallback } from 'react';
 import { useSettings } from '@/state/settings';
 import { AlertTriangle } from 'lucide-react';
 import type { BitcoinNetwork } from '@/lib/bitcoin/types';
@@ -13,10 +13,10 @@ const NetworkSelectorComponent = () => {
   const phraseInputRef = useRef<HTMLInputElement | null>(null);
   const lastFocusedRef = useRef<HTMLElement | null>(null);
 
-  const closeModal = () => {
+  const closeModal = useCallback(() => {
     setShowModal(false);
     setPhrase('');
-  };
+  }, []);
 
   const handleSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = e.target.value as BitcoinNetwork | 'mainnet';
@@ -68,7 +68,7 @@ const NetworkSelectorComponent = () => {
       document.body.style.overflow = previousBodyOverflow;
       lastFocusedRef.current?.focus();
     };
-  }, [showModal]);
+  }, [showModal, closeModal]);
 
   const confirmUnlock = () => {
     if (phrase === CONFIRMATION_PHRASE) {

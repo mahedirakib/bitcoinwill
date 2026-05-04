@@ -122,12 +122,17 @@ export const combineShares = async (shares: string[]): Promise<string> => {
     throw new Error('At least 2 shares required to reconstruct');
   }
 
+  const invalidShare = shares.find((share) => !validateShare(share));
+  if (invalidShare !== undefined) {
+    throw new Error('One or more shares have an invalid format');
+  }
+
   const shareBuffers = shares.map((share) => hexToBytes(normalizeShareHex(share)));
   const secret = await combine(shareBuffers);
   if (!isValidPrivateKeyBytes(secret)) {
     throw new Error('Shares did not reconstruct a valid private key');
   }
-  
+
   return bytesToHex(secret);
 };
 

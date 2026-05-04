@@ -1,3 +1,5 @@
+import type { SSSConfig, SocialRecoveryKit } from './sss';
+
 /**
  * @fileoverview Type definitions for the Bitcoin Will protocol.
  * 
@@ -47,8 +49,6 @@ export const MAX_LOCKTIME_BLOCKS = BLOCKS_PER_YEAR;
 
 /** Default locktime (144 blocks = ~1 day) */
 export const DEFAULT_LOCKTIME_BLOCKS = 144;
-
-import { SSSConfig, SocialRecoveryKit } from './sss';
 
 /**
  * Recovery method for the inheritance plan.

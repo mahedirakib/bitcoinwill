@@ -32,7 +32,8 @@ export const DevPlayground = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="space-y-4">
           <h2 className="text-xl font-bold">Plan Input (Live JSON Edit)</h2>
-          <textarea 
+          <textarea
+            aria-label="Plan input JSON editor"
             className="w-full h-64 p-4 bg-zinc-900 border border-white/10 rounded-xl font-mono text-sm"
             value={JSON.stringify(input, null, 2)}
             onChange={(e) => {

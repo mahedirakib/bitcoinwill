@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { InstructionModel, RecoveryKitData } from '@/lib/bitcoin/instructions';
 import type {
   AddressSummary,
@@ -28,12 +29,6 @@ export interface UseTransactionBroadcastReturn {
   setBroadcastMainnetPhrase: (value: string) => void;
   broadcastTransaction: () => Promise<void>;
   clearBroadcastState: () => void;
-}
-
-export interface UseCheckInPlanReturn {
-  checkInCadence: number;
-  setCheckInCadence: (value: number) => void;
-  checkInPlan: CheckInPlan | null;
 }
 
 export interface RecoveryPageProps {
@@ -77,8 +72,6 @@ export interface BroadcastPanelProps {
   onBroadcast: () => void;
   reconstructedKey?: string | null;
 }
-
-import { ReactNode } from 'react';
 
 export interface InstructionsViewProps {
   model: InstructionModel;

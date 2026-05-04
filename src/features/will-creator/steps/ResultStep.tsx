@@ -111,7 +111,7 @@ export const ResultStep = ({
                       />
                     </div>
                     <div className="rounded border border-border bg-white p-2">
-                      <QRCodeSVG value={share.share} size={108} bgColor="#ffffff" fgColor="#111111" level="H" />
+                      <QRCodeSVG value={share.share} size={108} bgColor="#ffffff" fgColor="#111111" level="H" title={`Share ${share.index} QR code`} />
                     </div>
                     <div className="rounded bg-muted px-2 py-1 font-mono text-[10px] break-all text-muted-foreground">
                       {share.share.slice(0, 28)}…{share.share.slice(-28)}
@@ -156,7 +156,7 @@ export const ResultStep = ({
               <QrCode className="h-3 w-3" /> Scan to fund
             </div>
             <div className="flex justify-center rounded-md border border-border bg-white p-3">
-              <QRCodeSVG value={result.address} size={160} bgColor="#ffffff" fgColor="#111111" level="M" />
+              <QRCodeSVG value={result.address} size={160} bgColor="#ffffff" fgColor="#111111" level="M" title="Vault address QR code" />
             </div>
             <p className="mt-2 text-center text-[11px] text-muted-foreground">Scan with your mobile wallet.</p>
           </div>

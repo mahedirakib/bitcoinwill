@@ -24,6 +24,7 @@ export const ShareRecovery = ({ onKeyReconstructed, onCancel }: ShareRecoveryPro
   const [isCombining, setIsCombining] = useState(false);
   const [reconstructedKey, setReconstructedKey] = useState<string | null>(null);
   const [showKey, setShowKey] = useState(false);
+  const isCombiningRef = useRef(false);
 
   const shares = shareInputs.map((input) => input.value);
 
@@ -52,11 +53,12 @@ export const ShareRecovery = ({ onKeyReconstructed, onCancel }: ShareRecoveryPro
   const canCombine = recoverableShares.length >= threshold;
 
   const handleCombine = async () => {
-    if (!canCombine) {
-      showToast(`Need at least ${threshold} valid shares`);
+    if (!canCombine || isCombiningRef.current) {
+      if (!canCombine) showToast(`Need at least ${threshold} valid shares`);
       return;
     }
 
+    isCombiningRef.current = true;
     setIsCombining(true);
     try {
       const key = await combineShares(recoverableShares);
@@ -65,6 +67,7 @@ export const ShareRecovery = ({ onKeyReconstructed, onCancel }: ShareRecoveryPro
     } catch (error) {
       showToast((error as Error).message || 'Failed to combine shares');
     } finally {
+      isCombiningRef.current = false;
       setIsCombining(false);
     }
   };

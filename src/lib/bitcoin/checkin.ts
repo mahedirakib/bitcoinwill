@@ -27,10 +27,14 @@ export const buildCheckInPlan = (
   confirmationsSinceLastFunding?: number,
   cadenceRatio = 0.5,
 ): CheckInPlan => {
+  if (!Number.isFinite(locktimeBlocks) || locktimeBlocks < 1 || locktimeBlocks > Number.MAX_SAFE_INTEGER) {
+    throw new Error('Invalid locktimeBlocks: must be a positive finite integer');
+  }
+
   const normalizedCadence = normalizeCadenceRatio(cadenceRatio);
   const recommendedCheckInEveryBlocks = Math.max(1, Math.floor(locktimeBlocks * normalizedCadence));
 
-  if (!Number.isFinite(confirmationsSinceLastFunding)) {
+  if (typeof confirmationsSinceLastFunding !== 'number' || !Number.isFinite(confirmationsSinceLastFunding)) {
     return {
       locktimeBlocks,
       cadenceRatio: normalizedCadence,
@@ -40,7 +44,7 @@ export const buildCheckInPlan = (
     };
   }
 
-  const confirmations = Math.max(0, Math.floor(confirmationsSinceLastFunding as number));
+  const confirmations = Math.max(0, Math.floor(confirmationsSinceLastFunding));
   const blocksUntilRecommendedCheckIn = recommendedCheckInEveryBlocks - confirmations;
   const blocksUntilBeneficiaryEligible = locktimeBlocks - confirmations;
 

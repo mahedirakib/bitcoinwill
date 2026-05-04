@@ -84,9 +84,9 @@ const fetchAddressSummaryWithProvider = async (
     providerUsed: request.provider,
     providerLabel: config.providerLabel,
     usedFallbackProvider: false,
-    confirmedBalanceSats: chainFunded - chainSpent,
-    unconfirmedBalanceSats: mempoolFunded - mempoolSpent,
-    totalBalanceSats: chainFunded - chainSpent + (mempoolFunded - mempoolSpent),
+    confirmedBalanceSats: Math.max(0, chainFunded - chainSpent),
+    unconfirmedBalanceSats: Math.max(0, mempoolFunded - mempoolSpent),
+    totalBalanceSats: Math.max(0, chainFunded - chainSpent + (mempoolFunded - mempoolSpent)),
     txCount,
     tipHeight,
     lastFundingTx,
@@ -128,7 +128,7 @@ export const fetchAddressSummary = async ({
         usedFallbackProvider: index > 0,
       };
     } catch (error) {
-      lastError = error as Error;
+      lastError = error instanceof Error ? error : new Error(String(error));
     }
   }
 

@@ -1,12 +1,12 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import type { BitcoinNetwork } from '@/lib/bitcoin/types';
-import type { 
-  BroadcastTransactionResult, 
-  ExplorerProvider 
+import type {
+  BroadcastTransactionResult,
+  ExplorerProvider
 } from '@/lib/bitcoin/explorer';
-import { 
+import {
   broadcastTransaction as broadcastTx,
-  supportsPublicExplorerNetwork 
+  supportsPublicExplorerNetwork
 } from '@/lib/bitcoin/explorer';
 import { useToast } from '@/components/Toast';
 import type { UseTransactionBroadcastReturn } from '../types';
@@ -23,11 +23,22 @@ export const useTransactionBroadcast = (
   const [broadcastError, setBroadcastError] = useState<string | null>(null);
   const [isBroadcasting, setIsBroadcasting] = useState(false);
   const [broadcastMainnetPhrase, setBroadcastMainnetPhrase] = useState('');
+  const isBroadcastingRef = useRef(false);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   const publicExplorerAvailable = supportsPublicExplorerNetwork(network);
   const isMainnet = network === 'mainnet';
 
   const broadcastTransaction = useCallback(async () => {
+    if (isBroadcastingRef.current) return;
+
     if (!publicExplorerAvailable) {
       const message = 'Public broadcast is unavailable on Regtest. Use your local node RPC instead.';
       setBroadcastError(message);
@@ -42,6 +53,7 @@ export const useTransactionBroadcast = (
       return;
     }
 
+    isBroadcastingRef.current = true;
     setIsBroadcasting(true);
     setBroadcastError(null);
     setBroadcastResult(null);
@@ -53,14 +65,19 @@ export const useTransactionBroadcast = (
         rawTxHex,
         fallbackToOtherProvider: true,
       });
+      if (!isMountedRef.current) return;
       setBroadcastResult(result);
       showToast(`Broadcast accepted by ${result.providerLabel}`);
     } catch (error) {
+      if (!isMountedRef.current) return;
       const message = (error as Error).message || 'Transaction broadcast failed.';
       setBroadcastError(message);
       showToast(message);
     } finally {
-      setIsBroadcasting(false);
+      isBroadcastingRef.current = false;
+      if (isMountedRef.current) {
+        setIsBroadcasting(false);
+      }
     }
   }, [network, explorerProvider, rawTxHex, isMainnet, broadcastMainnetPhrase, showToast, publicExplorerAvailable]);
 

@@ -218,7 +218,11 @@ export const connectLedger = async (
   try {
     return await getLedgerWalletPublicKey(transport, path);
   } finally {
-    await transport.close();
+    try {
+      await transport.close();
+    } catch {
+      // Ignore close errors to avoid masking the original error
+    }
   }
 };
 

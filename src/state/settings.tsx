@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useRef, useState } from 'react';
+import React, { createContext, useContext, useRef, useState, useCallback, useMemo } from 'react';
 import { BitcoinNetwork, isBitcoinNetwork } from '@/lib/bitcoin/types';
 
 interface SettingsContextType {
@@ -26,7 +26,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [isMainnetUnlocked, setIsMainnetUnlocked] = useState(false);
   const isMainnetUnlockedRef = useRef(false);
 
-  const setNetwork = (n: BitcoinNetwork) => {
+  const setNetwork = useCallback((n: BitcoinNetwork) => {
     if (n === 'mainnet' && !isMainnetUnlockedRef.current) return;
     setNetworkState(n);
     if (n !== 'mainnet') {
@@ -36,15 +36,20 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         // Ignore storage errors in restricted browser contexts.
       }
     }
-  };
+  }, []);
 
-  const unlockMainnet = () => {
+  const unlockMainnet = useCallback(() => {
     isMainnetUnlockedRef.current = true;
     setIsMainnetUnlocked(true);
-  };
+  }, []);
+
+  const value = useMemo(
+    () => ({ network, setNetwork, isMainnetUnlocked, unlockMainnet }),
+    [network, setNetwork, isMainnetUnlocked, unlockMainnet]
+  );
 
   return (
-    <SettingsContext.Provider value={{ network, setNetwork, isMainnetUnlocked, unlockMainnet }}>
+    <SettingsContext.Provider value={value}>
       {children}
     </SettingsContext.Provider>
   );

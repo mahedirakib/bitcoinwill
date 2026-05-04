@@ -2,7 +2,12 @@
  * Utility to download data as a JSON file in the browser.
  */
 export const downloadJson = <T>(filename: string, data: T) => {
-  const jsonString = JSON.stringify(data, null, 2);
+  let jsonString: string;
+  try {
+    jsonString = JSON.stringify(data, null, 2);
+  } catch {
+    throw new Error('Failed to serialize data to JSON');
+  }
   const blob = new Blob([jsonString], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
 

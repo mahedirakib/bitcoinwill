@@ -60,10 +60,10 @@ export const createChecklistState = (): Record<ChecklistItemId, boolean> => ({
   test_small_amount: false,
 });
 
-export const createInitialState = (network: BitcoinNetwork | 'mainnet'): WizardState => ({
+export const createInitialState = (network: BitcoinNetwork): WizardState => ({
   step: 'TYPE',
   input: {
-    network: network as BitcoinNetwork,
+    network,
     inheritance_type: 'timelock_recovery',
     owner_pubkey: '',
     beneficiary_pubkey: '',

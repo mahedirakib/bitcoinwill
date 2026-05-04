@@ -15,7 +15,7 @@ export const BroadcastPanel = ({
   onBroadcast,
   reconstructedKey,
 }: BroadcastPanelProps) => {
-  const isMainnet = model.network === 'MAINNET';
+  const isMainnet = model.network === 'mainnet';
   const canBroadcast =
     rawTxHex.trim().length > 0 &&
     (!isMainnet || broadcastMainnetPhrase === MAINNET_BROADCAST_CONFIRMATION);

@@ -58,7 +58,7 @@ export const buildTaprootPlan = (input: PlanInput): PlanOutput => {
   const scriptHex = bytesToHex(tapscript);
 
   return {
-    descriptor: `tr(${NUMS_KEY_HEX}, {${scriptHex}})`,
+    descriptor: `tr(${NUMS_KEY_HEX}, raw(${scriptHex}))`,
     script_asm: script.toASM(tapscript),
     script_hex: scriptHex,
     address: p2tr.address,

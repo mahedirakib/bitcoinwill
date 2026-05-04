@@ -15,6 +15,7 @@ export const HardwareWalletModal = ({ onConnect, onClose }: HardwareWalletModalP
   const [error, setError] = useState<string | null>(null);
   const modalRef = useRef<HTMLDivElement>(null);
   const lastFocusedRef = useRef<HTMLElement | null>(null);
+  const isConnectingRef = useRef(false);
 
   useEffect(() => {
     lastFocusedRef.current =
@@ -64,6 +65,8 @@ export const HardwareWalletModal = ({ onConnect, onClose }: HardwareWalletModalP
   }, [onClose]);
 
   const handleConnect = async (type: HardwareWalletType) => {
+    if (isConnectingRef.current) return;
+    isConnectingRef.current = true;
     setLoading(true);
     setError(null);
     try {
@@ -72,6 +75,7 @@ export const HardwareWalletModal = ({ onConnect, onClose }: HardwareWalletModalP
     } catch (err) {
       setError((err as Error).message);
     } finally {
+      isConnectingRef.current = false;
       setLoading(false);
     }
   };

@@ -296,7 +296,7 @@ describe('Instructions Module', () => {
     });
 
     it('rejects kit missing required fields', () => {
-      expect(() => validateAndNormalizeRecoveryKit({})).toThrow('missing plan or result');
+      expect(() => validateAndNormalizeRecoveryKit({})).toThrow('plan and result must be objects');
     });
 
     it('rejects tampered result payload', () => {

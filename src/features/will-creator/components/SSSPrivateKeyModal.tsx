@@ -15,6 +15,7 @@ export const SSSPrivateKeyModal = ({ privateKey, onConfirm, onCancel }: SSSPriva
   const timerRef = useRef<number | null>(null);
   const modalRef = useRef<HTMLDivElement>(null);
   const lastFocusedRef = useRef<HTMLElement | null>(null);
+  const isCopyingRef = useRef(false);
 
   useEffect(() => {
     return () => {
@@ -72,6 +73,8 @@ export const SSSPrivateKeyModal = ({ privateKey, onConfirm, onCancel }: SSSPriva
   }, [onCancel]);
 
   const handleCopy = async () => {
+    if (isCopyingRef.current) return;
+    isCopyingRef.current = true;
     try {
       if (!navigator.clipboard?.writeText) {
         showToast('Clipboard unavailable in this browser context');
@@ -89,6 +92,8 @@ export const SSSPrivateKeyModal = ({ privateKey, onConfirm, onCancel }: SSSPriva
       }, 2000);
     } catch {
       showToast('Failed to copy to clipboard');
+    } finally {
+      isCopyingRef.current = false;
     }
   };
 

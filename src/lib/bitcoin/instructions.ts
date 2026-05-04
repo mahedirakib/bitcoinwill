@@ -71,6 +71,9 @@ export const generateRecoveryKitChecksum = async (
       beneficiary_pubkey: plan.beneficiary_pubkey,
       locktime_blocks: plan.locktime_blocks,
       address_type: plan.address_type,
+      recovery_method: plan.recovery_method,
+      sss_config: plan.sss_config,
+      plan_label: plan.plan_label,
     },
     result: {
       address: result.address,
@@ -121,12 +124,12 @@ export const validateAndNormalizeRecoveryKit = (raw: unknown): RecoveryKitData =
     throw new Error('Invalid Recovery Kit: expected a JSON object.');
   }
 
-  const plan = raw.plan as PlanInput | undefined;
-  const result = raw.result as PlanOutput | undefined;
-
-  if (!plan || !result) {
-    throw new Error('Invalid Recovery Kit: missing plan or result.');
+  if (!isObjectRecord(raw.plan) || !isObjectRecord(raw.result)) {
+    throw new Error('Invalid Recovery Kit: plan and result must be objects.');
   }
+
+  const plan = raw.plan as unknown as PlanInput;
+  const result = raw.result as unknown as PlanOutput;
 
   // buildPlan validates all input fields and yields canonical result values.
   const canonicalResult = buildPlan(plan);
@@ -136,7 +139,8 @@ export const validateAndNormalizeRecoveryKit = (raw: unknown): RecoveryKitData =
     result.script_hex === canonicalResult.script_hex &&
     result.witness_script === canonicalResult.witness_script &&
     result.descriptor === canonicalResult.descriptor &&
-    result.network === canonicalResult.network;
+    result.network === canonicalResult.network &&
+    result.address_type === canonicalResult.address_type;
 
   if (!matchesCanonical) {
     throw new Error('Recovery Kit failed integrity check. The plan does not match the included result.');

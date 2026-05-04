@@ -117,6 +117,7 @@ export const VaultStatusPanel = ({
                 )}
                 target="_blank"
                 rel="noopener noreferrer"
+                aria-label="View funding transaction in blockchain explorer (opens in new tab)"
                 className="inline-flex items-center gap-1.5 text-xs font-medium text-foreground underline underline-offset-2 hover:text-foreground/70"
               >
                 View funding tx <ExternalLink className="h-3 w-3" />

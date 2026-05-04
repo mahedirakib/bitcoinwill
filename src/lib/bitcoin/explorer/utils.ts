@@ -1,5 +1,5 @@
 export const getTimeoutMs = (timeoutMs?: number): number =>
-  Number.isFinite(timeoutMs) && (timeoutMs as number) > 0 ? (timeoutMs as number) : 10_000;
+  typeof timeoutMs === 'number' && Number.isFinite(timeoutMs) && timeoutMs > 0 ? timeoutMs : 10_000;
 
 export const sanitizeAddress = (address: string): string => {
   const normalized = address.trim();
@@ -33,7 +33,7 @@ export const toSafeInteger = (value: unknown): number => {
 
 export const parseTipHeight = (value: string): number | undefined => {
   const parsed = Number.parseInt(value.trim(), 10);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
 };
 
 export const extractErrorMessage = async (response: Response): Promise<string> => {

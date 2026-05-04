@@ -1,4 +1,4 @@
-import { useReducer, useState, useEffect } from 'react';
+import { useReducer, useState, useEffect, useRef, useCallback } from 'react';
 import * as ecc from 'tiny-secp256k1';
 import { buildPlan } from '@/lib/bitcoin/planEngine';
 import type { PlanOutput, BitcoinNetwork } from '@/lib/bitcoin/types';
@@ -57,18 +57,20 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorW
   const [hardwareWalletConnected, setHardwareWalletConnected] = useState<HardwareWalletType | null>(null);
   const [pendingSSSKey, setPendingSSSKey] = useState<string | null>(null);
   const [pendingSSSConfig, setPendingSSSConfig] = useState<{ threshold: 2 | 3; total: 3 | 5 } | null>(null);
+  const isProcessingSSSRef = useRef(false);
+  const printTimeoutRef = useRef<number | null>(null);
 
-  const clearDraftState = () => {
+  const clearDraftState = useCallback(() => {
     try {
       sessionStorage.removeItem(STORAGE_KEY);
     } catch {
       // Ignore storage errors in restricted browser contexts.
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (hasRestored) return;
-    
+
     let savedDraft: string | null = null;
     try {
       savedDraft = sessionStorage.getItem(STORAGE_KEY);
@@ -92,7 +94,7 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorW
       showToast('Previous progress restored');
     }
     setHasRestored(true);
-  }, [hasRestored, network, showToast]);
+  }, [hasRestored, network, showToast, dispatch]);
 
   useEffect(() => {
     if (!hasRestored) return;
@@ -112,13 +114,13 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorW
     } catch {
       // Ignore storage errors
     }
-  }, [state.step, state.input, state.result, hasRestored]);
+  }, [state.step, state.input, state.result, hasRestored, clearDraftState]);
 
   useEffect(() => {
     if (state.step !== 'RESULT') {
       dispatch({ type: 'UPDATE_INPUT', payload: { network: network as BitcoinNetwork } });
     }
-  }, [network, state.step]);
+  }, [network, state.step, dispatch]);
 
   const nextStep = () => {
     if (state.step === 'TYPE') {
@@ -199,20 +201,21 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorW
   };
 
   const completeSSSGeneration = async () => {
-    if (!pendingSSSKey || !pendingSSSConfig) return;
+    if (!pendingSSSKey || !pendingSSSConfig || isProcessingSSSRef.current) return;
+    isProcessingSSSRef.current = true;
 
     try {
       const planInput = { ...state.input };
       const publicKey = ecc.pointFromScalar(hexToBytes(pendingSSSKey), true);
-      
+
       if (!publicKey) {
         throw new Error('Failed to regenerate beneficiary keypair');
       }
 
       planInput.beneficiary_pubkey = bytesToHex(publicKey);
       const socialKit = await splitPrivateKey(pendingSSSKey, pendingSSSConfig);
-      const result = buildPlan(planInput);
-      result.social_recovery_kit = socialKit;
+      const baseResult = buildPlan(planInput);
+      const result: PlanOutput = { ...baseResult, social_recovery_kit: socialKit };
 
       setPendingSSSKey(null);
       setPendingSSSConfig(null);
@@ -220,6 +223,8 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorW
       clearDraftState();
     } catch (e) {
       dispatch({ type: 'SET_ERRORS', payload: { global: (e as Error).message } });
+    } finally {
+      isProcessingSSSRef.current = false;
     }
   };
 
@@ -271,7 +276,7 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorW
 
   const printShares = (result: PlanOutput) => {
     if (!result.social_recovery_kit) return;
-    
+
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
       showToast('Please allow popups to print share cards');
@@ -284,13 +289,24 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorW
 
       printWindow.document.close();
       // Allow browser to render before printing
-      window.setTimeout(() => {
+      if (printTimeoutRef.current) {
+        window.clearTimeout(printTimeoutRef.current);
+      }
+      printTimeoutRef.current = window.setTimeout(() => {
         printWindow.print();
       }, 250);
     } catch {
       showToast('Failed to open print dialog');
     }
   };
+
+  useEffect(() => {
+    return () => {
+      if (printTimeoutRef.current) {
+        window.clearTimeout(printTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const downloadSharesAsTxt = (result: PlanOutput) => {
     if (!result.social_recovery_kit) return;
