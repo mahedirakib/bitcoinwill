@@ -3,13 +3,14 @@ import { DevPlayground } from './components/DevPlayground'
 import type { InstructionData } from './features/will-creator/WillCreatorWizard'
 import { SettingsProvider } from './state/settings'
 import { ErrorBoundary } from './components/ErrorBoundary'
-import { ToastProvider } from './components/Toast'
+import { ToastProvider, useToast } from './components/Toast'
 import { KeyboardShortcutsHelp } from './components/KeyboardShortcutsHelp'
 import { PageLoading } from './components/Loading'
 import { AppShell, type NavView } from './components/AppShell'
 import { Home } from './pages/Home'
+import type { SavedVault } from './lib/vaultStorage'
 
-type AppView = NavView | 'dev'
+type AppView = NavView | 'dev' | 'settings'
 const DEV_VIEW_ENABLED = import.meta.env.DEV
 
 const loadWillCreatorWizard = () => import('./features/will-creator/WillCreatorWizard')
@@ -17,6 +18,9 @@ const loadLearnPage = () => import('./pages/Learn')
 const loadInstructionsPage = () => import('./pages/Instructions')
 const loadProtocolPage = () => import('./pages/Protocol')
 const loadWhitepaperPage = () => import('./pages/Whitepaper')
+const loadVaultsPage = () => import('./pages/Vaults')
+const loadVaultDetailPage = () => import('./pages/VaultDetail')
+const loadSettingsPage = () => import('./pages/Settings')
 
 const WillCreatorWizard = lazy(async () => {
   const module = await loadWillCreatorWizard()
@@ -26,6 +30,18 @@ const Learn = lazy(loadLearnPage)
 const Instructions = lazy(loadInstructionsPage)
 const Protocol = lazy(loadProtocolPage)
 const Whitepaper = lazy(loadWhitepaperPage)
+const VaultsPage = lazy(async () => {
+  const module = await loadVaultsPage()
+  return { default: module.VaultsPage }
+})
+const VaultDetailPage = lazy(async () => {
+  const module = await loadVaultDetailPage()
+  return { default: module.VaultDetailPage }
+})
+const SettingsPage = lazy(async () => {
+  const module = await loadSettingsPage()
+  return { default: module.SettingsPage }
+})
 
 const preloadedViews = new Set<AppView>()
 const VIEW_PRELOADERS: Partial<Record<AppView, () => Promise<unknown>>> = {
@@ -35,6 +51,7 @@ const VIEW_PRELOADERS: Partial<Record<AppView, () => Promise<unknown>>> = {
   recover: loadInstructionsPage,
   protocol: loadProtocolPage,
   whitepaper: loadWhitepaperPage,
+  vaults: loadVaultsPage,
 }
 
 const preloadView = (view: AppView) => {
@@ -73,12 +90,14 @@ const viewFromPath = (pathname: string): AppView => {
   if (path === '/create') return 'create'
   if (path === '/recover') return 'recover'
   if (path === '/vaults') return 'vaults'
+  if (path === '/settings') return 'settings'
   return 'home'
 }
 
 const pathFromView = (view: AppView): string => {
   if (view === 'dev') return DEV_VIEW_ENABLED ? '/dev' : '/'
   if (view === 'home') return '/'
+  if (view === 'settings') return '/settings'
   return `/${view}`
 }
 
@@ -91,12 +110,15 @@ const TITLES: Record<NavView, { title: string; subtitle?: string }> = {
   protocol:     { title: 'Protocol' },
   instructions: { title: 'Instructions' },
   whitepaper:   { title: 'TIP Whitepaper' },
+  settings:     { title: 'Settings' },
 }
 
 const AppContent = () => {
+  const { showToast } = useToast()
   const [activeView, setActiveView] = useState<AppView>(() => viewFromPath(window.location.pathname))
   const historyActionRef = useRef<'push' | 'replace'>('replace')
   const [instructionData, setInstructionData] = useState<InstructionData | undefined>(undefined)
+  const [selectedVault, setSelectedVault] = useState<SavedVault | null>(null)
   const [forceQaCrash, setForceQaCrash] = useState(false)
 
   if (forceQaCrash) {
@@ -108,10 +130,27 @@ const AppContent = () => {
     if (view !== 'instructions') {
       setInstructionData(undefined)
     }
+    if (view !== 'vaults') {
+      setSelectedVault(null)
+    }
     preloadView(view)
     startTransition(() => {
       setActiveView(view)
     })
+  }
+
+  const handleViewVault = (vault: SavedVault) => {
+    setSelectedVault(vault)
+  }
+
+  const handleViewVaultInstructions = (vault: SavedVault) => {
+    setInstructionData({
+      plan: vault.plan,
+      result: vault.result,
+      created_at: vault.createdAt,
+    })
+    setSelectedVault(null)
+    navigateTo('instructions')
   }
 
   useEffect(() => {
@@ -158,7 +197,12 @@ const AppContent = () => {
       topbar={meta}
     >
       <Suspense fallback={<PageLoading />}>
-        {activeView === 'home' && <Home onNavigate={(v) => navigateTo(v)} />}
+        {activeView === 'home' && (
+          <Home
+            onNavigate={(v) => navigateTo(v)}
+            onViewVault={handleViewVault}
+          />
+        )}
 
         {activeView === 'create' && (
           <WillCreatorWizard
@@ -195,22 +239,27 @@ const AppContent = () => {
           />
         )}
 
-        {activeView === 'vaults' && (
-          <div className="mx-auto max-w-2xl panel p-8 text-center">
-            <h2 className="text-lg font-semibold">My vaults</h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Vaults you create or import will appear here. Saved vaults stay on your device.
-            </p>
-            <div className="mt-5 flex justify-center">
-              <button
-                type="button"
-                onClick={() => navigateTo('create')}
-                className="btn-accent"
-              >
-                Create your first vault
-              </button>
-            </div>
-          </div>
+        {activeView === 'vaults' && !selectedVault && (
+          <VaultsPage
+            onNavigate={(v) => navigateTo(v)}
+            onViewVault={handleViewVault}
+          />
+        )}
+
+        {activeView === 'vaults' && selectedVault && (
+          <VaultDetailPage
+            vault={selectedVault}
+            onBack={() => setSelectedVault(null)}
+            onViewInstructions={handleViewVaultInstructions}
+            onDelete={() => {
+              setSelectedVault(null)
+              showToast('Vault removed')
+            }}
+          />
+        )}
+
+        {activeView === 'settings' && (
+          <SettingsPage onNavigate={(v) => navigateTo(v)} />
         )}
       </Suspense>
 

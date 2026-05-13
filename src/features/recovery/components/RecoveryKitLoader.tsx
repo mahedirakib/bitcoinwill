@@ -1,15 +1,41 @@
 import { useState } from 'react';
-import { ChevronLeft, FileText, Key, Users } from 'lucide-react';
+import { ChevronLeft, FileText, Key, Users, Database } from 'lucide-react';
 import {
   buildInstructions,
   validateAndNormalizeRecoveryKit,
 } from '@/lib/bitcoin/instructions';
 import { useToast } from '@/components/Toast';
+import { useVaults } from '@/hooks/useVaults';
+import type { SavedVault } from '@/lib/vaultStorage';
 import type { RecoveryKitLoaderProps } from '../types';
 
 interface ExtendedRecoveryKitLoaderProps extends RecoveryKitLoaderProps {
   onSocialRecovery?: () => void;
 }
+
+const SavedVaultCard = ({
+  vault,
+  onClick,
+}: {
+  vault: SavedVault;
+  onClick: () => void;
+}) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className="flex w-full items-center gap-3 rounded-md border border-border bg-white p-3 text-left transition-colors hover:border-border-strong hover:bg-muted/30"
+  >
+    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md bg-muted">
+      <Database className="h-4 w-4 text-muted-foreground" />
+    </div>
+    <div className="min-w-0 flex-1">
+      <p className="truncate text-sm font-medium">{vault.name}</p>
+      <p className="truncate text-xs text-muted-foreground">
+        <span className="capitalize">{vault.network}</span> · {vault.address.slice(0, 12)}…{vault.address.slice(-8)}
+      </p>
+    </div>
+  </button>
+);
 
 export const RecoveryKitLoader = ({
   onLoad,
@@ -18,6 +44,7 @@ export const RecoveryKitLoader = ({
 }: ExtendedRecoveryKitLoaderProps) => {
   const [jsonInput, setJsonInput] = useState('');
   const { showToast } = useToast();
+  const { vaults } = useVaults();
 
   const loadRecoveryKit = (serializedKit: string) => {
     try {
@@ -50,6 +77,16 @@ export const RecoveryKitLoader = ({
     }
   };
 
+  const handleLoadSavedVault = (vault: SavedVault) => {
+    try {
+      const model = buildInstructions(vault.plan, vault.result, vault.createdAt);
+      onLoad(model);
+      showToast(`Loaded ${vault.name}`);
+    } catch (error) {
+      showToast((error as Error).message || 'Error loading vault');
+    }
+  };
+
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <button
@@ -67,6 +104,37 @@ export const RecoveryKitLoader = ({
         <h1 className="text-xl font-semibold tracking-tight">Recovery options</h1>
         <p className="text-sm text-muted-foreground">Choose how you want to access the vault.</p>
       </div>
+
+      {vaults.length > 0 && (
+        <div className="panel space-y-3 p-5">
+          <div className="flex items-center gap-3">
+            <div className="rounded-md bg-muted p-2 text-foreground/70">
+              <Database className="h-4 w-4" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold">My saved vaults</h3>
+              <p className="text-xs text-muted-foreground">
+                Quick access to vaults saved on this device.
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            {vaults.slice(0, 5).map((vault) => (
+              <SavedVaultCard
+                key={vault.id}
+                vault={vault}
+                onClick={() => handleLoadSavedVault(vault)}
+              />
+            ))}
+            {vaults.length > 5 && (
+              <p className="text-center text-xs text-muted-foreground">
+                +{vaults.length - 5} more vaults available in My vaults
+              </p>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="space-y-3">
         <div className="panel space-y-3 p-5">

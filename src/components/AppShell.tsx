@@ -10,6 +10,7 @@ import {
   ScrollText,
   Menu,
   X,
+  Settings,
 } from 'lucide-react';
 import { NetworkSelector } from './NetworkSelector';
 import { useSettings } from '@/state/settings';
@@ -23,7 +24,8 @@ export type NavView =
   | 'learn'
   | 'protocol'
   | 'instructions'
-  | 'whitepaper';
+  | 'whitepaper'
+  | 'settings';
 
 interface AppShellProps {
   active: NavView;
@@ -148,7 +150,20 @@ export const AppShell = ({ active, onNavigate, topbar, children }: AppShellProps
         </nav>
       </div>
 
-      <div className="mt-auto border-t border-border pt-3">
+      <div className="mt-auto border-t border-border pt-3 space-y-2">
+        <button
+          type="button"
+          onClick={() => onNavigate('settings')}
+          aria-current={active === 'settings' ? 'page' : undefined}
+          className={`flex w-full items-center gap-2.5 rounded-md border px-3 py-2 text-left text-sm transition-colors ${
+            active === 'settings'
+              ? 'border-border bg-muted font-semibold text-foreground'
+              : 'border-transparent font-medium text-foreground/70 hover:bg-muted hover:text-foreground'
+          }`}
+        >
+          <Settings className="h-4 w-4 flex-shrink-0" />
+          <span>Settings</span>
+        </button>
         <div className="flex items-center justify-between gap-2 px-2">
           <span className="text-xs text-muted-foreground">Network</span>
           <NetworkSelector />

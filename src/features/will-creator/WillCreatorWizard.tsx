@@ -6,6 +6,7 @@ import { validatePubkey } from '@/lib/bitcoin/validation';
 import { downloadJson, downloadTxt } from '@/lib/utils/download';
 import { useSettings } from '@/state/settings';
 import { useToast } from '@/components/Toast';
+import { useVaults } from '@/hooks/useVaults';
 import { normalizePubkeyHex, usesDisallowedSampleKey } from './safety';
 import { parseWizardDraft } from './draftState';
 import { buildSharePrintHtml, buildSharesText } from './shareExport';
@@ -49,6 +50,7 @@ interface WillCreatorWizardProps {
 export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorWizardProps) => {
   const { network } = useSettings();
   const { showToast } = useToast();
+  const { saveNewVault, hasVault } = useVaults();
   const [state, dispatch] = useReducer(wizardReducer, createInitialState(network));
   const [hasRestored, setHasRestored] = useState(false);
   const [showDownloadChecklist, setShowDownloadChecklist] = useState(false);
@@ -57,6 +59,7 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorW
   const [hardwareWalletConnected, setHardwareWalletConnected] = useState<HardwareWalletType | null>(null);
   const [pendingSSSKey, setPendingSSSKey] = useState<string | null>(null);
   const [pendingSSSConfig, setPendingSSSConfig] = useState<{ threshold: 2 | 3; total: 3 | 5 } | null>(null);
+  const [isVaultSaved, setIsVaultSaved] = useState(false);
   const isProcessingSSSRef = useRef(false);
   const printTimeoutRef = useRef<number | null>(null);
 
@@ -231,6 +234,18 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorW
   const cancelSSSGeneration = () => {
     setPendingSSSKey(null);
     setPendingSSSConfig(null);
+  };
+
+  const handleSaveVault = () => {
+    if (!state.result) return;
+    if (hasVault(state.result.address)) {
+      showToast('This vault is already saved');
+      setIsVaultSaved(true);
+      return;
+    }
+    saveNewVault(state.input, state.result);
+    setIsVaultSaved(true);
+    showToast('Vault saved to My vaults');
   };
 
   const handleCancel = () => {
@@ -419,6 +434,8 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorW
               onCopyToClipboard={copyToClipboard}
               onPrintShares={printShares}
               onDownloadShares={downloadSharesAsTxt}
+              onSaveVault={handleSaveVault}
+              isVaultSaved={isVaultSaved}
             />
           </StepErrorBoundary>
         )}

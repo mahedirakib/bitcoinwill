@@ -1,4 +1,4 @@
-import { AlertTriangle, Check, Copy, Download, FileText, Printer, QrCode, Users } from 'lucide-react';
+import { AlertTriangle, Check, Copy, Download, FileText, Printer, QrCode, Users, Save } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import type { PlanOutput } from '@/lib/bitcoin/types';
 import { CopyButton } from '@/components/CopyButton';
@@ -10,6 +10,8 @@ interface ResultStepProps {
   onCopyToClipboard: (text: string, label: string) => void;
   onPrintShares: (result: PlanOutput) => void;
   onDownloadShares: (result: PlanOutput) => void;
+  onSaveVault?: () => void;
+  isVaultSaved?: boolean;
 }
 
 export const ResultStep = ({
@@ -19,6 +21,8 @@ export const ResultStep = ({
   onCopyToClipboard,
   onPrintShares,
   onDownloadShares,
+  onSaveVault,
+  isVaultSaved,
 }: ResultStepProps) => {
   return (
     <div className="space-y-5">
@@ -167,6 +171,20 @@ export const ResultStep = ({
           <button type="button" onClick={onViewInstructions} className="btn-secondary w-full">
             <FileText className="h-4 w-4" /> View instructions
           </button>
+          {onSaveVault && !isVaultSaved && (
+            <button
+              type="button"
+              onClick={onSaveVault}
+              className="btn-secondary w-full"
+            >
+              <Save className="h-4 w-4" /> Save to my vaults
+            </button>
+          )}
+          {isVaultSaved && (
+            <div className="flex items-center justify-center gap-2 rounded-md border border-success/20 bg-success-bg py-2 text-sm text-success">
+              <Check className="h-4 w-4" /> Saved to my vaults
+            </div>
+          )}
           <button
             type="button"
             onClick={() => onCopyToClipboard(result.address, 'Address')}
