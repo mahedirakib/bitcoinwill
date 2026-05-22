@@ -130,6 +130,12 @@ export const parseLedgerPublicKeyResponse = (response: Uint8Array): string => {
     pubkeyBytes = ecc.pointCompress(pubkeyBytes, true);
   }
 
+  if (pubkeyBytes.length !== 33) {
+    throw new Error(
+      `Invalid Ledger public key length: expected 33 bytes (compressed) after parsing, got ${pubkeyBytes.length} bytes`
+    );
+  }
+
   return formatPublicKey(bytesToHex(pubkeyBytes));
 };
 

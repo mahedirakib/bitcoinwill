@@ -58,6 +58,10 @@ export const deleteVault = (id: string): void => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
 };
 
+export const clearAllVaults = (): void => {
+  localStorage.removeItem(STORAGE_KEY);
+};
+
 export const updateVaultName = (id: string, name: string): void => {
   const existing = getSavedVaults();
   const updated = existing.map((v) =>
@@ -134,20 +138,25 @@ export const importVaultsFromBackup = (json: string): ImportResult => {
 
     // Handle backup format
     if (parsed.vaults && Array.isArray(parsed.vaults)) {
+      const existing = getSavedVaults();
+      const existingAddresses = new Set(existing.map((v) => v.address));
+
       for (const vault of parsed.vaults) {
         if (!isValidVault(vault)) {
           result.errors.push(`Invalid vault data: ${vault?.name || 'unknown'}`);
           continue;
         }
-        if (getVaultByAddress(vault.address)) {
+        if (existingAddresses.has(vault.address)) {
           result.skipped++;
           continue;
         }
-        const existing = getSavedVaults();
-        existing.push({ ...vault, id: generateVaultId() });
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
+        const newVault: SavedVault = { ...vault, id: generateVaultId() };
+        existing.push(newVault);
+        existingAddresses.add(vault.address);
         result.imported++;
       }
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
       return result;
     }
 

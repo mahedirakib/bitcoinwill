@@ -1,14 +1,11 @@
-import { script, payments, initEccLib } from 'bitcoinjs-lib';
-import * as ecc from 'tiny-secp256k1';
+import { script, payments } from 'bitcoinjs-lib';
+import './init';
 import { PlanInput, PlanOutput, AddressType } from './types';
 import { getNetworkParams } from './network';
 import { validatePlanInput } from './validation';
 import { calculateTime } from './utils';
 import { bytesToHex, hexToBytes } from './hex';
 import { buildTaprootPlan } from './taproot';
-
-// Initialize ECC library for bitcoinjs-lib
-initEccLib(ecc);
 
 /**
  * Bitcoin Script Construction Module

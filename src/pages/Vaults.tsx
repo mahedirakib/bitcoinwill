@@ -334,8 +334,13 @@ export const VaultsPage = ({ onNavigate, onViewVault }: VaultsPageProps) => {
 
   const handleExport = () => {
     const json = exportAllVaults();
-    downloadJson('bitcoin-will-vaults-backup.json', JSON.parse(json));
-    showToast('Vaults exported');
+    try {
+      const data = JSON.parse(json);
+      downloadJson('bitcoin-will-vaults-backup.json', data);
+      showToast('Vaults exported');
+    } catch {
+      showToast('Failed to export vaults');
+    }
   };
 
   const handleImport = () => {

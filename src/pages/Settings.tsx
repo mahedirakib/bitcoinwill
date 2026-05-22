@@ -20,7 +20,7 @@ interface SettingsPageProps {
 
 export const SettingsPage = ({ onNavigate }: SettingsPageProps) => {
   const { network, setNetwork, isMainnetUnlocked, unlockMainnet } = useSettings();
-  const { vaults, exportAllVaults, removeVault } = useVaults();
+  const { vaults, exportAllVaults, clearAllVaults } = useVaults();
   const { showToast } = useToast();
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showMainnetConfirm, setShowMainnetConfirm] = useState(false);
@@ -28,12 +28,17 @@ export const SettingsPage = ({ onNavigate }: SettingsPageProps) => {
 
   const handleExport = () => {
     const json = exportAllVaults();
-    downloadJson('bitcoin-will-vaults-backup.json', JSON.parse(json));
-    showToast('Vaults exported');
+    try {
+      const data = JSON.parse(json);
+      downloadJson('bitcoin-will-vaults-backup.json', data);
+      showToast('Vaults exported');
+    } catch {
+      showToast('Failed to export vaults');
+    }
   };
 
   const handleClearAll = () => {
-    vaults.forEach((vault) => removeVault(vault.id));
+    clearAllVaults();
     setShowClearConfirm(false);
     showToast('All vaults cleared');
   };

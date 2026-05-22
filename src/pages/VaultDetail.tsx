@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   ArrowLeft,
   Copy,
@@ -68,7 +68,16 @@ export const VaultDetailPage = ({
   const [isEditingTags, setIsEditingTags] = useState(false);
   const [editTags, setEditTags] = useState(vault.tags?.join(', ') || '');
   const [copiedAddress, setCopiedAddress] = useState(false);
+  const copyTimeoutRef = useRef<number | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      if (copyTimeoutRef.current !== null) {
+        window.clearTimeout(copyTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const {
     vaultStatus,
@@ -85,7 +94,13 @@ export const VaultDetailPage = ({
       await navigator.clipboard.writeText(vault.address);
       setCopiedAddress(true);
       showToast('Address copied');
-      setTimeout(() => setCopiedAddress(false), 2000);
+      if (copyTimeoutRef.current !== null) {
+        window.clearTimeout(copyTimeoutRef.current);
+      }
+      copyTimeoutRef.current = window.setTimeout(() => {
+        setCopiedAddress(false);
+        copyTimeoutRef.current = null;
+      }, 2000);
     } catch {
       showToast('Clipboard unavailable');
     }

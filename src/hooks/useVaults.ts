@@ -1,9 +1,10 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import type { PlanInput, PlanOutput } from '@/lib/bitcoin/types';
 import {
   getSavedVaults,
   saveVault,
   deleteVault,
+  clearAllVaults,
   updateVaultName,
   updateVaultNotes,
   updateVaultLastChecked,
@@ -18,6 +19,7 @@ export interface UseVaultsReturn {
   vaults: SavedVault[];
   saveNewVault: (plan: PlanInput, result: PlanOutput, name?: string) => SavedVault;
   removeVault: (id: string) => void;
+  clearAllVaults: () => void;
   renameVault: (id: string, name: string) => void;
   updateNotes: (id: string, notes: string) => void;
   updateTags: (id: string, tags: string[]) => void;
@@ -35,10 +37,6 @@ export const useVaults = (): UseVaultsReturn => {
     setVaults(getSavedVaults());
   }, []);
 
-  useEffect(() => {
-    refreshVaults();
-  }, [refreshVaults]);
-
   const saveNewVault = useCallback(
     (plan: PlanInput, result: PlanOutput, name?: string) => {
       const vault = saveVault(plan, result, name);
@@ -55,6 +53,11 @@ export const useVaults = (): UseVaultsReturn => {
     },
     [refreshVaults]
   );
+
+  const clearAll = useCallback(() => {
+    clearAllVaults();
+    refreshVaults();
+  }, [refreshVaults]);
 
   const renameVault = useCallback(
     (id: string, name: string) => {
@@ -110,6 +113,7 @@ export const useVaults = (): UseVaultsReturn => {
     vaults,
     saveNewVault,
     removeVault,
+    clearAllVaults: clearAll,
     renameVault,
     updateNotes,
     updateTags,
