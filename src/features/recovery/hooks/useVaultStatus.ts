@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import type { BitcoinNetwork } from '@/lib/bitcoin/types';
 import type {
   AddressSummary,
@@ -9,6 +9,7 @@ import {
   supportsPublicExplorerNetwork
 } from '@/lib/bitcoin/explorer';
 import { useToast } from '@/components/Toast';
+import { useAsyncState } from '@/hooks/useAsyncState';
 import type { UseVaultStatusReturn } from '../types';
 
 const MIN_REFRESH_INTERVAL_MS = 5000;
@@ -19,18 +20,8 @@ export const useVaultStatus = (
 ): UseVaultStatusReturn => {
   const { showToast } = useToast();
   const [explorerProvider, setExplorerProvider] = useState<ExplorerProvider>('mempool');
-  const [vaultStatus, setVaultStatus] = useState<AddressSummary | null>(null);
-  const [statusError, setStatusError] = useState<string | null>(null);
-  const [isCheckingStatus, setIsCheckingStatus] = useState(false);
+  const { data: vaultStatus, isLoading: isCheckingStatus, error: statusError, execute, reset: resetAsync } = useAsyncState<AddressSummary>();
   const lastRefreshRef = useRef<number>(0);
-  const isMountedRef = useRef(true);
-
-  useEffect(() => {
-    isMountedRef.current = true;
-    return () => {
-      isMountedRef.current = false;
-    };
-  }, []);
 
   const publicExplorerAvailable = supportsPublicExplorerNetwork(network);
 
@@ -39,7 +30,6 @@ export const useVaultStatus = (
 
     if (!publicExplorerAvailable) {
       const message = 'Public explorers do not support Regtest. Connect a local node for live status.';
-      setStatusError(message);
       showToast(message);
       return;
     }
@@ -53,37 +43,24 @@ export const useVaultStatus = (
       return;
     }
 
-    setIsCheckingStatus(true);
-    setStatusError(null);
     lastRefreshRef.current = now;
 
-    try {
+    await execute(async () => {
       const summary = await fetchAddressSummary({
         network,
         address,
         provider: explorerProvider,
         fallbackToOtherProvider: true,
       });
-      if (!isMountedRef.current) return;
-      setVaultStatus(summary);
       showToast(`Vault status updated via ${summary.providerLabel}`);
-    } catch (error) {
-      if (!isMountedRef.current) return;
-      const message = (error as Error).message || 'Could not fetch vault status.';
-      setStatusError(message);
-      showToast(message);
-    } finally {
-      if (isMountedRef.current) {
-        setIsCheckingStatus(false);
-      }
-    }
-  }, [address, explorerProvider, network, showToast, publicExplorerAvailable]);
+      return summary;
+    });
+  }, [address, explorerProvider, network, showToast, publicExplorerAvailable, execute]);
 
   const clearVaultStatus = useCallback(() => {
-    setVaultStatus(null);
-    setStatusError(null);
+    resetAsync();
     lastRefreshRef.current = 0;
-  }, []);
+  }, [resetAsync]);
 
   return {
     vaultStatus,

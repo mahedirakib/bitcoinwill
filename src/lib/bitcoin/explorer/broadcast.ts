@@ -5,7 +5,8 @@ import { fetchTextWithTimeout } from './http';
 import { buildExplorerTxUrl } from './urls';
 
 const broadcastWithProvider = async (
-  request: Required<Pick<BroadcastTransactionRequest, 'network' | 'provider' | 'rawTxHex' | 'timeoutMs' | 'fetcher'>>,
+  request: Required<Pick<BroadcastTransactionRequest, 'network' | 'provider' | 'rawTxHex' | 'timeoutMs' | 'fetcher'>> &
+    Pick<BroadcastTransactionRequest, 'retryConfig'>,
 ): Promise<BroadcastTransactionResult> => {
   const config = getExplorerConfig(request.network, request.provider);
   const txid = (await fetchTextWithTimeout(
@@ -19,6 +20,7 @@ const broadcastWithProvider = async (
       },
       body: request.rawTxHex,
     },
+    request.retryConfig,
   )).trim();
 
   if (!/^[a-f0-9]{64}$/i.test(txid)) {
@@ -42,6 +44,7 @@ export const broadcastTransaction = async ({
   fallbackToOtherProvider = true,
   timeoutMs,
   fetcher = fetch,
+  retryConfig,
 }: BroadcastTransactionRequest): Promise<BroadcastTransactionResult> => {
   assertPublicExplorerNetwork(network);
   if (!isExplorerProvider(provider)) {
@@ -62,6 +65,7 @@ export const broadcastTransaction = async ({
         provider: providerCandidate,
         timeoutMs: requestTimeoutMs,
         fetcher,
+        retryConfig,
       });
       return {
         ...result,

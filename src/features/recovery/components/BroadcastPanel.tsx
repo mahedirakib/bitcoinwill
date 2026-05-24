@@ -1,4 +1,4 @@
-import { CheckCircle2, ExternalLink, Key, Send } from 'lucide-react';
+import { CheckCircle2, ExternalLink, Key, Send, AlertTriangle, RotateCcw } from 'lucide-react';
 import type { BroadcastPanelProps } from '../types';
 
 const MAINNET_BROADCAST_CONFIRMATION = 'I UNDERSTAND THIS BROADCASTS ON MAINNET';
@@ -90,11 +90,26 @@ export const BroadcastPanel = ({
       </button>
 
       {broadcastError && (
-        <div
-          role="alert"
-          className="rounded-md border border-danger/20 bg-danger/5 p-3 text-sm text-danger"
-        >
-          {broadcastError}
+        <div className="space-y-3">
+          <div
+            role="alert"
+            className="flex items-start gap-2 rounded-md border border-danger/20 bg-danger/5 p-3 text-sm text-danger"
+          >
+            <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+            <div className="flex-1">
+              <p className="font-medium">Broadcast failed</p>
+              <p className="text-xs text-danger/80 mt-1">{broadcastError}</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onBroadcast}
+            disabled={isBroadcasting || !canBroadcast}
+            className="btn-secondary w-full"
+          >
+            <RotateCcw className={`h-4 w-4 ${isBroadcasting ? 'animate-spin' : ''}`} />
+            {isBroadcasting ? 'Retrying…' : 'Retry broadcast'}
+          </button>
         </div>
       )}
 

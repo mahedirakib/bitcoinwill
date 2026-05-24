@@ -1,4 +1,5 @@
 import type { BitcoinNetwork } from '../types';
+import type { RetryConfig } from './http';
 
 export const EXPLORER_PROVIDERS = ['mempool', 'blockstream'] as const;
 export type ExplorerProvider = (typeof EXPLORER_PROVIDERS)[number];
@@ -41,6 +42,7 @@ export interface AddressSummaryRequest {
   fallbackToOtherProvider?: boolean;
   timeoutMs?: number;
   fetcher?: typeof fetch;
+  retryConfig?: RetryConfig;
 }
 
 export interface BroadcastTransactionRequest {
@@ -50,6 +52,7 @@ export interface BroadcastTransactionRequest {
   fallbackToOtherProvider?: boolean;
   timeoutMs?: number;
   fetcher?: typeof fetch;
+  retryConfig?: RetryConfig;
 }
 
 export interface BroadcastTransactionResult {

@@ -2,12 +2,12 @@ import { useReducer, useState, useEffect, useRef, useCallback } from 'react';
 import * as ecc from 'tiny-secp256k1';
 import { buildPlan } from '@/lib/bitcoin/planEngine';
 import type { PlanOutput, BitcoinNetwork } from '@/lib/bitcoin/types';
-import { validatePubkey } from '@/lib/bitcoin/validation';
+
 import { downloadJson, downloadTxt } from '@/lib/utils/download';
 import { useSettings } from '@/state/settings';
 import { useToast } from '@/components/Toast';
 import { useVaults } from '@/hooks/useVaults';
-import { normalizePubkeyHex, usesDisallowedSampleKey } from './safety';
+import { usesDisallowedSampleKey } from './safety';
 import { parseWizardDraft } from './draftState';
 import { buildSharePrintHtml, buildSharesText } from './shareExport';
 import { splitPrivateKey } from '@/lib/bitcoin/sss';
@@ -35,6 +35,12 @@ import {
   type Step,
   wizardReducer,
 } from './types';
+import {
+  getNextStep,
+  getPreviousStep,
+  canTransitionTo,
+  getStepDefinition,
+} from './stateMachine';
 
 export interface InstructionData {
   plan: PlanInput;
@@ -126,35 +132,22 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorW
   }, [network, state.step, dispatch]);
 
   const nextStep = () => {
-    if (state.step === 'TYPE') {
-      if (state.input.recovery_method === 'social' && !state.input.sss_config) {
-        dispatch({ type: 'SET_ERRORS', payload: { sss: 'Please select a share configuration (2-of-3 or 3-of-5)' } });
-        return;
+    const next = getNextStep(state.step);
+    if (next && canTransitionTo(state.step, next, state)) {
+      dispatch({ type: 'SET_STEP', payload: next });
+    } else if (state.step === 'TYPE' || state.step === 'KEYS') {
+      const validation = getStepDefinition(state.step).validate(state);
+      if (validation) {
+        dispatch({ type: 'SET_ERRORS', payload: validation });
       }
-      dispatch({ type: 'SET_STEP', payload: 'KEYS' });
     }
-    else if (state.step === 'KEYS') {
-      const errors: Record<string, string> = {};
-      const ownerPubkey = normalizePubkeyHex(state.input.owner_pubkey);
-      const beneficiaryPubkey = normalizePubkeyHex(state.input.beneficiary_pubkey);
-      const usesGeneratedBeneficiaryKey = state.input.recovery_method === 'social';
-
-      if (!validatePubkey(ownerPubkey)) errors.owner = 'Invalid public key format (must be 66 hex characters).';
-      if (!usesGeneratedBeneficiaryKey) {
-        if (!validatePubkey(beneficiaryPubkey)) errors.beneficiary = 'Invalid public key format.';
-        if (ownerPubkey === beneficiaryPubkey) errors.beneficiary = 'Keys must be different.';
-      }
-      
-      if (Object.keys(errors).length > 0) dispatch({ type: 'SET_ERRORS', payload: errors });
-      else dispatch({ type: 'SET_STEP', payload: 'TIMELOCK' });
-    }
-    else if (state.step === 'TIMELOCK') dispatch({ type: 'SET_STEP', payload: 'REVIEW' });
   };
 
   const prevStep = () => {
-    if (state.step === 'KEYS') dispatch({ type: 'SET_STEP', payload: 'TYPE' });
-    else if (state.step === 'TIMELOCK') dispatch({ type: 'SET_STEP', payload: 'KEYS' });
-    else if (state.step === 'REVIEW') dispatch({ type: 'SET_STEP', payload: 'TIMELOCK' });
+    const prev = getPreviousStep(state.step);
+    if (prev && canTransitionTo(state.step, prev, state)) {
+      dispatch({ type: 'SET_STEP', payload: prev });
+    }
   };
 
   const handleGenerate = async () => {

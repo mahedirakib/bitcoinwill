@@ -1,10 +1,11 @@
 import { Component, ErrorInfo, ReactNode } from 'react';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, RotateCcw, ArrowLeft } from 'lucide-react';
 
 interface StepErrorBoundaryProps {
   stepName: string;
   children: ReactNode;
   onReset?: () => void;
+  onBack?: () => void;
 }
 
 interface StepErrorBoundaryState {
@@ -42,7 +43,7 @@ export class StepErrorBoundary extends Component<StepErrorBoundaryProps, StepErr
                 Something went wrong in {this.props.stepName}
               </h3>
               <p className="text-xs text-danger/80">
-                An unexpected error occurred. You can try again or go back to the previous step.
+                An unexpected error occurred. Your inputs are preserved — you can try again.
               </p>
               {this.state.error && (
                 <pre className="rounded bg-white p-2 font-mono text-[11px] text-danger break-all">
@@ -51,9 +52,18 @@ export class StepErrorBoundary extends Component<StepErrorBoundaryProps, StepErr
               )}
             </div>
           </div>
-          <button type="button" onClick={this.handleReset} className="btn-primary">
-            Try again
-          </button>
+          <div className="flex gap-3">
+            <button type="button" onClick={this.handleReset} className="btn-primary">
+              <RotateCcw className="h-4 w-4" />
+              Try again
+            </button>
+            {this.props.onBack && (
+              <button type="button" onClick={this.props.onBack} className="btn-secondary">
+                <ArrowLeft className="h-4 w-4" />
+                Go back
+              </button>
+            )}
+          </div>
         </div>
       );
     }

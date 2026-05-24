@@ -39,3 +39,11 @@ export {
 export { fetchAddressSummary } from './fetch';
 export { broadcastTransaction } from './broadcast';
 export { buildExplorerAddressUrl, buildExplorerTxUrl } from './urls';
+export {
+  ExplorerError,
+  ExplorerNetworkError,
+  ExplorerTimeoutError,
+  ExplorerClientError,
+  ExplorerServerError,
+} from './errors';
+export type { RetryConfig } from './http';

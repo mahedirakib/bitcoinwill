@@ -111,6 +111,7 @@ describe('explorer helpers', () => {
       provider: 'mempool',
       fallbackToOtherProvider: true,
       fetcher,
+      retryConfig: { maxRetries: 0, baseDelayMs: 0, maxDelayMs: 0 },
     });
 
     expect(summary.providerUsed).toBe('blockstream');
@@ -229,6 +230,7 @@ describe('explorer helpers', () => {
       rawTxHex: '02000000000100000000',
       fallbackToOtherProvider: true,
       fetcher,
+      retryConfig: { maxRetries: 0, baseDelayMs: 0, maxDelayMs: 0 },
     });
 
     expect(result.txid).toBe(txidB);

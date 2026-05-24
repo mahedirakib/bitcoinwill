@@ -5,7 +5,8 @@ import { fetchJsonWithTimeout, fetchTextWithTimeout } from './http';
 import { getFundingEvents, getOldestConfirmedTxid } from './parsers';
 
 const fetchAddressSummaryWithProvider = async (
-  request: Required<Pick<AddressSummaryRequest, 'network' | 'address' | 'provider' | 'timeoutMs' | 'fetcher'>>,
+  request: Required<Pick<AddressSummaryRequest, 'network' | 'address' | 'provider' | 'timeoutMs' | 'fetcher'>> &
+    Pick<AddressSummaryRequest, 'retryConfig'>,
 ): Promise<AddressSummary> => {
   const config = getExplorerConfig(request.network, request.provider);
   const encodedAddress = encodeURIComponent(request.address);
@@ -15,16 +16,20 @@ const fetchAddressSummaryWithProvider = async (
       `${config.apiBaseUrl}/address/${encodedAddress}`,
       request.fetcher,
       request.timeoutMs,
+      request.retryConfig,
     ),
     fetchJsonWithTimeout<EsploraTx[]>(
       `${config.apiBaseUrl}/address/${encodedAddress}/txs`,
       request.fetcher,
       request.timeoutMs,
+      request.retryConfig,
     ),
     fetchTextWithTimeout(
       `${config.apiBaseUrl}/blocks/tip/height`,
       request.fetcher,
       request.timeoutMs,
+      undefined,
+      request.retryConfig,
     ),
   ]);
 
@@ -53,6 +58,7 @@ const fetchAddressSummaryWithProvider = async (
         `${config.apiBaseUrl}/address/${encodedAddress}/txs/chain/${lastSeenTxid}`,
         request.fetcher,
         request.timeoutMs,
+        request.retryConfig,
       );
       const olderTxs = Array.isArray(olderTxsRaw) ? olderTxsRaw : [];
       if (olderTxs.length === 0) break;
@@ -102,6 +108,7 @@ export const fetchAddressSummary = async ({
   fallbackToOtherProvider = true,
   timeoutMs,
   fetcher = fetch,
+  retryConfig,
 }: AddressSummaryRequest): Promise<AddressSummary> => {
   assertPublicExplorerNetwork(network);
   if (!isExplorerProvider(provider)) {
@@ -122,6 +129,7 @@ export const fetchAddressSummary = async ({
         provider: providerCandidate,
         timeoutMs: requestTimeoutMs,
         fetcher,
+        retryConfig,
       });
       return {
         ...summary,

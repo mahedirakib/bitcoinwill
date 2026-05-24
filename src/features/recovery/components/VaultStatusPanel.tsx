@@ -1,4 +1,4 @@
-import { Activity, ExternalLink, RefreshCw } from 'lucide-react';
+import { Activity, ExternalLink, RefreshCw, AlertTriangle } from 'lucide-react';
 import { StatusCard } from '@/components/DataDisplay';
 import {
   EXPLORER_PROVIDERS,
@@ -60,11 +60,26 @@ export const VaultStatusPanel = ({
       </div>
 
       {statusError && (
-        <div
-          role="alert"
-          className="rounded-md border border-danger/20 bg-danger/5 p-3 text-sm text-danger"
-        >
-          {statusError}
+        <div className="space-y-3">
+          <div
+            role="alert"
+            className="flex items-start gap-2 rounded-md border border-danger/20 bg-danger/5 p-3 text-sm text-danger"
+          >
+            <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+            <div className="flex-1">
+              <p className="font-medium">Unable to fetch vault status</p>
+              <p className="text-xs text-danger/80 mt-1">{statusError}</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onRefresh}
+            disabled={isCheckingStatus}
+            className="btn-secondary w-full"
+          >
+            <RefreshCw className={`h-4 w-4 ${isCheckingStatus ? 'animate-spin' : ''}`} />
+            {isCheckingStatus ? 'Retrying…' : 'Retry'}
+          </button>
         </div>
       )}
 
