@@ -224,11 +224,12 @@ export const SettingsPage = ({ onNavigate }: SettingsPageProps) => {
             </div>
 
             <div className="space-y-2">
-              <label className="field-label">Type the confirmation phrase</label>
+              <label htmlFor="mainnet-confirm" className="field-label">Type the confirmation phrase</label>
               <div className="rounded-md bg-muted px-3 py-2 text-center font-mono text-xs">
                 I UNDERSTAND MAINNET IS REAL MONEY
               </div>
               <input
+                id="mainnet-confirm"
                 type="text"
                 value={confirmPhrase}
                 onChange={(e) => setConfirmPhrase(e.target.value)}

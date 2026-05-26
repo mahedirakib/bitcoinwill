@@ -30,7 +30,16 @@ const calculateDelay = (attempt: number, config: RetryConfig): number => {
 
 const isRetryableError = (error: unknown): boolean => {
   if (error instanceof ExplorerError) return error.isRetryable;
-  if (error instanceof TypeError) return true;
+  // Only retry TypeErrors that appear to be network-related (fetch failures).
+  // Other TypeErrors are likely programming bugs and should not be retried.
+  if (error instanceof TypeError) {
+    const message = error.message.toLowerCase();
+    return (
+      message.includes('fetch') ||
+      message.includes('network') ||
+      message.includes('failed to fetch')
+    );
+  }
   if (error instanceof Error && error.name === 'AbortError') return true;
   return false;
 };

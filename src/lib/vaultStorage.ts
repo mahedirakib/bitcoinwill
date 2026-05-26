@@ -18,7 +18,12 @@ const STORAGE_KEY = 'bitcoinwill_saved_vaults';
 
 const generateVaultId = (): string => {
   const timestamp = Date.now().toString(36);
-  const random = Math.random().toString(36).substring(2, 8);
+  // Use crypto.randomUUID when available for better collision resistance,
+  // falling back to Math.random for environments without crypto.
+  const random =
+    typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID().replace(/-/g, '').slice(0, 8)
+      : Math.random().toString(36).substring(2, 8);
   return `${timestamp}-${random}`;
 };
 
@@ -48,18 +53,30 @@ export const saveVault = (plan: PlanInput, result: PlanOutput, name?: string): S
 
   const existing = getSavedVaults();
   const updated = [vault, ...existing];
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  } catch {
+    // Ignore storage errors in restricted browser contexts
+  }
   return vault;
 };
 
 export const deleteVault = (id: string): void => {
   const existing = getSavedVaults();
   const filtered = existing.filter((v) => v.id !== id);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+  } catch {
+    // Ignore storage errors
+  }
 };
 
 export const clearAllVaults = (): void => {
-  localStorage.removeItem(STORAGE_KEY);
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // Ignore storage errors
+  }
 };
 
 export const updateVaultName = (id: string, name: string): void => {
@@ -67,7 +84,11 @@ export const updateVaultName = (id: string, name: string): void => {
   const updated = existing.map((v) =>
     v.id === id ? { ...v, name: name.trim() || v.name } : v
   );
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  } catch {
+    // Ignore storage errors
+  }
 };
 
 export const updateVaultNotes = (id: string, notes: string): void => {
@@ -75,7 +96,11 @@ export const updateVaultNotes = (id: string, notes: string): void => {
   const updated = existing.map((v) =>
     v.id === id ? { ...v, notes: notes.trim() } : v
   );
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  } catch {
+    // Ignore storage errors
+  }
 };
 
 export const updateVaultLastChecked = (id: string): void => {
@@ -83,7 +108,11 @@ export const updateVaultLastChecked = (id: string): void => {
   const updated = existing.map((v) =>
     v.id === id ? { ...v, lastCheckedAt: new Date().toISOString() } : v
   );
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  } catch {
+    // Ignore storage errors
+  }
 };
 
 export const updateVaultTags = (id: string, tags: string[]): void => {
@@ -98,7 +127,11 @@ export const updateVaultTags = (id: string, tags: string[]): void => {
         }
       : v
   );
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  } catch {
+    // Ignore storage errors
+  }
 };
 
 export const getVaultById = (id: string): SavedVault | undefined => {
@@ -156,7 +189,11 @@ export const importVaultsFromBackup = (json: string): ImportResult => {
         result.imported++;
       }
 
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
+      } catch {
+        result.errors.push('Failed to save imported vaults to storage');
+      }
       return result;
     }
 

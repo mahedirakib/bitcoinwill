@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 
 export interface AsyncState<T> {
   data: T | null;
@@ -32,6 +32,12 @@ export function useAsyncState<T>(): UseAsyncStateReturn<T> {
   });
 
   const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   const execute = useCallback(async (asyncFn: () => Promise<T>): Promise<T | null> => {
     setState((prev) => ({ ...prev, isLoading: true, error: null }));

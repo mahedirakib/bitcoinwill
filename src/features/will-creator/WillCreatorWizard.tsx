@@ -248,9 +248,13 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorW
 
   const handleDownload = () => {
     if (!state.result) return;
-    const exportData = createRecoveryKitExport(state.input, state.result);
-    downloadJson(`recovery-kit-${state.result.address.slice(0, 8)}.json`, exportData);
-    showToast("Recovery Kit Downloaded");
+    try {
+      const exportData = createRecoveryKitExport(state.input, state.result);
+      downloadJson(`recovery-kit-${state.result.address.slice(0, 8)}.json`, exportData);
+      showToast("Recovery Kit Downloaded");
+    } catch (e) {
+      showToast(`Download failed: ${(e as Error).message}`);
+    }
   };
 
   const copyToClipboard = async (text: string, label: string): Promise<boolean> => {
@@ -285,23 +289,27 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorW
   const printShares = (result: PlanOutput) => {
     if (!result.social_recovery_kit) return;
 
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) {
-      showToast('Please allow popups to print share cards');
-      return;
-    }
-
     try {
-      printWindow.opener = null;
-      printWindow.document.write(buildSharePrintHtml(result));
+      const html = buildSharePrintHtml(result);
+      const blob = new Blob([html], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const printWindow = window.open(url, '_blank');
 
-      printWindow.document.close();
+      if (!printWindow) {
+        URL.revokeObjectURL(url);
+        showToast('Please allow popups to print share cards');
+        return;
+      }
+
+      printWindow.opener = null;
+
       // Allow browser to render before printing
       if (printTimeoutRef.current) {
         window.clearTimeout(printTimeoutRef.current);
       }
       printTimeoutRef.current = window.setTimeout(() => {
         printWindow.print();
+        URL.revokeObjectURL(url);
       }, 250);
     } catch {
       showToast('Failed to open print dialog');

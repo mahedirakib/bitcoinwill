@@ -207,6 +207,7 @@ export const VaultDetailPage = ({
               type="button"
               onClick={handleSaveName}
               className="rounded-md p-1.5 text-success hover:bg-success/10"
+              aria-label="Save vault name"
             >
               <Check className="h-4 w-4" />
             </button>
@@ -214,12 +215,13 @@ export const VaultDetailPage = ({
               type="button"
               onClick={handleCancelEdit}
               className="rounded-md p-1.5 text-muted-foreground hover:bg-muted"
+              aria-label="Cancel editing vault name"
             >
               <X className="h-4 w-4" />
             </button>
           </div>
         ) : (
-          <div className="flex items-center gap-2">
+          <div className="group flex items-center gap-2">
             <h1 className="text-xl font-semibold tracking-tight">{vault.name}</h1>
             <button
               type="button"

@@ -63,6 +63,10 @@ export const generateRecoveryKitChecksum = async (
   plan: PlanInput,
   result: PlanOutput
 ): Promise<string> => {
+  if (typeof crypto === 'undefined' || !crypto.subtle) {
+    throw new Error('Cryptographic digest is not available in this environment. Use a secure HTTPS connection.');
+  }
+
   const data = JSON.stringify({
     plan: {
       network: plan.network,

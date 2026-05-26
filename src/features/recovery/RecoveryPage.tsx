@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import * as ecc from 'tiny-secp256k1';
 import type { InstructionModel } from '@/lib/bitcoin/instructions';
 import {
@@ -69,8 +69,16 @@ const RecoveryPage = ({ initialData, onBack }: RecoveryPageProps) => {
     clearBroadcastState,
   } = useTransactionBroadcast(recoveryNetwork, explorerProvider);
 
+  const processedInitialDataRef = useRef<string | null>(null);
+
   useEffect(() => {
-    if (initialData?.plan && initialData?.result) {
+    // Use a stable key to avoid re-processing when only the object reference changes
+    const dataKey = initialData
+      ? `${initialData.plan?.owner_pubkey}-${initialData.result?.address}-${initialData.created_at}`
+      : null;
+
+    if (dataKey && dataKey !== processedInitialDataRef.current) {
+      processedInitialDataRef.current = dataKey;
       try {
         const normalized = validateAndNormalizeRecoveryKit(initialData);
         const m = buildInstructions(normalized.plan, normalized.result, normalized.created_at);

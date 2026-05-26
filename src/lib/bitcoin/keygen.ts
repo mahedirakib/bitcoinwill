@@ -5,7 +5,12 @@ const DEFAULT_MAX_ATTEMPTS = 128;
 
 export type RandomBytes = (target: Uint8Array) => Uint8Array;
 
-const browserRandomBytes: RandomBytes = (target) => crypto.getRandomValues(target);
+const browserRandomBytes: RandomBytes = (target) => {
+  if (typeof crypto === 'undefined' || !crypto.getRandomValues) {
+    throw new Error('Cryptographically secure random number generator is not available in this environment.');
+  }
+  return crypto.getRandomValues(target);
+};
 
 export const generateSecp256k1PrivateKey = (
   randomBytes: RandomBytes = browserRandomBytes,
