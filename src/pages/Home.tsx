@@ -14,6 +14,7 @@ import {
 import type { NavView } from '@/components/AppShell';
 import { useVaults } from '@/hooks/useVaults';
 import type { SavedVault } from '@/lib/vaultStorage';
+import { formatRelativeTime } from '@/lib/utils/time';
 
 interface HomeProps {
   onNavigate: (view: NavView) => void;
@@ -28,10 +29,17 @@ const VaultPreview = ({ vault, onClick }: { vault: SavedVault; onClick: () => vo
       ? 'bg-success/10 text-success'
       : 'bg-muted text-muted-foreground';
 
+  const lastCheckedLabel = vault.lastCheckedAt
+    ? `Checked ${formatRelativeTime(vault.lastCheckedAt)}`
+    : null;
+
   return (
     <button
       type="button"
       onClick={onClick}
+      aria-label={
+        lastCheckedLabel ? `${vault.name}, ${lastCheckedLabel}` : vault.name
+      }
       className="flex w-full items-center gap-3 rounded-md border border-border bg-white p-3 text-left transition-colors hover:border-border-strong hover:bg-muted/30"
     >
       <div className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md ${networkColor}`}>
@@ -44,7 +52,11 @@ const VaultPreview = ({ vault, onClick }: { vault: SavedVault; onClick: () => vo
         </p>
       </div>
       {vault.lastCheckedAt && (
-        <span className="flex-shrink-0 text-xs text-success" title="Status checked">
+        <span
+          className="flex-shrink-0 text-xs text-success"
+          title={lastCheckedLabel ?? undefined}
+          aria-label={lastCheckedLabel ?? undefined}
+        >
           <Activity className="h-3 w-3" />
         </span>
       )}

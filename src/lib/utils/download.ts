@@ -1,6 +1,27 @@
 /**
  * Utility to download data as a JSON file in the browser.
  */
+const triggerDownload = (filename: string, blob: Blob) => {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.rel = 'noopener';
+  link.style.display = 'none';
+
+  document.body.appendChild(link);
+  try {
+    link.click();
+  } finally {
+    if (link.parentNode) {
+      link.parentNode.removeChild(link);
+    }
+    window.setTimeout(() => {
+      URL.revokeObjectURL(url);
+    }, 100);
+  }
+};
+
 export const downloadJson = <T>(filename: string, data: T) => {
   let jsonString: string;
   try {
@@ -8,37 +29,9 @@ export const downloadJson = <T>(filename: string, data: T) => {
   } catch {
     throw new Error('Failed to serialize data to JSON');
   }
-  const blob = new Blob([jsonString], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-
-  // Delay cleanup so the browser has time to start the download
-  window.setTimeout(() => {
-    URL.revokeObjectURL(url);
-  }, 100);
+  triggerDownload(filename, new Blob([jsonString], { type: 'application/json' }));
 };
 
 export const downloadTxt = (filename: string, content: string) => {
-  const blob = new Blob([content], { type: 'text/plain' });
-  const url = URL.createObjectURL(blob);
-
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-
-  // Delay cleanup so the browser has time to start the download
-  window.setTimeout(() => {
-    URL.revokeObjectURL(url);
-  }, 100);
+  triggerDownload(filename, new Blob([content], { type: 'text/plain' }));
 };

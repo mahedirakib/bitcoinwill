@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, lazy, Suspense, startTransition } from 're
 import { DevPlayground } from './components/DevPlayground'
 import type { InstructionData } from './features/will-creator/WillCreatorWizard'
 import { SettingsProvider } from './state/settings'
-import { ErrorBoundary } from './components/ErrorBoundary'
+import { ErrorBoundary, PageErrorFallback } from './components/ErrorBoundary'
 import { ToastProvider, useToast } from './components/Toast'
 import { KeyboardShortcutsHelp } from './components/KeyboardShortcutsHelp'
 import { PageLoading } from './components/Loading'
@@ -198,68 +198,161 @@ const AppContent = () => {
     >
       <Suspense fallback={<PageLoading />}>
         {activeView === 'home' && (
-          <Home
-            onNavigate={(v) => navigateTo(v)}
-            onViewVault={handleViewVault}
-          />
+          <ErrorBoundary
+            key="home"
+            fallback={
+              <PageErrorFallback
+                onRetry={() => navigateTo('home', 'replace')}
+                onGoHome={() => navigateTo('home', 'replace')}
+              />
+            }
+          >
+            <Home
+              onNavigate={(v) => navigateTo(v)}
+              onViewVault={handleViewVault}
+            />
+          </ErrorBoundary>
         )}
 
         {activeView === 'create' && (
-          <WillCreatorWizard
-            onCancel={() => navigateTo('home', 'replace')}
-            onViewInstructions={(data) => {
-              setInstructionData(data)
-              navigateTo('instructions')
-            }}
-          />
+          <ErrorBoundary
+            key="create"
+            fallback={
+              <PageErrorFallback
+                onRetry={() => navigateTo('create', 'replace')}
+                onGoHome={() => navigateTo('home', 'replace')}
+              />
+            }
+          >
+            <WillCreatorWizard
+              onCancel={() => navigateTo('home', 'replace')}
+              onViewInstructions={(data) => {
+                setInstructionData(data)
+                navigateTo('instructions')
+              }}
+            />
+          </ErrorBoundary>
         )}
 
         {activeView === 'learn' && (
-          <Learn onBack={() => navigateTo('home', 'replace')} />
+          <ErrorBoundary
+            key="learn"
+            fallback={
+              <PageErrorFallback
+                onRetry={() => navigateTo('learn', 'replace')}
+                onGoHome={() => navigateTo('home', 'replace')}
+              />
+            }
+          >
+            <Learn onBack={() => navigateTo('home', 'replace')} />
+          </ErrorBoundary>
         )}
 
         {activeView === 'protocol' && (
-          <Protocol
-            onBack={() => navigateTo('home', 'replace')}
-            onOpenWhitepaper={() => navigateTo('whitepaper')}
-          />
+          <ErrorBoundary
+            key="protocol"
+            fallback={
+              <PageErrorFallback
+                onRetry={() => navigateTo('protocol', 'replace')}
+                onGoHome={() => navigateTo('home', 'replace')}
+              />
+            }
+          >
+            <Protocol
+              onBack={() => navigateTo('home', 'replace')}
+              onOpenWhitepaper={() => navigateTo('whitepaper')}
+            />
+          </ErrorBoundary>
         )}
 
         {activeView === 'whitepaper' && (
-          <Whitepaper onBack={() => navigateTo('home', 'replace')} />
+          <ErrorBoundary
+            key="whitepaper"
+            fallback={
+              <PageErrorFallback
+                onRetry={() => navigateTo('whitepaper', 'replace')}
+                onGoHome={() => navigateTo('home', 'replace')}
+              />
+            }
+          >
+            <Whitepaper onBack={() => navigateTo('home', 'replace')} />
+          </ErrorBoundary>
         )}
 
         {(activeView === 'instructions' || activeView === 'recover') && (
-          <Instructions
-            initialData={instructionData}
-            onBack={() => {
-              setInstructionData(undefined)
-              navigateTo('home', 'replace')
-            }}
-          />
+          <ErrorBoundary
+            key="instructions"
+            fallback={
+              <PageErrorFallback
+                onRetry={() => navigateTo('home', 'replace')}
+                onGoHome={() => navigateTo('home', 'replace')}
+              />
+            }
+          >
+            <Instructions
+              initialData={instructionData}
+              onBack={() => {
+                setInstructionData(undefined)
+                navigateTo('home', 'replace')
+              }}
+            />
+          </ErrorBoundary>
         )}
 
         {activeView === 'vaults' && !selectedVault && (
-          <VaultsPage
-            onNavigate={(v) => navigateTo(v)}
-            onViewVault={handleViewVault}
-          />
+          <ErrorBoundary
+            key="vaults-list"
+            fallback={
+              <PageErrorFallback
+                onRetry={() => navigateTo('vaults', 'replace')}
+                onGoHome={() => navigateTo('home', 'replace')}
+              />
+            }
+          >
+            <VaultsPage
+              onNavigate={(v) => navigateTo(v)}
+              onViewVault={handleViewVault}
+            />
+          </ErrorBoundary>
         )}
 
         {activeView === 'vaults' && selectedVault && (
-          <VaultDetailPage
-            vault={selectedVault}
-            onBack={() => setSelectedVault(null)}
-            onViewInstructions={handleViewVaultInstructions}
-            onDelete={() => {
-              setSelectedVault(null)
-              showToast('Vault removed')
-            }}
-          />
+          <ErrorBoundary
+            key={`vault-detail-${selectedVault.id}`}
+            fallback={
+              <PageErrorFallback
+                onRetry={() => setSelectedVault(null)}
+                onGoHome={() => {
+                  setSelectedVault(null)
+                  navigateTo('home', 'replace')
+                }}
+              />
+            }
+          >
+            <VaultDetailPage
+              vault={selectedVault}
+              onBack={() => setSelectedVault(null)}
+              onViewInstructions={handleViewVaultInstructions}
+              onDelete={() => {
+                setSelectedVault(null)
+                showToast('Vault removed')
+              }}
+            />
+          </ErrorBoundary>
         )}
 
         {activeView === 'settings' && (
-          <SettingsPage onNavigate={(v) => navigateTo(v)} />
+          <ErrorBoundary
+            key="settings"
+            fallback={
+              <PageErrorFallback
+                onRetry={() => navigateTo('settings', 'replace')}
+                onGoHome={() => navigateTo('home', 'replace')}
+              />
+            }
+          >
+            <SettingsPage onNavigate={(v) => navigateTo(v)} />
+          </ErrorBoundary>
         )}
       </Suspense>
 

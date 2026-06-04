@@ -14,7 +14,8 @@ export interface SavedVault {
   tags?: string[];
 }
 
-const STORAGE_KEY = 'bitcoinwill_saved_vaults';
+export const VAULTS_STORAGE_KEY = 'bitcoinwill_saved_vaults';
+const STORAGE_KEY = VAULTS_STORAGE_KEY;
 
 const generateVaultId = (): string => {
   const timestamp = Date.now().toString(36);

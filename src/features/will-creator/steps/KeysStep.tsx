@@ -98,7 +98,16 @@ export const KeysStep = ({
             Use sample key
           </button>
         )}
-        {errors.owner && <p id="owner-pubkey-error" className="text-xs text-danger">{errors.owner}</p>}
+        {errors.owner && (
+          <p
+            id="owner-pubkey-error"
+            role="alert"
+            aria-live="polite"
+            className="text-xs text-danger"
+          >
+            {errors.owner}
+          </p>
+        )}
       </div>
 
       {/* Hardware wallet row */}
@@ -163,7 +172,16 @@ export const KeysStep = ({
               Use sample key
             </button>
           )}
-          {errors.beneficiary && <p id="beneficiary-pubkey-error" className="text-xs text-danger">{errors.beneficiary}</p>}
+          {errors.beneficiary && (
+            <p
+              id="beneficiary-pubkey-error"
+              role="alert"
+              aria-live="polite"
+              className="text-xs text-danger"
+            >
+              {errors.beneficiary}
+            </p>
+          )}
         </div>
       )}
 

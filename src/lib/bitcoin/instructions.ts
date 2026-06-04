@@ -89,8 +89,11 @@ export const generateRecoveryKitChecksum = async (
   });
 
   const encoder = new TextEncoder();
-  const dataBuffer = encoder.encode(data);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer.buffer as ArrayBuffer);
+  // TextEncoder.encode() always returns a Uint8Array backed by a plain
+  // ArrayBuffer (never SharedArrayBuffer); narrow the generic so it satisfies
+  // SubtleCrypto's BufferSource parameter type.
+  const dataBuffer = encoder.encode(data) as Uint8Array<ArrayBuffer>;
+  const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer);
   const hashArray = new Uint8Array(hashBuffer);
 
   return bytesToHex(hashArray);

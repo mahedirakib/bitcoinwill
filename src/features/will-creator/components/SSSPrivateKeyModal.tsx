@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { AlertTriangle, Check, Copy, Shield } from 'lucide-react';
 import { useToast } from '@/components/Toast';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 
 interface SSSPrivateKeyModalProps {
   privateKey: string;
@@ -13,9 +14,9 @@ export const SSSPrivateKeyModal = ({ privateKey, onConfirm, onCancel }: SSSPriva
   const [hasCopied, setHasCopied] = useState(false);
   const [hasConfirmed, setHasConfirmed] = useState(false);
   const timerRef = useRef<number | null>(null);
-  const modalRef = useRef<HTMLDivElement>(null);
-  const lastFocusedRef = useRef<HTMLElement | null>(null);
   const isCopyingRef = useRef(false);
+
+  const modalRef = useFocusTrap<HTMLDivElement>({ onEscape: onCancel });
 
   useEffect(() => {
     return () => {
@@ -24,53 +25,6 @@ export const SSSPrivateKeyModal = ({ privateKey, onConfirm, onCancel }: SSSPriva
       }
     };
   }, []);
-
-  useEffect(() => {
-    lastFocusedRef.current =
-      document.activeElement instanceof HTMLElement ? document.activeElement : null;
-
-    const previousBodyOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-
-    const focusTimer = window.setTimeout(() => {
-      const firstFocusable = modalRef.current?.querySelector<HTMLElement>(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-      );
-      firstFocusable?.focus();
-    }, 0);
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onCancel();
-        return;
-      }
-
-      if (event.key !== 'Tab' || !modalRef.current) return;
-      const focusable = modalRef.current.querySelectorAll<HTMLElement>(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-      );
-
-      if (focusable.length === 0) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.clearTimeout(focusTimer);
-      window.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = previousBodyOverflow;
-      lastFocusedRef.current?.focus();
-    };
-  }, [onCancel]);
 
   const handleCopy = async () => {
     if (isCopyingRef.current) return;

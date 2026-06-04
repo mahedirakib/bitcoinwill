@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import type { BitcoinNetwork } from '@/lib/bitcoin/types';
 import type {
   AddressSummary,
@@ -21,9 +21,13 @@ export const useVaultStatus = (
   const { showToast } = useToast();
   const [explorerProvider, setExplorerProvider] = useState<ExplorerProvider>('mempool');
   const { data: vaultStatus, isLoading: isCheckingStatus, error: statusError, execute, reset: resetAsync } = useAsyncState<AddressSummary>();
-  const lastRefreshRef = useRef<number>(0);
+  const lastRefreshByAddressRef = useRef<Map<string, number>>(new Map());
 
   const publicExplorerAvailable = supportsPublicExplorerNetwork(network);
+
+  useEffect(() => {
+    lastRefreshByAddressRef.current.delete(address ?? '');
+  }, [address]);
 
   const refreshVaultStatus = useCallback(async () => {
     if (!address) return;
@@ -35,7 +39,8 @@ export const useVaultStatus = (
     }
 
     const now = Date.now();
-    const timeSinceLastRefresh = now - lastRefreshRef.current;
+    const lastRefresh = lastRefreshByAddressRef.current.get(address) ?? 0;
+    const timeSinceLastRefresh = now - lastRefresh;
     if (timeSinceLastRefresh < MIN_REFRESH_INTERVAL_MS) {
       const secondsRemaining = Math.ceil((MIN_REFRESH_INTERVAL_MS - timeSinceLastRefresh) / 1000);
       const message = `Please wait ${secondsRemaining} second${secondsRemaining > 1 ? 's' : ''} before refreshing again`;
@@ -43,7 +48,7 @@ export const useVaultStatus = (
       return;
     }
 
-    lastRefreshRef.current = now;
+    lastRefreshByAddressRef.current.set(address, now);
 
     await execute(async () => {
       const summary = await fetchAddressSummary({
@@ -59,7 +64,7 @@ export const useVaultStatus = (
 
   const clearVaultStatus = useCallback(() => {
     resetAsync();
-    lastRefreshRef.current = 0;
+    lastRefreshByAddressRef.current.clear();
   }, [resetAsync]);
 
   return {

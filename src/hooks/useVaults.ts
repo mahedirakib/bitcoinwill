@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import type { PlanInput, PlanOutput } from '@/lib/bitcoin/types';
 import {
   getSavedVaults,
@@ -14,6 +14,7 @@ import {
   type SavedVault,
   type ImportResult,
 } from '@/lib/vaultStorage';
+import { VAULTS_STORAGE_KEY } from '@/lib/vaultStorage';
 
 export interface UseVaultsReturn {
   vaults: SavedVault[];
@@ -32,6 +33,16 @@ export interface UseVaultsReturn {
 
 export const useVaults = (): UseVaultsReturn => {
   const [vaults, setVaults] = useState<SavedVault[]>(() => getSavedVaults());
+
+  useEffect(() => {
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === null || event.key === VAULTS_STORAGE_KEY) {
+        setVaults(getSavedVaults());
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
 
   const refreshVaults = useCallback(() => {
     setVaults(getSavedVaults());

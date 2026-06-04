@@ -22,6 +22,7 @@ import { useToast } from '@/components/Toast';
 import { useVaults } from '@/hooks/useVaults';
 import { calculateTime } from '@/lib/bitcoin/utils';
 import { downloadJson } from '@/lib/utils/download';
+import { formatRelativeTime } from '@/lib/utils/time';
 import { useVaultStatus } from '@/features/recovery/hooks/useVaultStatus';
 import { formatBtc, formatSats } from '@/lib/bitcoin/explorer';
 
@@ -241,8 +242,11 @@ export const VaultDetailPage = ({
           <span className="inline-flex items-center gap-1.5 rounded-sm bg-muted px-2 py-1 text-xs font-medium">
             {vault.addressType === 'p2tr' ? 'Taproot' : 'P2WSH'}
           </span>
-          <span className="inline-flex items-center gap-1.5 rounded-sm bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">
-            <Clock className="h-3 w-3" /> {new Date(vault.createdAt).toLocaleDateString()}
+          <span
+            className="inline-flex items-center gap-1.5 rounded-sm bg-muted px-2 py-1 text-xs font-medium text-muted-foreground"
+            title={new Date(vault.createdAt).toLocaleString()}
+          >
+            <Clock className="h-3 w-3" /> Created {formatRelativeTime(vault.createdAt)}
           </span>
           {vault.tags && vault.tags.length > 0 && !isEditingTags && (
             vault.tags.map((tag) => (

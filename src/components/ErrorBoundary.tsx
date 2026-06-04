@@ -9,6 +9,11 @@ const withBase = (path = ''): string => {
 
 interface Props {
   children: ReactNode;
+  /**
+   * Optional fallback UI to render when an error is caught.
+   * If omitted, the full-screen error UI is shown.
+   */
+  fallback?: ReactNode;
 }
 
 interface State {
@@ -30,6 +35,9 @@ export class ErrorBoundary extends Component<Props, State> {
 
   public render() {
     if (this.state.hasError) {
+      if (this.props.fallback !== undefined) {
+        return this.props.fallback;
+      }
       return (
         <div className="flex min-h-screen items-center justify-center bg-background p-6">
           <div className="panel w-full max-w-md p-6 space-y-5 text-center">
@@ -75,3 +83,30 @@ export class ErrorBoundary extends Component<Props, State> {
     return this.props.children;
   }
 }
+
+interface PageErrorFallbackProps {
+  onRetry: () => void;
+  onGoHome: () => void;
+}
+
+export const PageErrorFallback = ({ onRetry, onGoHome }: PageErrorFallbackProps) => (
+  <div className="flex flex-col items-center justify-center gap-4 px-6 py-16 text-center">
+    <div className="rounded-full bg-danger/10 p-3 text-danger">
+      <AlertTriangle className="h-6 w-6" />
+    </div>
+    <div className="space-y-1">
+      <h2 className="text-base font-semibold">This page failed to load</h2>
+      <p className="max-w-sm text-sm text-muted-foreground">
+        Something went wrong rendering this view. The rest of the app is unaffected.
+      </p>
+    </div>
+    <div className="flex gap-2">
+      <button type="button" onClick={onGoHome} className="btn-secondary">
+        <Home className="h-4 w-4" /> Home
+      </button>
+      <button type="button" onClick={onRetry} className="btn-primary">
+        <RefreshCcw className="h-4 w-4" /> Retry
+      </button>
+    </div>
+  </div>
+);

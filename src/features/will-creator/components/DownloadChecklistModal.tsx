@@ -1,6 +1,6 @@
-import { useEffect, useRef } from 'react';
 import type { ChecklistItemId } from '../types';
 import { CHECKLIST_ITEMS } from '../types';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 
 interface DownloadChecklistModalProps {
   checklist: Record<ChecklistItemId, boolean>;
@@ -15,52 +15,10 @@ export const DownloadChecklistModal = ({
   onConfirm,
   onClose,
 }: DownloadChecklistModalProps) => {
-  const modalRef = useRef<HTMLDivElement>(null);
-  const lastFocusedRef = useRef<HTMLElement | null>(null);
-
-  useEffect(() => {
-    lastFocusedRef.current =
-      document.activeElement instanceof HTMLElement ? document.activeElement : null;
-
-    const previousBodyOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    const focusTimer = window.setTimeout(() => {
-      const firstCheckbox = modalRef.current?.querySelector<HTMLInputElement>('input[type="checkbox"]');
-      firstCheckbox?.focus();
-    }, 0);
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onClose();
-        return;
-      }
-
-      if (event.key !== 'Tab' || !modalRef.current) return;
-      const focusable = modalRef.current.querySelectorAll<HTMLElement>(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-      );
-
-      if (focusable.length === 0) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.clearTimeout(focusTimer);
-      window.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = previousBodyOverflow;
-      lastFocusedRef.current?.focus();
-    };
-  }, [onClose]);
+  const modalRef = useFocusTrap<HTMLDivElement>({
+    onEscape: onClose,
+    initialFocus: 'input[type="checkbox"]',
+  });
 
   const allChecked = Object.values(checklist).every(Boolean);
 

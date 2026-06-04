@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Keyboard } from 'lucide-react';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 
 interface Shortcut {
   keys: string[];
@@ -19,8 +20,6 @@ const isModalOpen = (): boolean => {
 
 export const KeyboardShortcutsHelp = () => {
   const [isVisible, setIsVisible] = useState(false);
-  const panelRef = useRef<HTMLDivElement>(null);
-  const lastFocusedRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -36,59 +35,16 @@ export const KeyboardShortcutsHelp = () => {
         e.preventDefault();
         setIsVisible((prev) => !prev);
       }
-
-      if (e.key === 'Escape' && isVisible) {
-        setIsVisible(false);
-      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isVisible]);
 
-  useEffect(() => {
-    if (!isVisible) return;
-
-    lastFocusedRef.current =
-      document.activeElement instanceof HTMLElement ? document.activeElement : null;
-
-    const previousBodyOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-
-    const focusTimer = window.setTimeout(() => {
-      const firstFocusable = panelRef.current?.querySelector<HTMLElement>(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-      );
-      firstFocusable?.focus();
-    }, 0);
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== 'Tab' || !panelRef.current) return;
-      const focusable = panelRef.current.querySelectorAll<HTMLElement>(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-      );
-
-      if (focusable.length === 0) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.clearTimeout(focusTimer);
-      window.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = previousBodyOverflow;
-      lastFocusedRef.current?.focus();
-    };
-  }, [isVisible]);
+  const panelRef = useFocusTrap<HTMLDivElement>({
+    enabled: isVisible,
+    onEscape: () => setIsVisible(false),
+  });
 
   if (!isVisible) return null;
 

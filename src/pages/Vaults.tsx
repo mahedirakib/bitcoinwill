@@ -21,6 +21,7 @@ import type { SavedVault } from '@/lib/vaultStorage';
 import { useVaults } from '@/hooks/useVaults';
 import { useToast } from '@/components/Toast';
 import { downloadJson } from '@/lib/utils/download';
+import { formatRelativeTime } from '@/lib/utils/time';
 import type { NavView } from '@/components/AppShell';
 
 type SortOption = 'newest' | 'oldest' | 'name' | 'network';
@@ -118,14 +119,14 @@ const VaultCard = ({
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-1">
               <Clock className="h-3 w-3" />
-              {new Date(vault.createdAt).toLocaleDateString()}
+              Created {formatRelativeTime(vault.createdAt)}
             </span>
             <span className="capitalize">{vault.network}</span>
             <span>{vault.addressType === 'p2tr' ? 'Taproot' : 'P2WSH'}</span>
             {vault.lastCheckedAt && (
               <span className="inline-flex items-center gap-1 text-success">
                 <Check className="h-3 w-3" />
-                Checked {new Date(vault.lastCheckedAt).toLocaleDateString()}
+                Checked {formatRelativeTime(vault.lastCheckedAt)}
               </span>
             )}
           </div>

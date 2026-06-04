@@ -146,7 +146,11 @@ export const TypeStep = ({ input, errors, dispatch, onCancel, onNext }: TypeStep
           {!input.sss_config && (
             <p className="text-xs text-muted-foreground">Select a share configuration to continue.</p>
           )}
-          {errors.sss && <p className="text-xs text-danger">{errors.sss}</p>}
+          {errors.sss && (
+            <p className="text-xs text-danger" role="alert" aria-live="polite">
+              {errors.sss}
+            </p>
+          )}
         </div>
       )}
 

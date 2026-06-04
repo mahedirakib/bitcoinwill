@@ -1,7 +1,8 @@
-import React, { useEffect, useRef, useState, memo, useCallback } from 'react';
+import React, { useRef, useState, memo, useCallback } from 'react';
 import { useSettings } from '@/state/settings';
 import { AlertTriangle } from 'lucide-react';
 import type { BitcoinNetwork } from '@/lib/bitcoin/types';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 
 const CONFIRMATION_PHRASE = 'I UNDERSTAND MAINNET IS REAL MONEY';
 
@@ -9,9 +10,7 @@ const NetworkSelectorComponent = () => {
   const { network, setNetwork, isMainnetUnlocked, unlockMainnet } = useSettings();
   const [showModal, setShowModal] = useState(false);
   const [phrase, setPhrase] = useState('');
-  const modalRef = useRef<HTMLDivElement | null>(null);
   const phraseInputRef = useRef<HTMLInputElement | null>(null);
-  const lastFocusedRef = useRef<HTMLElement | null>(null);
 
   const closeModal = useCallback(() => {
     setShowModal(false);
@@ -27,48 +26,11 @@ const NetworkSelectorComponent = () => {
     setNetwork(val);
   };
 
-  useEffect(() => {
-    if (!showModal) return;
-
-    lastFocusedRef.current =
-      document.activeElement instanceof HTMLElement ? document.activeElement : null;
-
-    const previousBodyOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    const focusTimer = window.setTimeout(() => phraseInputRef.current?.focus(), 0);
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        closeModal();
-        return;
-      }
-
-      if (event.key !== 'Tab' || !modalRef.current) return;
-      const focusable = modalRef.current.querySelectorAll<HTMLElement>(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-      );
-
-      if (focusable.length === 0) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.clearTimeout(focusTimer);
-      window.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = previousBodyOverflow;
-      lastFocusedRef.current?.focus();
-    };
-  }, [showModal, closeModal]);
+  const modalRef = useFocusTrap<HTMLDivElement>({
+    enabled: showModal,
+    onEscape: closeModal,
+    initialFocus: () => phraseInputRef.current,
+  });
 
   const confirmUnlock = () => {
     if (phrase === CONFIRMATION_PHRASE) {

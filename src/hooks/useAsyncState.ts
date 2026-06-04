@@ -32,6 +32,7 @@ export function useAsyncState<T>(): UseAsyncStateReturn<T> {
   });
 
   const isMountedRef = useRef(true);
+  const sequenceRef = useRef(0);
 
   useEffect(() => {
     return () => {
@@ -40,16 +41,17 @@ export function useAsyncState<T>(): UseAsyncStateReturn<T> {
   }, []);
 
   const execute = useCallback(async (asyncFn: () => Promise<T>): Promise<T | null> => {
+    const sequence = ++sequenceRef.current;
     setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
     try {
       const result = await asyncFn();
-      if (isMountedRef.current) {
+      if (isMountedRef.current && sequenceRef.current === sequence) {
         setState({ data: result, isLoading: false, error: null });
       }
       return result;
     } catch (err) {
-      if (isMountedRef.current) {
+      if (isMountedRef.current && sequenceRef.current === sequence) {
         const message = err instanceof Error ? err.message : 'An unexpected error occurred';
         setState((prev) => ({ ...prev, isLoading: false, error: message }));
       }
