@@ -130,12 +130,12 @@ Records of significant architectural decisions:
 See [Recovery Guide](./RECOVERY_GUIDE.md) for detailed steps.
 
 **Contributing code:**
-1. Clone the private repository
+1. Fork the repository and clone your fork
 2. `npm install`
 3. `npm run dev`
 4. Make changes
 5. `npm run ready-check`
-6. Submit for review
+6. Open a pull request against `main`
 
 See [Contributing](../CONTRIBUTING.md) for details.
 

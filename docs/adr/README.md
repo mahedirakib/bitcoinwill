@@ -33,7 +33,7 @@ When making significant architectural decisions:
 
 1. Create a new ADR using the format: `NNN-title-in-kebab-case.md`
 2. Use the template below
-3. Submit for review through the private repository workflow
+3. Submit for review via a pull request against `main`
 4. Update this index
 
 ## ADR Template

@@ -210,7 +210,7 @@ import type { BitcoinNetwork } from '@/lib/bitcoin/types';
 
 ```typescript
 // ❌ Never store private keys
-const privateKey = 'L1aW4aubDFB7yfras2S1mN3MCqJQaK9dNt7';
+const privateKey = 'NEVER_COMMIT_A_REAL_PRIVATE_KEY';
 
 // ❌ Never trust user input without validation
 const address = userInput; // Validate first!
