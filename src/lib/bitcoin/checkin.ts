@@ -1,4 +1,5 @@
 import { calculateTime } from './utils';
+import { MAX_LOCKTIME_BLOCKS } from './types';
 
 export type CheckInStatus = 'unknown' | 'on_track' | 'due_now' | 'beneficiary_path_open';
 
@@ -27,8 +28,15 @@ export const buildCheckInPlan = (
   confirmationsSinceLastFunding?: number,
   cadenceRatio = 0.5,
 ): CheckInPlan => {
-  if (!Number.isFinite(locktimeBlocks) || locktimeBlocks < 1 || locktimeBlocks > Number.MAX_SAFE_INTEGER) {
-    throw new Error('Invalid locktimeBlocks: must be a positive finite integer');
+  if (
+    !Number.isFinite(locktimeBlocks) ||
+    !Number.isSafeInteger(locktimeBlocks) ||
+    locktimeBlocks < 1 ||
+    locktimeBlocks > MAX_LOCKTIME_BLOCKS
+  ) {
+    throw new Error(
+      `Invalid locktimeBlocks: must be a positive integer between 1 and ${MAX_LOCKTIME_BLOCKS}.`,
+    );
   }
 
   const normalizedCadence = normalizeCadenceRatio(cadenceRatio);

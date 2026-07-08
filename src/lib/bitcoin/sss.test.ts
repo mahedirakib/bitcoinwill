@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import * as ecc from 'tiny-secp256k1';
 import {
   splitPrivateKey,
   combineShares,
@@ -6,10 +7,26 @@ import {
   getSSSOptions,
   collectUniqueValidShares,
 } from './sss';
+import { bytesToHex } from './hex';
 
 describe('Shamir Secret Sharing', () => {
-  // Test private key (DO NOT USE IN PRODUCTION)
-  const TEST_PRIVATE_KEY = 'e9873d79c6d87dc0fb6a5778633389f4453213303da61f20bd67fc233aa33262';
+  // Build a valid 32-byte secp256k1 private key at runtime so the repo never
+  // commits a hardcoded scalar for which ecc.isPrivate is true (AGENTS.md:
+  // "Never commit private keys — Not even for testing").
+  const buildTestPrivateKeyBytes = (): Uint8Array => {
+    const candidate = new Uint8Array(32);
+    candidate.fill(0xab);
+    for (let high = 0x01; high < 0xff; high += 1) {
+      candidate[0] = high;
+      if (ecc.isPrivate(candidate)) {
+        return candidate;
+      }
+    }
+    throw new Error('test setup: could not derive a valid test private key');
+  };
+
+  const TEST_PRIVATE_KEY_BYTES = buildTestPrivateKeyBytes();
+  const TEST_PRIVATE_KEY = bytesToHex(TEST_PRIVATE_KEY_BYTES);
 
   describe('splitPrivateKey', () => {
     it('should split into 2-of-3 shares', async () => {
@@ -81,7 +98,7 @@ describe('Shamir Secret Sharing', () => {
         splitResult.shares[1].share,
       ];
 
-      const reconstructed = await combineShares(sharesToCombine);
+      const reconstructed = await combineShares(sharesToCombine, { expectedThreshold: 2 });
       expect(reconstructed).toBe(TEST_PRIVATE_KEY);
     });
 
@@ -92,8 +109,8 @@ describe('Shamir Secret Sharing', () => {
       const combo1 = [splitResult.shares[0].share, splitResult.shares[2].share];
       const combo2 = [splitResult.shares[1].share, splitResult.shares[2].share];
 
-      expect(await combineShares(combo1)).toBe(TEST_PRIVATE_KEY);
-      expect(await combineShares(combo2)).toBe(TEST_PRIVATE_KEY);
+      expect(await combineShares(combo1, { expectedThreshold: 2 })).toBe(TEST_PRIVATE_KEY);
+      expect(await combineShares(combo2, { expectedThreshold: 2 })).toBe(TEST_PRIVATE_KEY);
     });
 
     it('should reconstruct from 3-of-5 threshold', async () => {
@@ -105,7 +122,7 @@ describe('Shamir Secret Sharing', () => {
         splitResult.shares[4].share,
       ];
 
-      const reconstructed = await combineShares(sharesToCombine);
+      const reconstructed = await combineShares(sharesToCombine, { expectedThreshold: 3 });
       expect(reconstructed).toBe(TEST_PRIVATE_KEY);
     });
 
@@ -115,12 +132,67 @@ describe('Shamir Secret Sharing', () => {
       // Use all 3 shares (more than threshold of 2)
       const sharesToCombine = splitResult.shares.map(s => s.share);
 
-      const reconstructed = await combineShares(sharesToCombine);
+      const reconstructed = await combineShares(sharesToCombine, { expectedThreshold: 2 });
       expect(reconstructed).toBe(TEST_PRIVATE_KEY);
     });
 
     it('should reject single share', async () => {
-      await expect(combineShares(['abcd1234'])).rejects.toThrow('At least 2 shares required');
+      await expect(combineShares(['abcd1234'], { expectedThreshold: 2 })).rejects.toThrow('At least 2 shares required');
+    });
+
+    it('should reject fewer shares than the expected threshold', async () => {
+      const splitResult = await splitPrivateKey(TEST_PRIVATE_KEY, { threshold: 3, total: 5 });
+
+      // Provide only 2 shares for a 3-of-5 scheme — would silently yield a
+      // wrong key without the threshold check.
+      const twoShares = [splitResult.shares[0].share, splitResult.shares[1].share];
+
+      await expect(
+        combineShares(twoShares, { expectedThreshold: 3 }),
+      ).rejects.toThrow('Need at least 3 shares');
+    });
+
+    it('should reject an unsupported expected threshold', async () => {
+      await expect(
+        // 4 is not a supported threshold (only 2 and 3 are)
+        combineShares(['a'.repeat(64), 'b'.repeat(64)], { expectedThreshold: 4 as unknown as 2 | 3 }),
+      ).rejects.toThrow('Invalid expected threshold');
+    });
+
+    it('should verify the reconstructed key against the expected beneficiary pubkey', async () => {
+      const splitResult = await splitPrivateKey(TEST_PRIVATE_KEY, { threshold: 2, total: 3 });
+      const derivedPub = ecc.pointFromScalar(TEST_PRIVATE_KEY_BYTES, true);
+      // TEST_PRIVATE_KEY is a valid scalar, so pointFromScalar always returns a point.
+      if (!derivedPub) throw new Error('test setup: expected a derived pubkey');
+      const expectedPubkey = bytesToHex(derivedPub);
+      const shares = [splitResult.shares[0].share, splitResult.shares[1].share];
+
+      const reconstructed = await combineShares(shares, {
+        expectedThreshold: 2,
+        expectedBeneficiaryPubkey: expectedPubkey,
+      });
+      expect(reconstructed).toBe(TEST_PRIVATE_KEY);
+    });
+
+    it('should throw when the reconstructed key does not match the expected pubkey', async () => {
+      const splitResult = await splitPrivateKey(TEST_PRIVATE_KEY, { threshold: 2, total: 3 });
+      const shares = [splitResult.shares[0].share, splitResult.shares[1].share];
+
+      // A different, valid-looking pubkey that does NOT correspond to the secret.
+      const wrongPubkey = '02e9634f19b165239105436a5c17e3371901c5651581452a329978747474747474';
+
+      await expect(
+        combineShares(shares, { expectedThreshold: 2, expectedBeneficiaryPubkey: wrongPubkey }),
+      ).rejects.toThrow('does not match the beneficiary public key');
+    });
+
+    it('should reject an invalid expected beneficiary pubkey', async () => {
+      const splitResult = await splitPrivateKey(TEST_PRIVATE_KEY, { threshold: 2, total: 3 });
+      const shares = [splitResult.shares[0].share, splitResult.shares[1].share];
+
+      await expect(
+        combineShares(shares, { expectedThreshold: 2, expectedBeneficiaryPubkey: 'not-a-pubkey' }),
+      ).rejects.toThrow('not a valid compressed pubkey');
     });
   });
 

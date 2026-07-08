@@ -8,13 +8,20 @@ const reuseExistingServer =
     ? !process.env.CI
     : process.env.PLAYWRIGHT_REUSE_SERVER === '1';
 
+// In CI, exercise the production build (vite preview) so e2e catches
+// prod-only breakage (minification, chunking, dev-only code paths). Locally,
+// use the dev server for faster iteration.
+const webServerCommand = process.env.CI
+  ? `npm run build && npm run preview -- --host ${e2eHost} --port ${e2ePort} --strictPort`
+  : `npm run dev -- --host ${e2eHost} --port ${e2ePort} --strictPort`;
+
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: 'html',
+  reporter: process.env.CI ? [['github'], ['html']] : 'html',
   use: {
     baseURL,
     trace: 'on-first-retry',
@@ -30,8 +37,9 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: `npm run dev -- --host ${e2eHost} --port ${e2ePort} --strictPort`,
+    command: webServerCommand,
     url: baseURL,
     reuseExistingServer,
+    timeout: 120_000,
   },
 });

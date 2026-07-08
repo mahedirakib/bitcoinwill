@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { buildPlan } from './planEngine';
+import { buildTaprootPlan } from './taproot';
 import { PlanInput } from './types';
 
 describe('PlanEngine', () => {
@@ -90,6 +91,24 @@ describe('PlanEngine', () => {
       const result2 = buildPlan(input2);
       
       expect(result1.address).not.toBe(result2.address);
+    });
+
+    it('delegates to buildTaprootPlan when address_type is p2tr', () => {
+      const taprootInput = { ...sampleInput, address_type: 'p2tr' as const };
+      const result = buildPlan(taprootInput);
+
+      // Taproot addresses start with bc1p/tb1p/bcrt1p
+      expect(result.address).toMatch(/^tb1p/);
+      expect(result.address_type).toBe('p2tr');
+
+      // Must match buildTaprootPlan output exactly (delegation, not reimplementation).
+      expect(result).toEqual(buildTaprootPlan(taprootInput));
+    });
+
+    it('defaults to p2wsh when no address_type is provided', () => {
+      const result = buildPlan(sampleInput);
+      expect(result.address_type).toBe('p2wsh');
+      expect(result.address).toMatch(/^tb1q/);
     });
   });
 

@@ -1,25 +1,34 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode } from 'react';
-import { Check } from 'lucide-react';
+import { Check, AlertCircle, Info } from 'lucide-react';
+
+export type ToastVariant = 'success' | 'error' | 'info';
 
 interface ToastContextType {
-  showToast: (message: string) => void;
+  showToast: (message: string, variant?: ToastVariant) => void;
 }
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
+const VARIANT_CONFIG: Record<ToastVariant, { Icon: React.ComponentType<{ className?: string }>; accent: string; durationMs: number; role: 'status' | 'alert' }> = {
+  success: { Icon: Check, accent: 'text-success', durationMs: 2000, role: 'status' },
+  error: { Icon: AlertCircle, accent: 'text-danger', durationMs: 5000, role: 'alert' },
+  info: { Icon: Info, accent: 'text-foreground', durationMs: 3000, role: 'status' },
+};
+
 export const ToastProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [message, setMessage] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; variant: ToastVariant } | null>(null);
   const dismissTimerRef = useRef<number | null>(null);
 
-  const showToast = useCallback((msg: string) => {
+  const showToast = useCallback((message: string, variant: ToastVariant = 'success') => {
     if (dismissTimerRef.current !== null) {
       window.clearTimeout(dismissTimerRef.current);
     }
-    setMessage(msg);
+    setToast({ message, variant });
+    const { durationMs } = VARIANT_CONFIG[variant];
     dismissTimerRef.current = window.setTimeout(() => {
-      setMessage(null);
+      setToast(null);
       dismissTimerRef.current = null;
-    }, 2000);
+    }, durationMs);
   }, []);
 
   useEffect(() => {
@@ -30,19 +39,22 @@ export const ToastProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     };
   }, []);
 
+  const config = toast ? VARIANT_CONFIG[toast.variant] : VARIANT_CONFIG.success;
+  const Icon = config.Icon;
+
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
-      {message && (
+      {toast && (
         <div
-          role="status"
-          aria-live="polite"
+          role={config.role}
+          aria-live={toast.variant === 'error' ? 'assertive' : 'polite'}
           aria-atomic="true"
           className="fixed bottom-6 left-1/2 z-[200] -translate-x-1/2"
         >
           <div className="flex items-center gap-2 rounded-md border border-border bg-white px-3 py-2 text-sm font-medium shadow-md">
-            <Check className="h-3.5 w-3.5 text-success" />
-            <span className="text-foreground">{message}</span>
+            <Icon className={`h-3.5 w-3.5 ${config.accent}`} />
+            <span className="text-foreground">{toast.message}</span>
           </div>
         </div>
       )}

@@ -236,7 +236,11 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorW
       setIsVaultSaved(true);
       return;
     }
-    saveNewVault(state.input, state.result);
+    const saved = saveNewVault(state.input, state.result);
+    if (!saved) {
+      showToast('Could not save vault: browser storage is unavailable. Download the Recovery Kit instead.', 'error');
+      return;
+    }
     setIsVaultSaved(true);
     showToast('Vault saved to My vaults');
   };
@@ -253,14 +257,14 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorW
       downloadJson(`recovery-kit-${state.result.address.slice(0, 8)}.json`, exportData);
       showToast("Recovery Kit Downloaded");
     } catch (e) {
-      showToast(`Download failed: ${(e as Error).message}`);
+      showToast(`Download failed: ${(e as Error).message}`, 'error');
     }
   };
 
   const copyToClipboard = async (text: string, label: string): Promise<boolean> => {
     try {
       if (!navigator.clipboard?.writeText) {
-        showToast('Clipboard unavailable in this browser context');
+        showToast('Clipboard unavailable in this browser context', 'error');
         return false;
       }
 
@@ -268,7 +272,7 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorW
       showToast(`${label} Copied`);
       return true;
     } catch {
-      showToast('Clipboard unavailable in this browser context');
+      showToast('Clipboard unavailable in this browser context', 'error');
       return false;
     }
   };
@@ -312,7 +316,7 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorW
         URL.revokeObjectURL(url);
       }, 250);
     } catch {
-      showToast('Failed to open print dialog');
+      showToast('Failed to open print dialog', 'error');
     }
   };
 

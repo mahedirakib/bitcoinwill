@@ -56,6 +56,9 @@ export const DEFAULT_LOCKTIME_BLOCKS = 144;
  * - 'social': Multiple shares distributed to trusted parties
  */
 export type RecoveryMethod = 'single' | 'social';
+export const RECOVERY_METHODS: readonly RecoveryMethod[] = ['single', 'social'];
+export const isRecoveryMethod = (value: unknown): value is RecoveryMethod =>
+  typeof value === 'string' && RECOVERY_METHODS.includes(value as RecoveryMethod);
 
 /**
  * Supported Bitcoin address types for vault creation.

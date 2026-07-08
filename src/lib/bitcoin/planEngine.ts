@@ -3,17 +3,17 @@ import './init';
 import { PlanInput, PlanOutput, AddressType } from './types';
 import { getNetworkParams } from './network';
 import { validatePlanInput } from './validation';
-import { calculateTime } from './utils';
+import { generatePlanExplanation } from './utils';
 import { bytesToHex, hexToBytes } from './hex';
 import { buildTaprootPlan } from './taproot';
 
 /**
  * Bitcoin Script Construction Module
- * 
+ *
  * This module implements the TimeLock Inheritance Protocol (TIP) using native
  * Bitcoin Script opcodes. It creates a P2WSH (Pay-to-Witness-Script-Hash) vault
  * with two spending paths:
- * 
+ *
  * **Script Logic:**
  * ```
  * OP_IF
@@ -23,11 +23,11 @@ import { buildTaprootPlan } from './taproot';
  *   <beneficiary_pubkey> OP_CHECKSIG    //        Beneficiary claim after delay
  * OP_ENDIF
  * ```
- * 
+ *
  * **Spending Methods:**
  * - Owner Path: [signature, 1] - Can spend immediately at any time
  * - Beneficiary Path: [signature, 0] - Can spend only after CSV delay expires
- * 
+ *
  * @module planEngine
  * @see {@link https://github.com/bitcoin/bips/blob/master/bip-0112.mediawiki|BIP-112 CSV}
  * @see {@link https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki|BIP-141 SegWit}
@@ -109,30 +109,6 @@ export const buildPlan = (input: PlanInput): PlanOutput => {
     witness_script: scriptHex,
     network: input.network,
     address_type: 'p2wsh' as AddressType,
-    human_explanation: generateExplanation(input, p2wsh.address),
+    human_explanation: generatePlanExplanation(input, p2wsh.address),
   };
-};
-
-/**
- * Generates human-readable explanations of the plan's spending conditions.
- * 
- * Creates an array of strings that explain in plain English:
- * - The vault address
- * - Owner's immediate spending rights
- * - Beneficiary's conditional spending rights after CSV delay
- * - Timer reset behavior on owner activity
- * 
- * @param {PlanInput} input - The plan input containing keys and locktime
- * @param {string} address - The generated vault address
- * @returns {string[]} Array of explanation strings for UI display
- * 
- * @private This is an internal helper function, not exported
- */
-const generateExplanation = (input: PlanInput, address: string): string[] => {
-  return [
-    `Vault Address: ${address}`,
-    `1. The Owner (${input.owner_pubkey.substring(0, 8)}...) can spend these funds at any time.`,
-    `2. The Beneficiary (${input.beneficiary_pubkey.substring(0, 8)}...) can claim the funds ONLY if they have remained unmoved for at least ${input.locktime_blocks} blocks (approx. ${calculateTime(input.locktime_blocks)}).`,
-    `3. Every time the Owner moves the funds to a new vault, the timer resets.`
-  ];
 };

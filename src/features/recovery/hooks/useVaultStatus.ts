@@ -34,7 +34,7 @@ export const useVaultStatus = (
 
     if (!publicExplorerAvailable) {
       const message = 'Public explorers do not support Regtest. Connect a local node for live status.';
-      showToast(message);
+      showToast(message, 'error');
       return;
     }
 
@@ -44,7 +44,7 @@ export const useVaultStatus = (
     if (timeSinceLastRefresh < MIN_REFRESH_INTERVAL_MS) {
       const secondsRemaining = Math.ceil((MIN_REFRESH_INTERVAL_MS - timeSinceLastRefresh) / 1000);
       const message = `Please wait ${secondsRemaining} second${secondsRemaining > 1 ? 's' : ''} before refreshing again`;
-      showToast(message);
+      showToast(message, 'info');
       return;
     }
 

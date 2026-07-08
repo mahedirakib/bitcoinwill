@@ -33,7 +33,7 @@ export const SettingsPage = ({ onNavigate }: SettingsPageProps) => {
       downloadJson('bitcoin-will-vaults-backup.json', data);
       showToast('Vaults exported');
     } catch {
-      showToast('Failed to export vaults');
+      showToast('Failed to export vaults', 'error');
     }
   };
 

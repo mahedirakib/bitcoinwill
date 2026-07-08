@@ -1,14 +1,37 @@
 import { describe, expect, it } from 'vitest';
 import * as ecc from 'tiny-secp256k1';
-import { bytesToHex, hexToBytes } from './hex';
+import { bytesToHex } from './hex';
 import { generateSecp256k1PrivateKey, type RandomBytes } from './keygen';
 
-const VALID_PRIVATE_KEY = 'e9873d79c6d87dc0fb6a5778633389f4453213303da61f20bd67fc233aa33262';
+/**
+ * Build a deterministic, valid 32-byte secp256k1 private key at runtime so the
+ * repo never commits a hardcoded scalar for which `ecc.isPrivate` is true
+ * (AGENTS.md: "Never commit private keys — Not even for testing").
+ *
+ * We start from a fixed byte pattern (not itself a valid key in any meaningful
+ * sense — it's just a test vector) and bump the high byte until ecc.isPrivate
+ * accepts it. The result is only ever computed in-memory and never written to
+ * the repo.
+ */
+const buildTestPrivateKey = (): Uint8Array => {
+  const candidate = new Uint8Array(32);
+  // Start from a deterministic, non-zero pattern.
+  candidate.fill(0xab);
+  for (let high = 0x01; high < 0xff; high += 1) {
+    candidate[0] = high;
+    if (ecc.isPrivate(candidate)) {
+      return candidate;
+    }
+  }
+  throw new Error('test setup: could not derive a valid test private key');
+};
 
 describe('generateSecp256k1PrivateKey', () => {
   it('returns a valid 32-byte secp256k1 private key', () => {
+    const expected = buildTestPrivateKey();
+    const expectedHex = bytesToHex(expected);
     const randomBytes: RandomBytes = (target) => {
-      target.set(hexToBytes(VALID_PRIVATE_KEY));
+      target.set(expected);
       return target;
     };
 
@@ -16,10 +39,12 @@ describe('generateSecp256k1PrivateKey', () => {
 
     expect(privateKey).toHaveLength(32);
     expect(ecc.isPrivate(privateKey)).toBe(true);
-    expect(bytesToHex(privateKey)).toBe(VALID_PRIVATE_KEY);
+    expect(bytesToHex(privateKey)).toBe(expectedHex);
   });
 
   it('retries invalid random candidates before returning a key', () => {
+    const expected = buildTestPrivateKey();
+    const expectedHex = bytesToHex(expected);
     let calls = 0;
     const randomBytes: RandomBytes = (target) => {
       calls += 1;
@@ -28,14 +53,14 @@ describe('generateSecp256k1PrivateKey', () => {
         return target;
       }
 
-      target.set(hexToBytes(VALID_PRIVATE_KEY));
+      target.set(expected);
       return target;
     };
 
     const privateKey = generateSecp256k1PrivateKey(randomBytes);
 
     expect(calls).toBe(2);
-    expect(bytesToHex(privateKey)).toBe(VALID_PRIVATE_KEY);
+    expect(bytesToHex(privateKey)).toBe(expectedHex);
   });
 
   it('throws when no valid candidate is generated', () => {

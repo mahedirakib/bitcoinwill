@@ -44,7 +44,12 @@ const getWalletVendorChunk = (id: string): string | undefined => {
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  base: '/',
+  // Allow the deploy pipeline to override the base path. GitHub Pages
+  // project-site deploys (https://<user>.github.io/bitcoinwill/) need
+  // base: '/bitcoinwill/', while local dev and <user>.github.io root deploys
+  // use '/'. The deploy workflow passes BASE_PATH via env from
+  // actions/configure-pages.
+  base: process.env.BASE_PATH || '/',
   plugins: [
     react(),
     wasm(),

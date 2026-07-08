@@ -46,12 +46,34 @@ export interface SocialRecoveryKit {
 const normalizeShareHex = (shareHex: string): string =>
   shareHex.trim().toLowerCase();
 
-const isSupportedSSSConfig = (config: SSSConfig): boolean =>
+export const isSupportedSSSConfig = (config: SSSConfig): boolean =>
   (config.threshold === 2 && config.total === 3) ||
   (config.threshold === 3 && config.total === 5);
 
 const isValidPrivateKeyBytes = (keyBytes: Uint8Array): boolean =>
   keyBytes.length === 32 && ecc.isPrivate(keyBytes);
+
+/** Options governing how `combineShares` validates the reconstruction. */
+export interface CombineSharesOptions {
+  /**
+   * The threshold the shares were originally split under. The underlying SSS
+   * library interpolates through whatever shares it receives and does NOT
+   * validate against the original threshold, so providing fewer than this many
+   * shares silently yields a wrong key. Requiring it here prevents that class
+   * of silent data-loss bugs.
+   */
+  expectedThreshold: SSSThreshold;
+  /**
+   * Optional beneficiary public key (compressed, 66 hex chars). When provided,
+   * the reconstructed private key is checked against it and the operation
+   * throws on mismatch. This is the strongest defense against wrong-key
+   * reconstruction (mixed shares, wrong threshold, corrupted shares).
+   */
+  expectedBeneficiaryPubkey?: string;
+}
+
+const isCompressedPubkey = (value: string): boolean =>
+  /^(02|03)[a-fA-F0-9]{64}$/.test(value);
 
 /**
  * Get available SSS configurations for UI display.
@@ -112,14 +134,39 @@ export const splitPrivateKey = async (
 
 /**
  * Combine Shamir shares to reconstruct the private key.
- * 
- * @param shares - Array of shares (must meet threshold)
+ *
+ * The `expectedThreshold` is REQUIRED. The underlying SSS library interpolates
+ * through every provided share and does not validate against the original
+ * threshold — providing fewer shares than the scheme requires silently returns
+ * a plausible-but-WRONG scalar. Requiring the threshold here makes that
+ * failure mode explicit instead of silent.
+ *
+ * When `expectedBeneficiaryPubkey` is provided, the reconstructed key is
+ * additionally verified to derive to that pubkey, catching any reconstruction
+ * mistake (mixed shares from different vaults, corrupted shares, wrong
+ * threshold metadata).
+ *
+ * @param shares - Array of hex-encoded shares (must meet expectedThreshold)
+ * @param options - Reconstruction validation options
  * @returns Reconstructed private key in hex format
- * @throws Error if shares are invalid or insufficient
+ * @throws Error if shares are invalid, insufficient, or fail verification
  */
-export const combineShares = async (shares: string[]): Promise<string> => {
+export const combineShares = async (
+  shares: string[],
+  options: CombineSharesOptions,
+): Promise<string> => {
+  if (!isSupportedSSSConfig({ threshold: options.expectedThreshold, total: options.expectedThreshold === 2 ? 3 : 5 })) {
+    throw new Error('Invalid expected threshold: supported values are 2 (2-of-3) and 3 (3-of-5).');
+  }
+
   if (shares.length < 2) {
     throw new Error('At least 2 shares required to reconstruct');
+  }
+
+  if (shares.length < options.expectedThreshold) {
+    throw new Error(
+      `Need at least ${options.expectedThreshold} shares for this configuration, received ${shares.length}.`,
+    );
   }
 
   const invalidShare = shares.find((share) => !validateShare(share));
@@ -131,6 +178,19 @@ export const combineShares = async (shares: string[]): Promise<string> => {
   const secret = await combine(shareBuffers);
   if (!isValidPrivateKeyBytes(secret)) {
     throw new Error('Shares did not reconstruct a valid private key');
+  }
+
+  if (options.expectedBeneficiaryPubkey) {
+    const expectedPub = options.expectedBeneficiaryPubkey.trim().toLowerCase();
+    if (!isCompressedPubkey(expectedPub)) {
+      throw new Error('Expected beneficiary public key is not a valid compressed pubkey.');
+    }
+    const derivedPub = ecc.pointFromScalar(secret, true);
+    if (!derivedPub || bytesToHex(derivedPub) !== expectedPub) {
+      throw new Error(
+        'Reconstructed key does not match the beneficiary public key. Check that you used the correct threshold and shares from the same vault.',
+      );
+    }
   }
 
   return bytesToHex(secret);

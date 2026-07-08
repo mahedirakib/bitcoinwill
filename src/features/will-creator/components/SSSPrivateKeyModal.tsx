@@ -31,7 +31,7 @@ export const SSSPrivateKeyModal = ({ privateKey, onConfirm, onCancel }: SSSPriva
     isCopyingRef.current = true;
     try {
       if (!navigator.clipboard?.writeText) {
-        showToast('Clipboard unavailable in this browser context');
+        showToast('Clipboard unavailable in this browser context', 'error');
         return;
       }
       await navigator.clipboard.writeText(privateKey);
@@ -45,7 +45,7 @@ export const SSSPrivateKeyModal = ({ privateKey, onConfirm, onCancel }: SSSPriva
         timerRef.current = null;
       }, 2000);
     } catch {
-      showToast('Failed to copy to clipboard');
+      showToast('Failed to copy to clipboard', 'error');
     } finally {
       isCopyingRef.current = false;
     }

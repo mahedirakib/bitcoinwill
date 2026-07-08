@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest';
 import {
   buildInstructions,
   generateInstructionTxt,
+  generateRecoveryKitChecksum,
+  verifyRecoveryKitChecksum,
   InstructionModel,
   validateAndNormalizeRecoveryKit,
 } from './instructions';
@@ -323,6 +325,39 @@ describe('Instructions Module', () => {
       };
 
       expect(() => validateAndNormalizeRecoveryKit(badKit)).toThrow('Invalid network');
+    });
+  });
+
+  describe('recovery kit checksum', () => {
+    const planInput: PlanInput = {
+      network: 'testnet',
+      inheritance_type: 'timelock_recovery',
+      owner_pubkey: '02e9634f19b165239105436a5c17e3371901c5651581452a329978747474747474',
+      beneficiary_pubkey: '03e9634f19b165239105436a5c17e3371901c5651581452a329978747474747474',
+      locktime_blocks: 144,
+    };
+
+    it('verifies a checksum it generated', async () => {
+      const result = buildPlan(planInput);
+      const checksum = await generateRecoveryKitChecksum(planInput, result);
+      expect(await verifyRecoveryKitChecksum(planInput, result, checksum)).toBe(true);
+    });
+
+    it('rejects a wrong checksum', async () => {
+      const result = buildPlan(planInput);
+      const wrong = '0'.repeat(64);
+      expect(await verifyRecoveryKitChecksum(planInput, result, wrong)).toBe(false);
+    });
+
+    it('verifies checksums case-insensitively', async () => {
+      const result = buildPlan(planInput);
+      const checksum = await generateRecoveryKitChecksum(planInput, result);
+      expect(await verifyRecoveryKitChecksum(planInput, result, checksum.toUpperCase())).toBe(true);
+    });
+
+    it('rejects a malformed expected checksum', async () => {
+      const result = buildPlan(planInput);
+      expect(await verifyRecoveryKitChecksum(planInput, result, 'not-hex')).toBe(false);
     });
   });
 });

@@ -6,6 +6,15 @@ export const sanitizeAddress = (address: string): string => {
   if (normalized.length < 14) {
     throw new Error('Address is too short to query.');
   }
+  // Bech32/bech32m addresses (BIP173/BIP350) are case-insensitive but must be
+  // a single case. Explorers return vout `scriptpubkey_address` in lowercase,
+  // so normalize pasted bech32 addresses (which may be uppercase) to lowercase
+  // to keep funding-event address comparisons reliable. Legacy Base58Check
+  // addresses (prefixed with 1/3/m/n/2/...) are case-sensitive and must not be
+  // lowercased.
+  if (/^(bc|tb|bcrt)1/i.test(normalized)) {
+    return normalized.toLowerCase();
+  }
   return normalized;
 };
 

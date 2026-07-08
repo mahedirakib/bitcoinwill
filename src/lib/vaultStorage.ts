@@ -28,6 +28,22 @@ const generateVaultId = (): string => {
   return `${timestamp}-${random}`;
 };
 
+/**
+ * Removes the social-recovery kit (all Shamir shares) from a PlanOutput before
+ * it is persisted. The entire point of splitting the beneficiary key into
+ * shares is that no single location holds all of them — storing all shares
+ * together in localStorage would defeat that and expose the key to any
+ * browser extension, shared-computer user, or XSS that can read localStorage.
+ *
+ * The in-memory wizard state still keeps the shares (for display/download),
+ * but the persisted copy must never contain them.
+ */
+const stripRecoveryKitSecrets = (result: PlanOutput): PlanOutput => {
+  if (!result.social_recovery_kit) return result;
+  const { social_recovery_kit: _socialRecoveryKit, ...safeResult } = result;
+  return safeResult;
+};
+
 export const getSavedVaults = (): SavedVault[] => {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -40,7 +56,7 @@ export const getSavedVaults = (): SavedVault[] => {
   }
 };
 
-export const saveVault = (plan: PlanInput, result: PlanOutput, name?: string): SavedVault => {
+export const saveVault = (plan: PlanInput, result: PlanOutput, name?: string): SavedVault | null => {
   const vault: SavedVault = {
     id: generateVaultId(),
     name: name || `Vault ${result.address.slice(0, 8)}…`,
@@ -49,7 +65,8 @@ export const saveVault = (plan: PlanInput, result: PlanOutput, name?: string): S
     addressType: result.address_type,
     createdAt: new Date().toISOString(),
     plan,
-    result,
+    // Never persist the SSS shares — see stripRecoveryKitSecrets.
+    result: stripRecoveryKitSecrets(result),
   };
 
   const existing = getSavedVaults();
@@ -57,7 +74,10 @@ export const saveVault = (plan: PlanInput, result: PlanOutput, name?: string): S
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
   } catch {
-    // Ignore storage errors in restricted browser contexts
+    // Storage is unavailable (quota exceeded, Safari private mode, restricted
+    // context). Return null so callers can surface the failure instead of
+    // reporting a false "saved" confirmation.
+    return null;
   }
   return vault;
 };
@@ -184,7 +204,13 @@ export const importVaultsFromBackup = (json: string): ImportResult => {
           result.skipped++;
           continue;
         }
-        const newVault: SavedVault = { ...vault, id: generateVaultId() };
+        // Re-strip any shares that may have been present in the backup so the
+        // restored vault never carries SSS shares in localStorage.
+        const newVault: SavedVault = {
+          ...vault,
+          id: generateVaultId(),
+          result: stripRecoveryKitSecrets(vault.result),
+        };
         existing.push(newVault);
         existingAddresses.add(vault.address);
         result.imported++;

@@ -11,9 +11,11 @@ interface ShareInput {
 interface ShareRecoveryProps {
   onKeyReconstructed: (privateKeyHex: string) => void;
   onCancel: () => void;
+  /** When provided, the reconstructed key is verified to derive to this pubkey. */
+  beneficiaryPubkey?: string;
 }
 
-export const ShareRecovery = ({ onKeyReconstructed, onCancel }: ShareRecoveryProps) => {
+export const ShareRecovery = ({ onKeyReconstructed, onCancel, beneficiaryPubkey }: ShareRecoveryProps) => {
   const { showToast } = useToast();
   const idCounterRef = useRef(0);
   const [shareInputs, setShareInputs] = useState<ShareInput[]>(() => [
@@ -54,18 +56,21 @@ export const ShareRecovery = ({ onKeyReconstructed, onCancel }: ShareRecoveryPro
 
   const handleCombine = async () => {
     if (!canCombine || isCombiningRef.current) {
-      if (!canCombine) showToast(`Need at least ${threshold} valid shares`);
+      if (!canCombine) showToast(`Need at least ${threshold} valid shares`, 'info');
       return;
     }
 
     isCombiningRef.current = true;
     setIsCombining(true);
     try {
-      const key = await combineShares(recoverableShares);
+      const key = await combineShares(recoverableShares, {
+        expectedThreshold: threshold,
+        expectedBeneficiaryPubkey: beneficiaryPubkey,
+      });
       setReconstructedKey(key);
       showToast('Private key reconstructed successfully');
     } catch (error) {
-      showToast((error as Error).message || 'Failed to combine shares');
+      showToast((error as Error).message || 'Failed to combine shares', 'error');
     } finally {
       isCombiningRef.current = false;
       setIsCombining(false);

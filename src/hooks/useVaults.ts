@@ -18,7 +18,7 @@ import { VAULTS_STORAGE_KEY } from '@/lib/vaultStorage';
 
 export interface UseVaultsReturn {
   vaults: SavedVault[];
-  saveNewVault: (plan: PlanInput, result: PlanOutput, name?: string) => SavedVault;
+  saveNewVault: (plan: PlanInput, result: PlanOutput, name?: string) => SavedVault | null;
   removeVault: (id: string) => void;
   clearAllVaults: () => void;
   renameVault: (id: string, name: string) => void;
@@ -51,7 +51,7 @@ export const useVaults = (): UseVaultsReturn => {
   const saveNewVault = useCallback(
     (plan: PlanInput, result: PlanOutput, name?: string) => {
       const vault = saveVault(plan, result, name);
-      refreshVaults();
+      if (vault) refreshVaults();
       return vault;
     },
     [refreshVaults]

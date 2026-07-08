@@ -54,7 +54,7 @@ export const RecoveryKitLoader = ({
       onLoad(model);
       showToast('Instructions loaded successfully');
     } catch (error) {
-      showToast((error as Error).message || 'Error parsing JSON');
+      showToast((error as Error).message || 'Error parsing JSON', 'error');
     }
   };
 
@@ -66,12 +66,21 @@ export const RecoveryKitLoader = ({
     const selectedFile = event.target.files?.[0];
     if (!selectedFile) return;
 
+    // Recovery kits are tiny JSON files. Reject anything oversized to avoid
+    // locking up the tab reading a multi-GB file into memory.
+    const MAX_KIT_BYTES = 1_000_000; // 1 MB
+    if (selectedFile.size > MAX_KIT_BYTES) {
+      showToast('File is too large to be a Recovery Kit (max 1 MB).', 'error');
+      event.target.value = '';
+      return;
+    }
+
     try {
       const fileContents = await selectedFile.text();
       setJsonInput(fileContents);
       loadRecoveryKit(fileContents);
     } catch (error) {
-      showToast((error as Error).message || 'Error reading Recovery Kit file');
+      showToast((error as Error).message || 'Error reading Recovery Kit file', 'error');
     } finally {
       event.target.value = '';
     }
@@ -83,7 +92,7 @@ export const RecoveryKitLoader = ({
       onLoad(model);
       showToast(`Loaded ${vault.name}`);
     } catch (error) {
-      showToast((error as Error).message || 'Error loading vault');
+      showToast((error as Error).message || 'Error loading vault', 'error');
     }
   };
 

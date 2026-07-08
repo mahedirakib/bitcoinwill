@@ -1,4 +1,5 @@
-import { PlanInput, isBitcoinNetwork, isAddressType, INHERITANCE_TYPE, MIN_LOCKTIME_BLOCKS, MAX_LOCKTIME_BLOCKS, BLOCKS_PER_DAY, BLOCKS_PER_WEEK, BLOCKS_PER_MONTH, BLOCKS_PER_YEAR } from './types';
+import { PlanInput, isBitcoinNetwork, isAddressType, isRecoveryMethod, INHERITANCE_TYPE, MIN_LOCKTIME_BLOCKS, MAX_LOCKTIME_BLOCKS, BLOCKS_PER_DAY, BLOCKS_PER_WEEK, BLOCKS_PER_MONTH, BLOCKS_PER_YEAR } from './types';
+import { isSupportedSSSConfig } from './sss';
 import * as ecc from 'tiny-secp256k1';
 import { hexToBytes } from './hex';
 
@@ -67,6 +68,24 @@ export const validatePlanInput = (input: PlanInput): void => {
     throw new Error('Invalid address type. Supported values: p2wsh, p2tr.');
   }
 
+  // Recovery method and SSS config must be internally consistent. The wizard
+  // enforces this ad-hoc at the call site, but the library boundary must not
+  // rely on that — kit imports or other callers could bypass it.
+  if (input.recovery_method !== undefined && !isRecoveryMethod(input.recovery_method)) {
+    throw new Error('Invalid recovery method. Supported values: single, social.');
+  }
+  if (input.recovery_method === 'social') {
+    if (!input.sss_config || !isSupportedSSSConfig(input.sss_config)) {
+      throw new Error(
+        'Social recovery requires a valid SSS configuration. Supported schemes are 2-of-3 and 3-of-5.',
+      );
+    }
+  } else if (input.recovery_method === 'single' && input.sss_config !== undefined) {
+    throw new Error('Single-key recovery must not include an SSS configuration.');
+  } else if (input.recovery_method === undefined && input.sss_config !== undefined) {
+    throw new Error('SSS configuration requires recovery_method to be set to "social".');
+  }
+
   if (typeof input.owner_pubkey !== 'string' || typeof input.beneficiary_pubkey !== 'string') {
     throw new Error(
       'Invalid public key format.\n\n' +
@@ -82,7 +101,7 @@ export const validatePlanInput = (input: PlanInput): void => {
       'Common issues:\n' +
       '- Key is too short or too long (must be exactly 66 characters)\n' +
       '- Does not start with "02" or "03" (must be a compressed public key)\n' +
-      '- Contains invalid characters (only 0-9 and a-f allowed)\n\n' +
+      '- Contains invalid characters (only 0-9 and a-f are allowed, case-insensitive)\n\n' +
       'How to find your public key:\n' +
       '- Sparrow Wallet: Settings > Show XPUB/Keys > copy "Master Public Key"\n' +
       '- Electrum: Wallet > Information > copy "Master Public Key"'

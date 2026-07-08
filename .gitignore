@@ -14,11 +14,11 @@
 # Misc
 .DS_Store
 *.pem
+# Ignore all env files (including per-mode .env.production/.env.development),
+# but keep the committed .env.example as a documented template.
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
+!.env.example
 
 # Debug
 npm-debug.log*

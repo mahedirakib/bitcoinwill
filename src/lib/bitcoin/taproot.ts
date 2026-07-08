@@ -3,7 +3,7 @@ import './init';
 import { PlanInput, PlanOutput, AddressType } from './types';
 import { getNetworkParams } from './network';
 import { validatePlanInput } from './validation';
-import { calculateTime } from './utils';
+import { generatePlanExplanation } from './utils';
 import { bytesToHex, hexToBytes } from './hex';
 
 // NUMS (Nothing Up My Sleeve) public key for unspendable internal key
@@ -63,15 +63,6 @@ export const buildTaprootPlan = (input: PlanInput): PlanOutput => {
     witness_script: scriptHex,
     network: input.network,
     address_type: 'p2tr' as AddressType,
-    human_explanation: generateTaprootExplanation(input, p2tr.address),
+    human_explanation: generatePlanExplanation(input, p2tr.address),
   };
-};
-
-const generateTaprootExplanation = (input: PlanInput, address: string): string[] => {
-  return [
-    `Vault Address: ${address}`,
-    `1. The Owner (${input.owner_pubkey.substring(0, 8)}...) can spend these funds at any time.`,
-    `2. The Beneficiary (${input.beneficiary_pubkey.substring(0, 8)}...) can claim the funds ONLY if they have remained unmoved for at least ${input.locktime_blocks} blocks (approx. ${calculateTime(input.locktime_blocks)}).`,
-    `3. Every time the Owner moves the funds to a new vault, the timer resets.`
-  ];
 };

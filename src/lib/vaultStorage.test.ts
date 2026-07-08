@@ -93,18 +93,19 @@ describe('vaultStorage', () => {
     it('should save a vault and return it with generated id', () => {
       const vault = saveVault(mockPlan, mockResult);
 
-      expect(vault.id).toBeDefined();
-      expect(vault.name).toBe(`Vault ${mockResult.address.slice(0, 8)}…`);
-      expect(vault.address).toBe(mockResult.address);
-      expect(vault.network).toBe(mockPlan.network);
-      expect(vault.plan).toEqual(mockPlan);
-      expect(vault.result).toEqual(mockResult);
-      expect(vault.createdAt).toBeDefined();
+      expect(vault).not.toBeNull();
+      expect(vault!.id).toBeDefined();
+      expect(vault!.name).toBe(`Vault ${mockResult.address.slice(0, 8)}…`);
+      expect(vault!.address).toBe(mockResult.address);
+      expect(vault!.network).toBe(mockPlan.network);
+      expect(vault!.plan).toEqual(mockPlan);
+      expect(vault!.result).toEqual(mockResult);
+      expect(vault!.createdAt).toBeDefined();
     });
 
     it('should use custom name when provided', () => {
       const vault = saveVault(mockPlan, mockResult, 'My Custom Vault');
-      expect(vault.name).toBe('My Custom Vault');
+      expect(vault!.name).toBe('My Custom Vault');
     });
 
     it('should prepend new vault to existing vaults', () => {
@@ -116,11 +117,48 @@ describe('vaultStorage', () => {
       expect(saved[0].name).toBe('Second');
       expect(saved[1].name).toBe('First');
     });
+
+    it('should strip social_recovery_kit shares before persisting', () => {
+      const resultWithShares: PlanOutput = {
+        ...mockResult,
+        social_recovery_kit: {
+          config: { threshold: 2, total: 3 },
+          shares: [
+            { index: 1, share: 'a'.repeat(80) },
+            { index: 2, share: 'b'.repeat(80) },
+          ],
+          instructions: ['Keep shares separate.'],
+        },
+      };
+
+      const vault = saveVault(mockPlan, resultWithShares);
+
+      expect(vault).not.toBeNull();
+      // The returned vault reflects exactly what was persisted (shares stripped),
+      // so callers can't accidentally treat the saved vault as still carrying
+      // the share material. The in-memory wizard state keeps its own copy.
+      expect(vault!.result.social_recovery_kit).toBeUndefined();
+
+      // The persisted copy must NOT contain the shares either.
+      const stored = getSavedVaults();
+      expect(stored).toHaveLength(1);
+      expect(stored[0].result.social_recovery_kit).toBeUndefined();
+    });
+
+    it('should return null when localStorage.setItem throws', () => {
+      // Override setItem to throw, simulating quota exceeded / private mode.
+      mockStorage.setItem.mockImplementationOnce(() => {
+        throw new Error('QuotaExceededError');
+      });
+
+      const vault = saveVault(mockPlan, mockResult);
+      expect(vault).toBeNull();
+    });
   });
 
   describe('deleteVault', () => {
     it('should remove vault by id', () => {
-      const vault = saveVault(mockPlan, mockResult);
+      const vault = saveVault(mockPlan, mockResult)!;
       expect(getSavedVaults()).toHaveLength(1);
 
       deleteVault(vault.id);
@@ -136,7 +174,7 @@ describe('vaultStorage', () => {
 
   describe('updateVaultName', () => {
     it('should update vault name', () => {
-      const vault = saveVault(mockPlan, mockResult, 'Original');
+      const vault = saveVault(mockPlan, mockResult, 'Original')!;
       updateVaultName(vault.id, 'Updated');
 
       const saved = getSavedVaults();
@@ -144,7 +182,7 @@ describe('vaultStorage', () => {
     });
 
     it('should keep original name if new name is empty', () => {
-      const vault = saveVault(mockPlan, mockResult, 'Original');
+      const vault = saveVault(mockPlan, mockResult, 'Original')!;
       updateVaultName(vault.id, '   ');
 
       const saved = getSavedVaults();
@@ -154,7 +192,7 @@ describe('vaultStorage', () => {
 
   describe('updateVaultNotes', () => {
     it('should update vault notes', () => {
-      const vault = saveVault(mockPlan, mockResult);
+      const vault = saveVault(mockPlan, mockResult)!;
       updateVaultNotes(vault.id, 'Test note content');
 
       const saved = getSavedVaults();
@@ -162,7 +200,7 @@ describe('vaultStorage', () => {
     });
 
     it('should trim notes', () => {
-      const vault = saveVault(mockPlan, mockResult);
+      const vault = saveVault(mockPlan, mockResult)!;
       updateVaultNotes(vault.id, '  trimmed notes  ');
 
       const saved = getSavedVaults();
@@ -172,7 +210,7 @@ describe('vaultStorage', () => {
 
   describe('updateVaultLastChecked', () => {
     it('should update last checked timestamp', () => {
-      const vault = saveVault(mockPlan, mockResult);
+      const vault = saveVault(mockPlan, mockResult)!;
       expect(getSavedVaults()[0].lastCheckedAt).toBeUndefined();
 
       updateVaultLastChecked(vault.id);
@@ -185,7 +223,7 @@ describe('vaultStorage', () => {
 
   describe('getVaultById', () => {
     it('should return vault by id', () => {
-      const vault = saveVault(mockPlan, mockResult);
+      const vault = saveVault(mockPlan, mockResult)!;
       const found = getVaultById(vault.id);
       expect(found).toEqual(vault);
     });
@@ -198,7 +236,7 @@ describe('vaultStorage', () => {
 
   describe('getVaultByAddress', () => {
     it('should return vault by address', () => {
-      const vault = saveVault(mockPlan, mockResult);
+      const vault = saveVault(mockPlan, mockResult)!;
       const found = getVaultByAddress(mockResult.address);
       expect(found).toEqual(vault);
     });
@@ -222,7 +260,7 @@ describe('vaultStorage', () => {
 
   describe('updateVaultTags', () => {
     it('should update vault tags', () => {
-      const vault = saveVault(mockPlan, mockResult);
+      const vault = saveVault(mockPlan, mockResult)!;
       updateVaultTags(vault.id, ['savings', 'family', '2025']);
 
       const saved = getSavedVaults();
@@ -230,7 +268,7 @@ describe('vaultStorage', () => {
     });
 
     it('should trim and lowercase tags', () => {
-      const vault = saveVault(mockPlan, mockResult);
+      const vault = saveVault(mockPlan, mockResult)!;
       updateVaultTags(vault.id, ['  Savings  ', 'FAMILY', '  2025  ']);
 
       const saved = getSavedVaults();
@@ -238,7 +276,7 @@ describe('vaultStorage', () => {
     });
 
     it('should filter out empty tags', () => {
-      const vault = saveVault(mockPlan, mockResult);
+      const vault = saveVault(mockPlan, mockResult)!;
       updateVaultTags(vault.id, ['savings', '', '  ', 'family']);
 
       const saved = getSavedVaults();
@@ -246,7 +284,7 @@ describe('vaultStorage', () => {
     });
 
     it('should clear tags when empty array provided', () => {
-      const vault = saveVault(mockPlan, mockResult);
+      const vault = saveVault(mockPlan, mockResult)!;
       updateVaultTags(vault.id, ['savings']);
       updateVaultTags(vault.id, []);
 
@@ -324,6 +362,40 @@ describe('vaultStorage', () => {
       const result = importVaultsFromBackup(JSON.stringify({ foo: 'bar' }));
       expect(result.imported).toBe(0);
       expect(result.errors).toHaveLength(1);
+    });
+
+    it('strips social_recovery_kit shares when importing a backup', () => {
+      const backup = {
+        version: '1.0',
+        exportedAt: new Date().toISOString(),
+        vaults: [
+          {
+            id: 'imported-with-shares',
+            name: 'Imported Vault',
+            address: 'tb1qwithshares',
+            network: 'testnet',
+            addressType: 'p2wsh',
+            createdAt: new Date().toISOString(),
+            plan: mockPlan,
+            result: {
+              ...mockResult,
+              address: 'tb1qwithshares',
+              social_recovery_kit: {
+                config: { threshold: 2, total: 3 },
+                shares: [{ index: 1, share: 'a'.repeat(80) }],
+                instructions: ['Should not survive import.'],
+              },
+            },
+          },
+        ],
+      };
+
+      const result = importVaultsFromBackup(JSON.stringify(backup));
+      expect(result.imported).toBe(1);
+
+      const stored = getSavedVaults();
+      expect(stored).toHaveLength(1);
+      expect(stored[0].result.social_recovery_kit).toBeUndefined();
     });
   });
 });

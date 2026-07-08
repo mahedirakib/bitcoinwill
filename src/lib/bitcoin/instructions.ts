@@ -1,7 +1,17 @@
 import { PlanInput, PlanOutput, AddressType } from './types';
 import { calculateTime } from './utils';
 import { buildPlan } from './planEngine';
-import { bytesToHex } from './hex';
+import { bytesToHex, hexToBytes } from './hex';
+
+/** Constant-time equality check for two equal-length byte arrays. */
+const constantTimeEqual = (a: Uint8Array, b: Uint8Array): boolean => {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i += 1) {
+    diff |= a[i] ^ b[i];
+  }
+  return diff === 0;
+};
 
 /**
  * Data model for beneficiary-facing instructions.
@@ -114,7 +124,11 @@ export const verifyRecoveryKitChecksum = async (
 ): Promise<boolean> => {
   try {
     const actualChecksum = await generateRecoveryKitChecksum(plan, result);
-    return actualChecksum.toLowerCase() === expectedChecksum.toLowerCase();
+    // Constant-time comparison: the checksum itself is derived from non-secret
+    // plan data, so timing leakage is not directly dangerous here, but using a
+    // constant-time comparison defends against copy-paste reuse of this helper
+    // for authenticated (HMAC-style) checks in the future.
+    return constantTimeEqual(hexToBytes(actualChecksum), hexToBytes(expectedChecksum));
   } catch {
     return false;
   }

@@ -103,7 +103,7 @@ export const VaultDetailPage = ({
         copyTimeoutRef.current = null;
       }, 2000);
     } catch {
-      showToast('Clipboard unavailable');
+      showToast('Clipboard unavailable', 'error');
     }
   };
 

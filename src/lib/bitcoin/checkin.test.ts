@@ -38,4 +38,16 @@ describe('checkin helpers', () => {
     expect(low.recommendedCheckInEveryBlocks).toBe(200);
     expect(high.recommendedCheckInEveryBlocks).toBe(900);
   });
+
+  it('rejects locktime exceeding the protocol maximum', () => {
+    expect(() => buildCheckInPlan(52_561)).toThrow('between 1 and 52560');
+  });
+
+  it('rejects non-integer locktime', () => {
+    expect(() => buildCheckInPlan(1.5)).toThrow('between 1 and 52560');
+  });
+
+  it('accepts the maximum allowed locktime', () => {
+    expect(() => buildCheckInPlan(52_560)).not.toThrow();
+  });
 });

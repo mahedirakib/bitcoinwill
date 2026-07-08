@@ -340,13 +340,13 @@ export const VaultsPage = ({ onNavigate, onViewVault }: VaultsPageProps) => {
       downloadJson('bitcoin-will-vaults-backup.json', data);
       showToast('Vaults exported');
     } catch {
-      showToast('Failed to export vaults');
+      showToast('Failed to export vaults', 'error');
     }
   };
 
   const handleImport = () => {
     if (!importText.trim()) {
-      showToast('Paste JSON to import');
+      showToast('Paste JSON to import', 'info');
       return;
     }
     const result = importVaults(importText);
@@ -354,10 +354,10 @@ export const VaultsPage = ({ onNavigate, onViewVault }: VaultsPageProps) => {
       showToast(`Imported ${result.imported} vault${result.imported > 1 ? 's' : ''}`);
     }
     if (result.skipped > 0) {
-      showToast(`${result.skipped} vault${result.skipped > 1 ? 's' : ''} already exist`);
+      showToast(`${result.skipped} vault${result.skipped > 1 ? 's' : ''} already exist`, 'info');
     }
     if (result.errors.length > 0) {
-      showToast(`Import errors: ${result.errors.join(', ')}`);
+      showToast(`Import errors: ${result.errors.join(', ')}`, 'error');
     }
     setImportText('');
     setShowImport(false);
@@ -374,13 +374,13 @@ export const VaultsPage = ({ onNavigate, onViewVault }: VaultsPageProps) => {
         showToast(`Imported ${result.imported} vault${result.imported > 1 ? 's' : ''}`);
       }
       if (result.skipped > 0) {
-        showToast(`${result.skipped} vault${result.skipped > 1 ? 's' : ''} already exist`);
+        showToast(`${result.skipped} vault${result.skipped > 1 ? 's' : ''} already exist`, 'info');
       }
       if (result.errors.length > 0) {
-        showToast(`Import errors: ${result.errors.join(', ')}`);
+        showToast(`Import errors: ${result.errors.join(', ')}`, 'error');
       }
     } catch {
-      showToast('Error reading file');
+      showToast('Error reading file', 'error');
     } finally {
       event.target.value = '';
     }

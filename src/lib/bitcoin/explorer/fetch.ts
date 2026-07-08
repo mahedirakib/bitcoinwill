@@ -84,15 +84,24 @@ const fetchAddressSummaryWithProvider = async (
     }
   }
 
+  // Compute each component from the raw (possibly negative) differences, then
+  // clamp independently. The total is derived from the clamped components so
+  // `total === confirmed + unconfirmed` always holds — previously the total
+  // used the raw differences while the parts were clamped, which could make the
+  // displayed total silently disagree with the sum of its parts when an
+  // explorer reported spent > funded in one bucket.
+  const confirmedBalance = Math.max(0, chainFunded - chainSpent);
+  const unconfirmedBalance = Math.max(0, mempoolFunded - mempoolSpent);
+
   return {
     network: request.network,
     address: request.address,
     providerUsed: request.provider,
     providerLabel: config.providerLabel,
     usedFallbackProvider: false,
-    confirmedBalanceSats: Math.max(0, chainFunded - chainSpent),
-    unconfirmedBalanceSats: Math.max(0, mempoolFunded - mempoolSpent),
-    totalBalanceSats: Math.max(0, chainFunded - chainSpent + (mempoolFunded - mempoolSpent)),
+    confirmedBalanceSats: confirmedBalance,
+    unconfirmedBalanceSats: unconfirmedBalance,
+    totalBalanceSats: Math.max(0, confirmedBalance + unconfirmedBalance),
     txCount,
     tipHeight,
     lastFundingTx,

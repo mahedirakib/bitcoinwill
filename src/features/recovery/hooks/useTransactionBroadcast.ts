@@ -35,13 +35,13 @@ export const useTransactionBroadcast = (
   const broadcastTransaction = useCallback(async () => {
     if (!publicExplorerAvailable) {
       const message = 'Public broadcast is unavailable on Regtest. Use your local node RPC instead.';
-      showToast(message);
+      showToast(message, 'error');
       return;
     }
 
     if (isMainnet && broadcastMainnetPhrase !== MAINNET_BROADCAST_CONFIRMATION) {
       const message = 'Mainnet broadcast requires the exact confirmation phrase.';
-      showToast(message);
+      showToast(message, 'error');
       return;
     }
 

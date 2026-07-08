@@ -130,11 +130,19 @@ export const parseWizardDraft = (
   if (!isObjectRecord(parsed.input)) return null;
 
   const timestamp = parseTimestamp(parsed.timestamp);
-  if (timestamp) {
-    const ageMs = Date.now() - timestamp.getTime();
-    if (ageMs > DRAFT_EXPIRY_MS) {
-      return null;
-    }
+  // A missing or malformed timestamp is treated as expired rather than as
+  // "no expiry check" — otherwise stale or tampered drafts with a bad
+  // timestamp would bypass the 1-hour expiry window indefinitely.
+  if (!timestamp) {
+    return null;
+  }
+  const ageMs = Date.now() - timestamp.getTime();
+  if (ageMs > DRAFT_EXPIRY_MS) {
+    return null;
+  }
+  // Also reject drafts dated in the future (clock skew / tampering).
+  if (ageMs < -60_000) {
+    return null;
   }
 
   const input = sanitizePlanInput(parsed.input, fallbackNetwork);

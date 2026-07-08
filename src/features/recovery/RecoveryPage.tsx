@@ -84,7 +84,7 @@ const RecoveryPage = ({ initialData, onBack }: RecoveryPageProps) => {
         const m = buildInstructions(normalized.plan, normalized.result, normalized.created_at);
         setModel(m);
       } catch (error) {
-        showToast((error as Error).message || 'Invalid Recovery Kit');
+        showToast((error as Error).message || 'Invalid Recovery Kit', 'error');
       }
     }
   }, [initialData, showToast]);
@@ -101,14 +101,14 @@ const RecoveryPage = ({ initialData, onBack }: RecoveryPageProps) => {
       !privateKeyMatchesBeneficiary(reconstructedKey, loadedModel.beneficiaryPubkey)
     ) {
       setReconstructedKey(null);
-      showToast('Reconstructed key does not match this Recovery Kit beneficiary key.');
+      showToast('Reconstructed key does not match this Recovery Kit beneficiary key.', 'error');
     }
     setModel(loadedModel);
   };
 
   const handleKeyReconstructed = (privateKeyHex: string) => {
     if (model && !privateKeyMatchesBeneficiary(privateKeyHex, model.beneficiaryPubkey)) {
-      showToast('Reconstructed key does not match this Recovery Kit beneficiary key.');
+      showToast('Reconstructed key does not match this Recovery Kit beneficiary key.', 'error');
       setShowShareRecovery(false);
       return;
     }
@@ -139,6 +139,7 @@ const RecoveryPage = ({ initialData, onBack }: RecoveryPageProps) => {
       <ShareRecovery
         onKeyReconstructed={handleKeyReconstructed}
         onCancel={handleBackToLoader}
+        beneficiaryPubkey={model?.beneficiaryPubkey}
       />
     );
   }

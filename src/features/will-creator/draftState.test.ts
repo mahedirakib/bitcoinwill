@@ -13,6 +13,10 @@ describe('wizard draft restore helpers', () => {
     recovery_method: 'single' as const,
   };
 
+  // Drafts without a valid (recent) timestamp are now treated as expired, so
+  // every restorable payload must carry a fresh timestamp.
+  const freshTimestamp = () => new Date().toISOString();
+
   it('returns null for malformed JSON payloads', () => {
     expect(parseWizardDraft('{this-is-not-json', 'testnet')).toBeNull();
   });
@@ -20,6 +24,7 @@ describe('wizard draft restore helpers', () => {
   it('returns null for invalid step payloads', () => {
     const payload = JSON.stringify({
       step: 'INVALID_STEP',
+      timestamp: freshTimestamp(),
       input: {
         network: 'testnet',
         owner_pubkey: '',
@@ -32,13 +37,14 @@ describe('wizard draft restore helpers', () => {
   });
 
   it('returns null when input payload is missing or invalid', () => {
-    const payload = JSON.stringify({ step: 'KEYS' });
+    const payload = JSON.stringify({ step: 'KEYS', timestamp: freshTimestamp() });
     expect(parseWizardDraft(payload, 'testnet')).toBeNull();
   });
 
   it('sanitizes restored input values to safe defaults', () => {
     const payload = JSON.stringify({
       step: 'TIMELOCK',
+      timestamp: freshTimestamp(),
       input: {
         network: 'signet',
         inheritance_type: 'legacy_recovery',
@@ -63,6 +69,7 @@ describe('wizard draft restore helpers', () => {
   it('preserves valid fields from restored drafts', () => {
     const payload = JSON.stringify({
       step: 'REVIEW',
+      timestamp: freshTimestamp(),
       input: {
         network: 'mainnet',
         inheritance_type: 'timelock_recovery',
@@ -94,6 +101,7 @@ describe('wizard draft restore helpers', () => {
   it('drops invalid optional configuration fields', () => {
     const payload = JSON.stringify({
       step: 'TYPE',
+      timestamp: freshTimestamp(),
       input: {
         network: 'testnet',
         inheritance_type: 'timelock_recovery',
@@ -124,6 +132,7 @@ describe('wizard draft restore helpers', () => {
   it('does not restore social recovery share material from saved results', () => {
     const payload = JSON.stringify({
       step: 'RESULT',
+      timestamp: freshTimestamp(),
       input: {
         network: 'testnet',
         inheritance_type: 'timelock_recovery',
@@ -162,6 +171,7 @@ describe('wizard draft restore helpers', () => {
   it('does not restore stripped social recovery results as completed plans', () => {
     const payload = JSON.stringify({
       step: 'RESULT',
+      timestamp: freshTimestamp(),
       input: {
         network: 'testnet',
         inheritance_type: 'timelock_recovery',
@@ -193,6 +203,7 @@ describe('wizard draft restore helpers', () => {
     const result = buildPlan(canonicalInput);
     const payload = JSON.stringify({
       step: 'RESULT',
+      timestamp: freshTimestamp(),
       input: canonicalInput,
       result,
     });
@@ -206,6 +217,7 @@ describe('wizard draft restore helpers', () => {
   it('falls back to review when a completed draft result is missing', () => {
     const payload = JSON.stringify({
       step: 'RESULT',
+      timestamp: freshTimestamp(),
       input: canonicalInput,
     });
 
@@ -219,6 +231,7 @@ describe('wizard draft restore helpers', () => {
     const result = buildPlan(canonicalInput);
     const payload = JSON.stringify({
       step: 'RESULT',
+      timestamp: freshTimestamp(),
       input: canonicalInput,
       result: {
         ...result,
@@ -230,5 +243,66 @@ describe('wizard draft restore helpers', () => {
 
     expect(restored?.step).toBe('REVIEW');
     expect(restored?.result).toBeUndefined();
+  });
+
+  it('treats a draft with a missing timestamp as expired', () => {
+    const payload = JSON.stringify({
+      step: 'TIMELOCK',
+      input: {
+        network: 'testnet',
+        inheritance_type: 'timelock_recovery',
+        owner_pubkey: '02e9634f19b165239105436a5c17e3371901c5651581452a329978747474747474',
+        beneficiary_pubkey: '03e9634f19b165239105436a5c17e3371901c5651581452a329978747474747474',
+        locktime_blocks: 144,
+      },
+    });
+    expect(parseWizardDraft(payload, 'testnet')).toBeNull();
+  });
+
+  it('treats a draft with a malformed timestamp as expired', () => {
+    const payload = JSON.stringify({
+      step: 'TIMELOCK',
+      timestamp: 'not-a-date',
+      input: {
+        network: 'testnet',
+        inheritance_type: 'timelock_recovery',
+        owner_pubkey: '02e9634f19b165239105436a5c17e3371901c5651581452a329978747474747474',
+        beneficiary_pubkey: '03e9634f19b165239105436a5c17e3371901c5651581452a329978747474747474',
+        locktime_blocks: 144,
+      },
+    });
+    expect(parseWizardDraft(payload, 'testnet')).toBeNull();
+  });
+
+  it('treats a draft older than the expiry window as expired', () => {
+    const expired = new Date(Date.now() - (60 * 60 * 1000 + 60_000)).toISOString();
+    const payload = JSON.stringify({
+      step: 'TIMELOCK',
+      timestamp: expired,
+      input: {
+        network: 'testnet',
+        inheritance_type: 'timelock_recovery',
+        owner_pubkey: '02e9634f19b165239105436a5c17e3371901c5651581452a329978747474747474',
+        beneficiary_pubkey: '03e9634f19b165239105436a5c17e3371901c5651581452a329978747474747474',
+        locktime_blocks: 144,
+      },
+    });
+    expect(parseWizardDraft(payload, 'testnet')).toBeNull();
+  });
+
+  it('rejects a draft whose timestamp is far in the future', () => {
+    const future = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+    const payload = JSON.stringify({
+      step: 'TIMELOCK',
+      timestamp: future,
+      input: {
+        network: 'testnet',
+        inheritance_type: 'timelock_recovery',
+        owner_pubkey: '02e9634f19b165239105436a5c17e3371901c5651581452a329978747474747474',
+        beneficiary_pubkey: '03e9634f19b165239105436a5c17e3371901c5651581452a329978747474747474',
+        locktime_blocks: 144,
+      },
+    });
+    expect(parseWizardDraft(payload, 'testnet')).toBeNull();
   });
 });

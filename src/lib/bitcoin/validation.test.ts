@@ -259,5 +259,55 @@ describe('Validation Module', () => {
       };
       expect(() => validatePlanInput(invalidInput)).toThrow('Invalid Owner Public Key');
     });
+
+    describe('recovery_method and sss_config consistency', () => {
+      it('accepts social recovery with a valid 2-of-3 config', () => {
+        const input = { ...validInput, recovery_method: 'social', sss_config: { threshold: 2, total: 3 } } as PlanInput;
+        expect(() => validatePlanInput(input)).not.toThrow();
+      });
+
+      it('accepts social recovery with a valid 3-of-5 config', () => {
+        const input = { ...validInput, recovery_method: 'social', sss_config: { threshold: 3, total: 5 } } as PlanInput;
+        expect(() => validatePlanInput(input)).not.toThrow();
+      });
+
+      it('accepts single recovery with no sss_config', () => {
+        const input = { ...validInput, recovery_method: 'single' } as PlanInput;
+        expect(() => validatePlanInput(input)).not.toThrow();
+      });
+
+      it('throws when social recovery is requested without an sss_config', () => {
+        const input = { ...validInput, recovery_method: 'social' } as PlanInput;
+        expect(() => validatePlanInput(input)).toThrow('valid SSS configuration');
+      });
+
+      it('throws when social recovery uses an unsupported sss_config', () => {
+        const input = {
+          ...validInput,
+          recovery_method: 'social',
+          sss_config: { threshold: 2, total: 5 },
+        } as unknown as PlanInput;
+        expect(() => validatePlanInput(input)).toThrow('valid SSS configuration');
+      });
+
+      it('throws when single recovery includes an sss_config', () => {
+        const input = {
+          ...validInput,
+          recovery_method: 'single',
+          sss_config: { threshold: 2, total: 3 },
+        } as PlanInput;
+        expect(() => validatePlanInput(input)).toThrow('must not include an SSS configuration');
+      });
+
+      it('throws when an sss_config is present without a recovery_method', () => {
+        const input = { ...validInput, sss_config: { threshold: 2, total: 3 } } as PlanInput;
+        expect(() => validatePlanInput(input)).toThrow('recovery_method to be set to "social"');
+      });
+
+      it('throws for an unsupported recovery_method value', () => {
+        const input = { ...validInput, recovery_method: 'multisig' } as unknown as PlanInput;
+        expect(() => validatePlanInput(input)).toThrow('Invalid recovery method');
+      });
+    });
   });
 });
