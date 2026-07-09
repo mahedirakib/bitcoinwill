@@ -153,7 +153,10 @@ export const AppShell = ({ active, onNavigate, topbar, children }: AppShellProps
       <div className="mt-auto border-t border-border pt-3 space-y-2">
         <button
           type="button"
-          onClick={() => onNavigate('settings')}
+          onClick={() => {
+            onNavigate('settings');
+            setMobileOpen(false);
+          }}
           aria-current={active === 'settings' ? 'page' : undefined}
           className={`flex w-full items-center gap-2.5 rounded-md border px-3 py-2 text-left text-sm transition-colors ${
             active === 'settings'

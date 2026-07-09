@@ -8,10 +8,7 @@ interface Shortcut {
 }
 
 const SHORTCUTS: Shortcut[] = [
-  { keys: ['Ctrl', 'Enter'], description: 'Submit form / Continue' },
-  { keys: ['Esc'], description: 'Close modal / Go back' },
-  { keys: ['?'], description: 'Show this help' },
-  { keys: ['←', '→'], description: 'Navigate steps' },
+  { keys: ['?'], description: 'Show or hide this help' },
 ];
 
 const isModalOpen = (): boolean => {

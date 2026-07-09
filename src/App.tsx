@@ -120,6 +120,7 @@ const AppContent = () => {
   const [instructionData, setInstructionData] = useState<InstructionData | undefined>(undefined)
   const [selectedVault, setSelectedVault] = useState<SavedVault | null>(null)
   const [forceQaCrash, setForceQaCrash] = useState(false)
+  const [pageRetryKey, setPageRetryKey] = useState(0)
 
   if (forceQaCrash) {
     throw new Error('Forced QA crash to validate ErrorBoundary fallback UI.')
@@ -144,6 +145,17 @@ const AppContent = () => {
   const handleViewVault = (vault: SavedVault) => {
     navigateTo('vaults')
     setSelectedVault(vault)
+  }
+
+  const retryCurrentView = () => {
+    // Page boundaries retain their error state until remounted. Changing this
+    // key gives Retry a real recovery path without restarting the whole app.
+    setPageRetryKey((key) => key + 1)
+  }
+
+  const recoverTo = (view: AppView) => {
+    retryCurrentView()
+    navigateTo(view, 'replace')
   }
 
   const handleViewVaultInstructions = (vault: SavedVault) => {
@@ -205,11 +217,11 @@ const AppContent = () => {
       <Suspense fallback={<PageLoading />}>
         {activeView === 'home' && (
           <ErrorBoundary
-            key="home"
+            key={`home-${pageRetryKey}`}
             fallback={
               <PageErrorFallback
-                onRetry={() => navigateTo('home', 'replace')}
-                onGoHome={() => navigateTo('home', 'replace')}
+                onRetry={retryCurrentView}
+                onGoHome={() => recoverTo('home')}
               />
             }
           >
@@ -222,11 +234,11 @@ const AppContent = () => {
 
         {activeView === 'create' && (
           <ErrorBoundary
-            key="create"
+            key={`create-${pageRetryKey}`}
             fallback={
               <PageErrorFallback
-                onRetry={() => navigateTo('create', 'replace')}
-                onGoHome={() => navigateTo('home', 'replace')}
+                onRetry={retryCurrentView}
+                onGoHome={() => recoverTo('home')}
               />
             }
           >
@@ -242,11 +254,11 @@ const AppContent = () => {
 
         {activeView === 'learn' && (
           <ErrorBoundary
-            key="learn"
+            key={`learn-${pageRetryKey}`}
             fallback={
               <PageErrorFallback
-                onRetry={() => navigateTo('learn', 'replace')}
-                onGoHome={() => navigateTo('home', 'replace')}
+                onRetry={retryCurrentView}
+                onGoHome={() => recoverTo('home')}
               />
             }
           >
@@ -256,11 +268,11 @@ const AppContent = () => {
 
         {activeView === 'protocol' && (
           <ErrorBoundary
-            key="protocol"
+            key={`protocol-${pageRetryKey}`}
             fallback={
               <PageErrorFallback
-                onRetry={() => navigateTo('protocol', 'replace')}
-                onGoHome={() => navigateTo('home', 'replace')}
+                onRetry={retryCurrentView}
+                onGoHome={() => recoverTo('home')}
               />
             }
           >
@@ -273,11 +285,11 @@ const AppContent = () => {
 
         {activeView === 'whitepaper' && (
           <ErrorBoundary
-            key="whitepaper"
+            key={`whitepaper-${pageRetryKey}`}
             fallback={
               <PageErrorFallback
-                onRetry={() => navigateTo('whitepaper', 'replace')}
-                onGoHome={() => navigateTo('home', 'replace')}
+                onRetry={retryCurrentView}
+                onGoHome={() => recoverTo('home')}
               />
             }
           >
@@ -287,11 +299,11 @@ const AppContent = () => {
 
         {(activeView === 'instructions' || activeView === 'recover') && (
           <ErrorBoundary
-            key="instructions"
+            key={`instructions-${pageRetryKey}`}
             fallback={
               <PageErrorFallback
-                onRetry={() => navigateTo('home', 'replace')}
-                onGoHome={() => navigateTo('home', 'replace')}
+                onRetry={retryCurrentView}
+                onGoHome={() => recoverTo('home')}
               />
             }
           >
@@ -307,11 +319,11 @@ const AppContent = () => {
 
         {activeView === 'vaults' && !selectedVault && (
           <ErrorBoundary
-            key="vaults-list"
+            key={`vaults-list-${pageRetryKey}`}
             fallback={
               <PageErrorFallback
-                onRetry={() => navigateTo('vaults', 'replace')}
-                onGoHome={() => navigateTo('home', 'replace')}
+                onRetry={retryCurrentView}
+                onGoHome={() => recoverTo('home')}
               />
             }
           >
@@ -324,14 +336,11 @@ const AppContent = () => {
 
         {activeView === 'vaults' && selectedVault && (
           <ErrorBoundary
-            key={`vault-detail-${selectedVault.id}`}
+            key={`vault-detail-${selectedVault.id}-${pageRetryKey}`}
             fallback={
               <PageErrorFallback
-                onRetry={() => setSelectedVault(null)}
-                onGoHome={() => {
-                  setSelectedVault(null)
-                  navigateTo('home', 'replace')
-                }}
+                onRetry={retryCurrentView}
+                onGoHome={() => recoverTo('home')}
               />
             }
           >
@@ -349,11 +358,11 @@ const AppContent = () => {
 
         {activeView === 'settings' && (
           <ErrorBoundary
-            key="settings"
+            key={`settings-${pageRetryKey}`}
             fallback={
               <PageErrorFallback
-                onRetry={() => navigateTo('settings', 'replace')}
-                onGoHome={() => navigateTo('home', 'replace')}
+                onRetry={retryCurrentView}
+                onGoHome={() => recoverTo('home')}
               />
             }
           >

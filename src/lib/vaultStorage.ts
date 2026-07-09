@@ -194,6 +194,7 @@ export const importVaultsFromBackup = (json: string): ImportResult => {
     if (parsed.vaults && Array.isArray(parsed.vaults)) {
       const existing = getSavedVaults();
       const existingAddresses = new Set(existing.map((v) => v.address));
+      const importedVaults: SavedVault[] = [];
 
       for (const vault of parsed.vaults) {
         if (!isValidVault(vault)) {
@@ -212,14 +213,17 @@ export const importVaultsFromBackup = (json: string): ImportResult => {
           result: stripRecoveryKitSecrets(vault.result),
         };
         existing.push(newVault);
+        importedVaults.push(newVault);
         existingAddresses.add(vault.address);
-        result.imported++;
       }
 
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
-      } catch {
-        result.errors.push('Failed to save imported vaults to storage');
+      if (importedVaults.length > 0) {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
+          result.imported = importedVaults.length;
+        } catch {
+          result.errors.push('Failed to save imported vaults to storage');
+        }
       }
       return result;
     }

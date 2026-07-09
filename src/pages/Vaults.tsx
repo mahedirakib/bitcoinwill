@@ -81,6 +81,7 @@ const VaultCard = ({
                 type="text"
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
+                aria-label="Vault name"
                 className="field-input flex-1 text-sm"
                 autoFocus
                 onKeyDown={(e) => {
@@ -460,6 +461,7 @@ export const VaultsPage = ({ onNavigate, onViewVault }: VaultsPageProps) => {
               placeholder="Paste backup JSON here..."
               value={importText}
               onChange={(e) => setImportText(e.target.value)}
+              aria-label="Vault backup JSON"
             />
             <div className="flex gap-2">
               <button
@@ -554,6 +556,7 @@ export const VaultsPage = ({ onNavigate, onViewVault }: VaultsPageProps) => {
           placeholder="Search by name, address, or network..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
+          aria-label="Search vaults"
           className="field-input pl-9"
         />
         {searchQuery && (
@@ -581,6 +584,7 @@ export const VaultsPage = ({ onNavigate, onViewVault }: VaultsPageProps) => {
                 setShowImport(false);
                 setImportText('');
               }}
+              aria-label="Close import vaults"
               className="rounded-md p-1 text-muted-foreground hover:bg-muted"
             >
               <X className="h-4 w-4" />
@@ -609,6 +613,7 @@ export const VaultsPage = ({ onNavigate, onViewVault }: VaultsPageProps) => {
             placeholder="Paste backup JSON here..."
             value={importText}
             onChange={(e) => setImportText(e.target.value)}
+            aria-label="Vault backup JSON"
           />
           <button
             type="button"
@@ -631,6 +636,7 @@ export const VaultsPage = ({ onNavigate, onViewVault }: VaultsPageProps) => {
                 key={network}
                 type="button"
                 onClick={() => setNetworkFilter(network)}
+                aria-pressed={networkFilter === network}
                 className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
                   networkFilter === network
                     ? 'bg-foreground text-white'
@@ -648,6 +654,7 @@ export const VaultsPage = ({ onNavigate, onViewVault }: VaultsPageProps) => {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortOption)}
+              aria-label="Sort vaults"
               className="rounded-md border border-border bg-white px-2 py-1 text-xs font-medium text-foreground focus:border-foreground focus:outline-none"
             >
               <option value="newest">Newest first</option>
@@ -666,6 +673,7 @@ export const VaultsPage = ({ onNavigate, onViewVault }: VaultsPageProps) => {
               <button
                 type="button"
                 onClick={() => setTagFilter('all')}
+                aria-pressed={tagFilter === 'all'}
                 className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
                   tagFilter === 'all'
                     ? 'bg-accent text-white'
@@ -679,6 +687,7 @@ export const VaultsPage = ({ onNavigate, onViewVault }: VaultsPageProps) => {
                   key={tag}
                   type="button"
                   onClick={() => setTagFilter(tag)}
+                  aria-pressed={tagFilter === tag}
                   className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
                     tagFilter === tag
                       ? 'bg-accent text-white'

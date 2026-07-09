@@ -112,13 +112,15 @@ export const ShareRecovery = ({ onKeyReconstructed, onCancel, beneficiaryPubkey 
             <div className="relative">
               <div
                 className="break-all rounded-md border border-border bg-muted/40 p-3 font-mono text-xs text-foreground"
-                style={{ filter: showKey ? 'none' : 'blur(8px)' }}
+                aria-live={showKey ? 'polite' : undefined}
               >
-                {reconstructedKey}
+                {showKey ? reconstructedKey : 'Hidden until revealed'}
               </div>
               <button
                 type="button"
                 onClick={() => setShowKey(!showKey)}
+                aria-label={showKey ? 'Hide private key' : 'Reveal private key'}
+                aria-pressed={showKey}
                 className="absolute right-2 top-2 rounded-md border border-border bg-white px-2.5 py-1 text-xs font-medium text-foreground hover:bg-muted"
               >
                 {showKey ? 'Hide' : 'Reveal'}
@@ -163,6 +165,7 @@ export const ShareRecovery = ({ onKeyReconstructed, onCancel, beneficiaryPubkey 
               key={t}
               type="button"
               onClick={() => setThreshold(t)}
+              aria-pressed={threshold === t}
               className={`rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
                 threshold === t
                   ? 'border-foreground bg-foreground text-white'
@@ -188,6 +191,9 @@ export const ShareRecovery = ({ onKeyReconstructed, onCancel, beneficiaryPubkey 
                 value={input.value}
                 onChange={(e) => updateShare(input.id, e.target.value)}
                 placeholder="Paste share hex…"
+                aria-label={`Share ${index + 1}`}
+                autoComplete="off"
+                spellCheck={false}
                 className="field-input pl-[5.5rem]"
               />
             </div>

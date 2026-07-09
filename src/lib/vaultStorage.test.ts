@@ -370,6 +370,33 @@ describe('vaultStorage', () => {
       expect(getSavedVaults()).toHaveLength(0);
     });
 
+    it('reports a storage failure for backup imports instead of claiming success', () => {
+      const backup = {
+        version: '1.0',
+        vaults: [
+          {
+            id: 'imported-1',
+            name: 'Imported Vault',
+            address: 'tb1qfailbackupwrite',
+            network: 'testnet',
+            addressType: 'p2wsh',
+            createdAt: new Date().toISOString(),
+            plan: mockPlan,
+            result: { ...mockResult, address: 'tb1qfailbackupwrite' },
+          },
+        ],
+      };
+
+      mockStorage.setItem.mockImplementationOnce(() => {
+        throw new Error('QuotaExceededError');
+      });
+
+      const result = importVaultsFromBackup(JSON.stringify(backup));
+      expect(result.imported).toBe(0);
+      expect(result.errors).toEqual(['Failed to save imported vaults to storage']);
+      expect(getSavedVaults()).toHaveLength(0);
+    });
+
     it('ignores a non-string name when importing a single recovery kit', () => {
       const kit = {
         plan: mockPlan,
