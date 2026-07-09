@@ -64,11 +64,25 @@ export function useFocusTrap<T extends HTMLElement = HTMLElement>(
   const containerRef = useRef<T>(null);
   const lastFocusedRef = useRef<HTMLElement | null>(null);
 
+  // Keep callbacks/selectors in refs so the activating effect doesn't depend on
+  // their identity. Parent re-renders (e.g. a toast appearing) frequently
+  // produce new function references for `onEscape`/`initialFocus`; depending on
+  // them would tear the trap down and rebuild it, stealing focus mid-interaction.
+  // Refs are updated in an effect (not during render) to stay lint-compliant.
+  const onEscapeRef = useRef(onEscape);
+  const initialFocusRef = useRef(initialFocus);
+  useEffect(() => {
+    onEscapeRef.current = onEscape;
+    initialFocusRef.current = initialFocus;
+  }, [onEscape, initialFocus]);
+
   useEffect(() => {
     if (!enabled) return;
 
     const container = containerRef.current;
     if (!container) return;
+
+    const initialFocusSnapshot = initialFocusRef.current;
 
     lastFocusedRef.current =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -81,10 +95,10 @@ export function useFocusTrap<T extends HTMLElement = HTMLElement>(
 
     const focusTimer = window.setTimeout(() => {
       let target: HTMLElement | null = null;
-      if (typeof initialFocus === 'function') {
-        target = initialFocus(container);
-      } else if (typeof initialFocus === 'string') {
-        target = container.querySelector<HTMLElement>(initialFocus);
+      if (typeof initialFocusSnapshot === 'function') {
+        target = initialFocusSnapshot(container);
+      } else if (typeof initialFocusSnapshot === 'string') {
+        target = container.querySelector<HTMLElement>(initialFocusSnapshot);
       }
       if (!target) {
         target = container.querySelector<HTMLElement>(FOCUSABLE_SELECTOR);
@@ -95,7 +109,7 @@ export function useFocusTrap<T extends HTMLElement = HTMLElement>(
     const handleKeyDown = (event: KeyboardEvent) => {
       if (closeOnEscape && event.key === 'Escape') {
         event.stopPropagation();
-        onEscape?.();
+        onEscapeRef.current?.();
         return;
       }
 
@@ -128,7 +142,7 @@ export function useFocusTrap<T extends HTMLElement = HTMLElement>(
         lastFocusedRef.current?.focus();
       }
     };
-  }, [initialFocus, restoreFocus, lockScroll, closeOnEscape, onEscape, enabled]);
+  }, [restoreFocus, lockScroll, closeOnEscape, enabled]);
 
   return containerRef;
 }

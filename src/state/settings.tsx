@@ -1,6 +1,10 @@
 import React, { createContext, useContext, useRef, useState, useCallback, useMemo } from 'react';
 import { BitcoinNetwork, isBitcoinNetwork } from '@/lib/bitcoin/types';
 
+// The exact phrase a user must type to unlock mainnet. Shared by every entry
+// point that performs this dangerous action so the requirement can't drift.
+export const MAINNET_CONFIRMATION_PHRASE = 'I UNDERSTAND MAINNET IS REAL MONEY';
+
 interface SettingsContextType {
   network: BitcoinNetwork;
   setNetwork: (network: BitcoinNetwork) => void;

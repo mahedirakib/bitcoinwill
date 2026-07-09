@@ -24,7 +24,7 @@ import { calculateTime } from '@/lib/bitcoin/utils';
 import { downloadJson } from '@/lib/utils/download';
 import { formatRelativeTime } from '@/lib/utils/time';
 import { useVaultStatus } from '@/features/recovery/hooks/useVaultStatus';
-import { formatBtc, formatSats } from '@/lib/bitcoin/explorer';
+import { formatBtc, formatSats, buildExplorerAddressUrl } from '@/lib/bitcoin/explorer';
 
 interface VaultDetailPageProps {
   vault: SavedVault;
@@ -157,19 +157,22 @@ export const VaultDetailPage = ({
     setIsEditingTags(false);
   };
 
-  const handleRefreshStatus = () => {
-    refreshVaultStatus();
-    markChecked(vault.id);
+  const handleRefreshStatus = async () => {
+    // Only stamp "checked" when the status fetch actually succeeded, so the
+    // indicator never claims a check happened when it didn't.
+    const ok = await refreshVaultStatus();
+    if (ok) markChecked(vault.id);
   };
 
   const getExplorerUrl = () => {
-    const base =
-      vault.network === 'mainnet'
-        ? 'https://mempool.space/address/'
-        : vault.network === 'testnet'
-        ? 'https://mempool.space/testnet/address/'
-        : null;
-    return base ? `${base}${vault.address}` : null;
+    // Public explorers don't support regtest; reuse the centralized config so
+    // the link matches the provider used by the live-status panel.
+    if (vault.network === 'regtest') return null;
+    return buildExplorerAddressUrl(
+      vault.network as 'mainnet' | 'testnet',
+      'mempool',
+      vault.address,
+    );
   };
 
   const explorerUrl = getExplorerUrl();
@@ -313,55 +316,65 @@ export const VaultDetailPage = ({
           <div className="section-eyebrow flex items-center gap-1.5">
             <Activity className="h-3 w-3" /> Live status
           </div>
-          <button
-            type="button"
-            onClick={handleRefreshStatus}
-            disabled={isCheckingStatus}
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground disabled:opacity-50"
-          >
-            <RefreshCw className={`h-3 w-3 ${isCheckingStatus ? 'animate-spin' : ''}`} />
-            {isCheckingStatus ? 'Checking…' : 'Refresh'}
-          </button>
+          {vault.network !== 'regtest' && (
+            <button
+              type="button"
+              onClick={handleRefreshStatus}
+              disabled={isCheckingStatus}
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground disabled:opacity-50"
+            >
+              <RefreshCw className={`h-3 w-3 ${isCheckingStatus ? 'animate-spin' : ''}`} />
+              {isCheckingStatus ? 'Checking…' : 'Refresh'}
+            </button>
+          )}
         </div>
 
-        {statusError && (
-          <div className="rounded-md border border-danger/20 bg-danger/5 p-3 text-xs text-danger">
-            {statusError}
-          </div>
-        )}
-
-        {vaultStatus ? (
-          <div className="grid gap-3 sm:grid-cols-3">
-            <div className="rounded-md border border-border bg-white p-3 space-y-1">
-              <p className="text-xs text-muted-foreground">Confirmed balance</p>
-              <p className="text-lg font-semibold">{formatBtc(vaultStatus.confirmedBalanceSats)} BTC</p>
-              <p className="text-xs text-muted-foreground">{formatSats(vaultStatus.confirmedBalanceSats)} sats</p>
-            </div>
-            <div className="rounded-md border border-border bg-white p-3 space-y-1">
-              <p className="text-xs text-muted-foreground">Total transactions</p>
-              <p className="text-lg font-semibold">{vaultStatus.txCount}</p>
-              <p className="text-xs text-muted-foreground">
-                {vaultStatus.usedFallbackProvider ? 'Via fallback' : 'Direct'}
-              </p>
-            </div>
-            <div className="rounded-md border border-border bg-white p-3 space-y-1">
-              <p className="text-xs text-muted-foreground">Status</p>
-              <p className="text-lg font-semibold">
-                {vaultStatus.totalBalanceSats > 0 ? (
-                  <span className="text-success">Funded</span>
-                ) : (
-                  <span className="text-muted-foreground">Empty</span>
-                )}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {vaultStatus.totalBalanceSats > 0 ? 'Ready for check-in' : 'Awaiting deposit'}
-              </p>
-            </div>
+        {vault.network === 'regtest' ? (
+          <div className="rounded-md border border-warning/30 bg-warning-bg p-3 text-sm leading-relaxed text-warning print:hidden">
+            Regtest is local-only. Public explorers can't query it — for live status, use your own node or a local Esplora instance.
           </div>
         ) : (
-          <div className="rounded-md border border-border bg-muted/40 p-4 text-center text-sm text-muted-foreground">
-            Click refresh to check vault status on the blockchain
-          </div>
+          <>
+            {statusError && (
+              <div className="rounded-md border border-danger/20 bg-danger/5 p-3 text-xs text-danger">
+                {statusError}
+              </div>
+            )}
+
+            {vaultStatus ? (
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="rounded-md border border-border bg-white p-3 space-y-1">
+                  <p className="text-xs text-muted-foreground">Confirmed balance</p>
+                  <p className="text-lg font-semibold">{formatBtc(vaultStatus.confirmedBalanceSats)} BTC</p>
+                  <p className="text-xs text-muted-foreground">{formatSats(vaultStatus.confirmedBalanceSats)} sats</p>
+                </div>
+                <div className="rounded-md border border-border bg-white p-3 space-y-1">
+                  <p className="text-xs text-muted-foreground">Total transactions</p>
+                  <p className="text-lg font-semibold">{vaultStatus.txCount}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {vaultStatus.usedFallbackProvider ? 'Via fallback' : 'Direct'}
+                  </p>
+                </div>
+                <div className="rounded-md border border-border bg-white p-3 space-y-1">
+                  <p className="text-xs text-muted-foreground">Status</p>
+                  <p className="text-lg font-semibold">
+                    {vaultStatus.totalBalanceSats > 0 ? (
+                      <span className="text-success">Funded</span>
+                    ) : (
+                      <span className="text-muted-foreground">Empty</span>
+                    )}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {vaultStatus.totalBalanceSats > 0 ? 'Ready for check-in' : 'Awaiting deposit'}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-md border border-border bg-muted/40 p-4 text-center text-sm text-muted-foreground">
+                Click refresh to check vault status on the blockchain
+              </div>
+            )}
+          </>
         )}
       </div>
 

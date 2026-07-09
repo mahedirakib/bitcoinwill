@@ -110,6 +110,14 @@ export interface RestoredWizardDraft {
   step: WizardDraftStep;
   input: PlanInput;
   result?: PlanOutput;
+  /**
+   * True when the persisted draft was on the RESULT step with social recovery
+   * enabled. The result (and its SSS shares) are intentionally stripped from
+   * persisted drafts, so the user is rolled back to REVIEW. Generating again
+   * will produce a *new* random beneficiary key — shares from a previous
+   * session cannot be reused — so callers should warn the user.
+   */
+  socialResultDropped?: boolean;
 }
 
 export const parseWizardDraft = (
@@ -158,6 +166,7 @@ export const parseWizardDraft = (
   const restored: RestoredWizardDraft = {
     step: parsed.step === 'RESULT' && !restoredResult ? 'REVIEW' : parsed.step,
     input,
+    socialResultDropped: restoresSocialResult || undefined,
   };
 
   if (restoredResult) {

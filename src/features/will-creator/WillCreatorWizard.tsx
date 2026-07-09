@@ -68,6 +68,7 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorW
   const [isVaultSaved, setIsVaultSaved] = useState(false);
   const isProcessingSSSRef = useRef(false);
   const printTimeoutRef = useRef<number | null>(null);
+  const printUrlRef = useRef<string | null>(null);
 
   const clearDraftState = useCallback(() => {
     try {
@@ -100,7 +101,17 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorW
       if (restored.result && restored.step === 'RESULT') {
         dispatch({ type: 'SET_RESULT', payload: restored.result });
       }
-      showToast('Previous progress restored');
+      if (restored.socialResultDropped) {
+        // The prior session's social-recovery shares were stripped from the
+        // draft (they're secrets). Regenerating mints a brand-new beneficiary
+        // key, so any shares saved previously are no longer usable.
+        showToast(
+          'Previous progress restored. Generating the plan will create a new beneficiary key — shares from a previous session cannot be reused.',
+          'info',
+        );
+      } else {
+        showToast('Previous progress restored');
+      }
     }
     setHasRestored(true);
   }, [hasRestored, network, showToast, dispatch]);
@@ -224,10 +235,10 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorW
     }
   };
 
-  const cancelSSSGeneration = () => {
+  const cancelSSSGeneration = useCallback(() => {
     setPendingSSSKey(null);
     setPendingSSSConfig(null);
-  };
+  }, []);
 
   const handleSaveVault = () => {
     if (!state.result) return;
@@ -307,13 +318,32 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorW
 
       printWindow.opener = null;
 
-      // Allow browser to render before printing
+      // Clear any pending print from a previous invocation: cancel its timer
+      // and revoke its blob URL so we never leak one per re-print.
       if (printTimeoutRef.current) {
         window.clearTimeout(printTimeoutRef.current);
       }
+      if (printUrlRef.current) {
+        URL.revokeObjectURL(printUrlRef.current);
+      }
+      printUrlRef.current = url;
+
+      // Allow browser to render before printing
       printTimeoutRef.current = window.setTimeout(() => {
-        printWindow.print();
-        URL.revokeObjectURL(url);
+        printTimeoutRef.current = null;
+        const pendingUrl = printUrlRef.current;
+        try {
+          if (!printWindow.closed) {
+            printWindow.print();
+          }
+        } catch {
+          // Some engines throw if the user closed the window during the delay.
+        } finally {
+          if (pendingUrl) {
+            URL.revokeObjectURL(pendingUrl);
+            printUrlRef.current = null;
+          }
+        }
       }, 250);
     } catch {
       showToast('Failed to open print dialog', 'error');
@@ -324,6 +354,10 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorW
     return () => {
       if (printTimeoutRef.current) {
         window.clearTimeout(printTimeoutRef.current);
+      }
+      if (printUrlRef.current) {
+        URL.revokeObjectURL(printUrlRef.current);
+        printUrlRef.current = null;
       }
     };
   }, []);
@@ -351,10 +385,14 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorW
     setDownloadChecklist(createChecklistState());
   };
 
-  const closeDownloadChecklist = () => {
+  const closeDownloadChecklist = useCallback(() => {
     setShowDownloadChecklist(false);
     setDownloadChecklist(createChecklistState());
-  };
+  }, []);
+
+  const closeHardwareWallet = useCallback(() => {
+    setShowHardwareWallet(false);
+  }, []);
 
   const stepNumber = getStepNumber(state.step);
 
@@ -458,7 +496,7 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorW
       {showHardwareWallet && (
         <HardwareWalletModal
           onConnect={handleHardwareWalletConnect}
-          onClose={() => setShowHardwareWallet(false)}
+          onClose={closeHardwareWallet}
         />
       )}
 

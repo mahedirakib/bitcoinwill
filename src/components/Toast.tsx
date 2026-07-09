@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef, useMemo, ReactNode } from 'react';
 import { Check, AlertCircle, Info } from 'lucide-react';
 
 export type ToastVariant = 'success' | 'error' | 'info';
@@ -39,11 +39,17 @@ export const ToastProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     };
   }, []);
 
+  // Memoize the context value so consumers of `useToast` don't re-render every
+  // time a toast is shown or dismissed. Without this, every setToast creates a
+  // new value object, re-rendering all consumers — which in turn tears down and
+  // rebuilds any active focus trap whose options aren't referentially stable.
+  const value = useMemo(() => ({ showToast }), [showToast]);
+
   const config = toast ? VARIANT_CONFIG[toast.variant] : VARIANT_CONFIG.success;
   const Icon = config.Icon;
 
   return (
-    <ToastContext.Provider value={{ showToast }}>
+    <ToastContext.Provider value={value}>
       {children}
       {toast && (
         <div

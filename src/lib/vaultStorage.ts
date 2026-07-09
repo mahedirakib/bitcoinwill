@@ -231,8 +231,15 @@ export const importVaultsFromBackup = (json: string): ImportResult => {
         result.skipped++;
         return result;
       }
-      saveVault(parsed.plan, parsed.result, parsed.name);
-      result.imported++;
+      const safeName = typeof parsed.name === 'string' ? parsed.name : undefined;
+      const saved = saveVault(parsed.plan, parsed.result, safeName);
+      if (saved) {
+        result.imported++;
+      } else {
+        // saveVault returns null when localStorage is unavailable (quota,
+        // Safari private mode, restricted context). Don't claim success.
+        result.errors.push('Failed to save vault to storage');
+      }
       return result;
     }
 

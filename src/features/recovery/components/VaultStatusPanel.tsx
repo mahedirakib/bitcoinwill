@@ -6,6 +6,7 @@ import {
   formatBtc,
   formatSats,
 } from '@/lib/bitcoin/explorer';
+import type { BitcoinNetwork } from '@/lib/bitcoin/types';
 import type { VaultStatusPanelProps } from '../types';
 
 export const VaultStatusPanel = ({
@@ -17,7 +18,11 @@ export const VaultStatusPanel = ({
   onProviderChange,
   onRefresh,
 }: VaultStatusPanelProps) => {
-  const recoveryNetwork = model.network.toLowerCase() as 'mainnet' | 'testnet';
+  // model.network is upper-cased in instructions.ts and can be REGTEST. This
+  // panel is only rendered when a public explorer is available (RecoveryPage
+  // gates regtest out), but type it as the full union so the cast is sound and
+  // buildExplorerTxUrl can throw meaningfully if misused.
+  const recoveryNetwork = model.network.toLowerCase() as BitcoinNetwork;
   const providerForLinks = vaultStatus?.providerUsed ?? explorerProvider;
 
   return (

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import {
   ArrowLeft,
   Trash2,
@@ -8,9 +8,10 @@ import {
   Info,
   Database,
 } from 'lucide-react';
-import { useSettings } from '@/state/settings';
+import { useSettings, MAINNET_CONFIRMATION_PHRASE } from '@/state/settings';
 import { useVaults } from '@/hooks/useVaults';
 import { useToast } from '@/components/Toast';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { downloadJson } from '@/lib/utils/download';
 import type { NavView } from '@/components/AppShell';
 
@@ -25,6 +26,18 @@ export const SettingsPage = ({ onNavigate }: SettingsPageProps) => {
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showMainnetConfirm, setShowMainnetConfirm] = useState(false);
   const [confirmPhrase, setConfirmPhrase] = useState('');
+  const mainnetPhraseInputRef = useRef<HTMLInputElement | null>(null);
+
+  const closeMainnetConfirm = useCallback(() => {
+    setShowMainnetConfirm(false);
+    setConfirmPhrase('');
+  }, []);
+
+  const mainnetModalRef = useFocusTrap<HTMLDivElement>({
+    enabled: showMainnetConfirm,
+    onEscape: closeMainnetConfirm,
+    initialFocus: () => mainnetPhraseInputRef.current,
+  });
 
   const handleExport = () => {
     const json = exportAllVaults();
@@ -53,7 +66,7 @@ export const SettingsPage = ({ onNavigate }: SettingsPageProps) => {
   };
 
   const confirmMainnet = () => {
-    if (confirmPhrase === 'I UNDERSTAND MAINNET IS REAL MONEY') {
+    if (confirmPhrase === MAINNET_CONFIRMATION_PHRASE) {
       unlockMainnet();
       setNetwork('mainnet');
       setShowMainnetConfirm(false);
@@ -210,13 +223,19 @@ export const SettingsPage = ({ onNavigate }: SettingsPageProps) => {
       {/* Mainnet confirmation modal */}
       {showMainnetConfirm && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-foreground/30 p-6">
-          <div className="panel w-full max-w-md p-6 space-y-5 shadow-xl">
+          <div
+            ref={mainnetModalRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="mainnet-confirm-title"
+            className="panel w-full max-w-md p-6 space-y-5 shadow-xl"
+          >
             <div className="flex items-start gap-3">
               <div className="rounded-md bg-danger/10 p-2 text-danger">
                 <AlertTriangle className="h-5 w-5" />
               </div>
               <div>
-                <h2 className="text-base font-semibold">Switch to mainnet?</h2>
+                <h2 id="mainnet-confirm-title" className="text-base font-semibold">Switch to mainnet?</h2>
                 <p className="mt-1 text-sm text-muted-foreground">
                   Mainnet uses real Bitcoin. Mistakes can cause permanent loss of funds.
                 </p>
@@ -226,10 +245,11 @@ export const SettingsPage = ({ onNavigate }: SettingsPageProps) => {
             <div className="space-y-2">
               <label htmlFor="mainnet-confirm" className="field-label">Type the confirmation phrase</label>
               <div className="rounded-md bg-muted px-3 py-2 text-center font-mono text-xs">
-                I UNDERSTAND MAINNET IS REAL MONEY
+                {MAINNET_CONFIRMATION_PHRASE}
               </div>
               <input
                 id="mainnet-confirm"
+                ref={mainnetPhraseInputRef}
                 type="text"
                 value={confirmPhrase}
                 onChange={(e) => setConfirmPhrase(e.target.value)}
@@ -237,17 +257,13 @@ export const SettingsPage = ({ onNavigate }: SettingsPageProps) => {
                 spellCheck={false}
                 className="field-input"
                 placeholder="Type carefully…"
-                autoFocus
               />
             </div>
 
             <div className="flex justify-end gap-2">
               <button
                 type="button"
-                onClick={() => {
-                  setShowMainnetConfirm(false);
-                  setConfirmPhrase('');
-                }}
+                onClick={closeMainnetConfirm}
                 className="btn-ghost"
               >
                 Cancel
@@ -255,7 +271,7 @@ export const SettingsPage = ({ onNavigate }: SettingsPageProps) => {
               <button
                 type="button"
                 onClick={confirmMainnet}
-                disabled={confirmPhrase !== 'I UNDERSTAND MAINNET IS REAL MONEY'}
+                disabled={confirmPhrase !== MAINNET_CONFIRMATION_PHRASE}
                 className="btn-danger"
               >
                 Switch to mainnet

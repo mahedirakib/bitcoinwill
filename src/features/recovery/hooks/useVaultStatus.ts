@@ -29,13 +29,13 @@ export const useVaultStatus = (
     lastRefreshByAddressRef.current.delete(address ?? '');
   }, [address]);
 
-  const refreshVaultStatus = useCallback(async () => {
-    if (!address) return;
+  const refreshVaultStatus = useCallback(async (): Promise<boolean> => {
+    if (!address) return false;
 
     if (!publicExplorerAvailable) {
       const message = 'Public explorers do not support Regtest. Connect a local node for live status.';
       showToast(message, 'error');
-      return;
+      return false;
     }
 
     const now = Date.now();
@@ -45,21 +45,28 @@ export const useVaultStatus = (
       const secondsRemaining = Math.ceil((MIN_REFRESH_INTERVAL_MS - timeSinceLastRefresh) / 1000);
       const message = `Please wait ${secondsRemaining} second${secondsRemaining > 1 ? 's' : ''} before refreshing again`;
       showToast(message, 'info');
-      return;
+      return false;
     }
 
-    lastRefreshByAddressRef.current.set(address, now);
-
-    await execute(async () => {
-      const summary = await fetchAddressSummary({
+    // Only record the cooldown after a successful check. Setting it before the
+    // fetch would rate-limit the user for 5s even when the request failed,
+    // blocking an immediate retry after a transient blip.
+    const summary = await execute(async () => {
+      const result = await fetchAddressSummary({
         network,
         address,
         provider: explorerProvider,
         fallbackToOtherProvider: true,
       });
-      showToast(`Vault status updated via ${summary.providerLabel}`);
-      return summary;
+      showToast(`Vault status updated via ${result.providerLabel}`);
+      return result;
     });
+
+    if (summary) {
+      lastRefreshByAddressRef.current.set(address, Date.now());
+      return true;
+    }
+    return false;
   }, [address, explorerProvider, network, showToast, publicExplorerAvailable, execute]);
 
   const clearVaultStatus = useCallback(() => {

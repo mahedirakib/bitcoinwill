@@ -17,11 +17,12 @@ import {
   BarChart3,
   Tag,
 } from 'lucide-react';
-import type { SavedVault } from '@/lib/vaultStorage';
+import type { SavedVault, ImportResult } from '@/lib/vaultStorage';
 import { useVaults } from '@/hooks/useVaults';
 import { useToast } from '@/components/Toast';
 import { downloadJson } from '@/lib/utils/download';
 import { formatRelativeTime } from '@/lib/utils/time';
+import { buildExplorerAddressUrl } from '@/lib/bitcoin/explorer';
 import type { NavView } from '@/components/AppShell';
 
 type SortOption = 'newest' | 'oldest' | 'name' | 'network';
@@ -58,13 +59,14 @@ const VaultCard = ({
   };
 
   const getExplorerUrl = () => {
-    const base =
-      vault.network === 'mainnet'
-        ? 'https://mempool.space/address/'
-        : vault.network === 'testnet'
-        ? 'https://mempool.space/testnet/address/'
-        : null;
-    return base ? `${base}${vault.address}` : null;
+    // Public explorers don't support regtest. Use the centralized config so the
+    // link matches the provider used elsewhere in the app.
+    if (vault.network === 'regtest') return null;
+    return buildExplorerAddressUrl(
+      vault.network as 'mainnet' | 'testnet',
+      'mempool',
+      vault.address,
+    );
   };
 
   const explorerUrl = getExplorerUrl();
@@ -333,6 +335,26 @@ export const VaultsPage = ({ onNavigate, onViewVault }: VaultsPageProps) => {
     onViewVault(vault);
   };
 
+  // Build a single summary message for an import so the user sees one toast
+  // (the Toast component only displays one at a time) that captures every
+  // outcome, including the nothing-imported-nothing-skipped-no-errors case.
+  const summarizeImportResult = (result: ImportResult): string => {
+    if (result.imported === 0 && result.skipped === 0 && result.errors.length === 0) {
+      return 'No vaults found to import';
+    }
+    const parts: string[] = [];
+    if (result.imported > 0) {
+      parts.push(`Imported ${result.imported} vault${result.imported > 1 ? 's' : ''}`);
+    }
+    if (result.skipped > 0) {
+      parts.push(`${result.skipped} already exist${result.skipped > 1 ? '' : 's'}`);
+    }
+    if (result.errors.length > 0) {
+      parts.push(`errors: ${result.errors.join(', ')}`);
+    }
+    return parts.join(' · ');
+  };
+
   const handleExport = () => {
     const json = exportAllVaults();
     try {
@@ -350,15 +372,7 @@ export const VaultsPage = ({ onNavigate, onViewVault }: VaultsPageProps) => {
       return;
     }
     const result = importVaults(importText);
-    if (result.imported > 0) {
-      showToast(`Imported ${result.imported} vault${result.imported > 1 ? 's' : ''}`);
-    }
-    if (result.skipped > 0) {
-      showToast(`${result.skipped} vault${result.skipped > 1 ? 's' : ''} already exist`, 'info');
-    }
-    if (result.errors.length > 0) {
-      showToast(`Import errors: ${result.errors.join(', ')}`, 'error');
-    }
+    showToast(summarizeImportResult(result), result.errors.length > 0 ? 'error' : 'success');
     setImportText('');
     setShowImport(false);
   };
@@ -367,18 +381,20 @@ export const VaultsPage = ({ onNavigate, onViewVault }: VaultsPageProps) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    // Backups can contain many vaults, but anything past a few MB is not a
+    // legitimate backup. Guard against reading a multi-GB file into memory
+    // (mirrors the Recovery Kit loader's size guard).
+    const MAX_IMPORT_BYTES = 5_000_000; // 5 MB
+    if (file.size > MAX_IMPORT_BYTES) {
+      showToast('File is too large to be a vault backup (max 5 MB).', 'error');
+      event.target.value = '';
+      return;
+    }
+
     try {
       const text = await file.text();
       const result = importVaults(text);
-      if (result.imported > 0) {
-        showToast(`Imported ${result.imported} vault${result.imported > 1 ? 's' : ''}`);
-      }
-      if (result.skipped > 0) {
-        showToast(`${result.skipped} vault${result.skipped > 1 ? 's' : ''} already exist`, 'info');
-      }
-      if (result.errors.length > 0) {
-        showToast(`Import errors: ${result.errors.join(', ')}`, 'error');
-      }
+      showToast(summarizeImportResult(result), result.errors.length > 0 ? 'error' : 'success');
     } catch {
       showToast('Error reading file', 'error');
     } finally {

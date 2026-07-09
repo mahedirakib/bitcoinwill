@@ -71,7 +71,9 @@ export const TypeStep = ({ input, errors, dispatch, onCancel, onNext }: TypeStep
             </span>
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
-            Taproot (bc1p…) — better privacy and lower fees.
+            Taproot (bc1p…) — modern address format. Both spending paths use the
+            script path, so the spending script is revealed on-chain when funds
+            move, just like P2WSH.
           </p>
         </div>
         <Toggle

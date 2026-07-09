@@ -15,7 +15,7 @@ export interface UseVaultStatusReturn {
   isCheckingStatus: boolean;
   explorerProvider: ExplorerProvider;
   setExplorerProvider: (provider: ExplorerProvider) => void;
-  refreshVaultStatus: () => Promise<void>;
+  refreshVaultStatus: () => Promise<boolean>;
   clearVaultStatus: () => void;
 }
 

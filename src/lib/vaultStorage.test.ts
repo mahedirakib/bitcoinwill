@@ -352,6 +352,41 @@ describe('vaultStorage', () => {
       expect(getSavedVaults()).toHaveLength(1);
     });
 
+    it('reports a storage failure for single-kit import instead of claiming success', () => {
+      const kit = {
+        plan: mockPlan,
+        result: { ...mockResult, address: 'tb1qfailwrite' },
+      };
+
+      // saveVault's write throws (quota / private mode). The importer must not
+      // report the kit as imported when nothing was persisted.
+      mockStorage.setItem.mockImplementationOnce(() => {
+        throw new Error('QuotaExceededError');
+      });
+
+      const result = importVaultsFromBackup(JSON.stringify(kit));
+      expect(result.imported).toBe(0);
+      expect(result.errors).toHaveLength(1);
+      expect(getSavedVaults()).toHaveLength(0);
+    });
+
+    it('ignores a non-string name when importing a single recovery kit', () => {
+      const kit = {
+        plan: mockPlan,
+        result: { ...mockResult, address: 'tb1qbadname' },
+        name: { weird: true },
+      };
+
+      const result = importVaultsFromBackup(JSON.stringify(kit));
+      expect(result.imported).toBe(1);
+
+      const saved = getSavedVaults();
+      expect(saved).toHaveLength(1);
+      // A non-string name must not be persisted; fall back to the default.
+      expect(typeof saved[0].name).toBe('string');
+      expect(saved[0].name).toBe(`Vault ${'tb1qbadname'.slice(0, 8)}…`);
+    });
+
     it('should handle invalid JSON', () => {
       const result = importVaultsFromBackup('invalid json');
       expect(result.imported).toBe(0);

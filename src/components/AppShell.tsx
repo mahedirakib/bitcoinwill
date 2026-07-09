@@ -182,7 +182,7 @@ export const AppShell = ({ active, onNavigate, topbar, children }: AppShellProps
       </a>
 
       {/* Desktop Sidebar */}
-      <aside className="hidden w-60 flex-shrink-0 flex-col border-r border-border bg-background px-3 py-5 lg:flex">
+      <aside className="hidden w-60 flex-shrink-0 flex-col border-r border-border bg-background px-3 py-5 lg:flex print:hidden">
         {sidebarContent}
       </aside>
 
@@ -191,7 +191,7 @@ export const AppShell = ({ active, onNavigate, topbar, children }: AppShellProps
         <div
           id="mobile-navigation"
           ref={drawerRef}
-          className="fixed inset-0 z-50 flex lg:hidden"
+          className="fixed inset-0 z-50 flex lg:hidden print:hidden"
           role="dialog"
           aria-modal="true"
           aria-label="Navigation menu"
@@ -217,7 +217,7 @@ export const AppShell = ({ active, onNavigate, topbar, children }: AppShellProps
 
       {/* Main */}
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center justify-between gap-3 border-b border-border bg-white px-4 py-4 md:px-8">
+        <header className="flex items-center justify-between gap-3 border-b border-border bg-white px-4 py-4 md:px-8 print:hidden">
           <div className="flex items-center gap-3 min-w-0">
             <button
               type="button"

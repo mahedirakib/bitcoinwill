@@ -1,10 +1,8 @@
 import React, { useRef, useState, memo, useCallback } from 'react';
-import { useSettings } from '@/state/settings';
+import { useSettings, MAINNET_CONFIRMATION_PHRASE } from '@/state/settings';
 import { AlertTriangle } from 'lucide-react';
 import type { BitcoinNetwork } from '@/lib/bitcoin/types';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
-
-const CONFIRMATION_PHRASE = 'I UNDERSTAND MAINNET IS REAL MONEY';
 
 const NetworkSelectorComponent = () => {
   const { network, setNetwork, isMainnetUnlocked, unlockMainnet } = useSettings();
@@ -33,7 +31,7 @@ const NetworkSelectorComponent = () => {
   });
 
   const confirmUnlock = () => {
-    if (phrase === CONFIRMATION_PHRASE) {
+    if (phrase === MAINNET_CONFIRMATION_PHRASE) {
       unlockMainnet();
       setNetwork('mainnet');
       closeModal();
@@ -104,7 +102,7 @@ const NetworkSelectorComponent = () => {
                 Type the confirmation phrase
               </label>
               <div className="rounded-md bg-muted px-3 py-2 text-center font-mono text-xs">
-                {CONFIRMATION_PHRASE}
+                {MAINNET_CONFIRMATION_PHRASE}
               </div>
               <input
                 id="mainnet-phrase"
@@ -126,7 +124,7 @@ const NetworkSelectorComponent = () => {
               <button
                 type="button"
                 onClick={confirmUnlock}
-                disabled={phrase !== CONFIRMATION_PHRASE}
+                disabled={phrase !== MAINNET_CONFIRMATION_PHRASE}
                 className="btn-danger"
               >
                 Switch to mainnet

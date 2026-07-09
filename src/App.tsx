@@ -130,9 +130,11 @@ const AppContent = () => {
     if (view !== 'instructions') {
       setInstructionData(undefined)
     }
-    if (view !== 'vaults') {
-      setSelectedVault(null)
-    }
+    // Always clear the selected vault here. `handleViewVault` re-sets it after
+    // navigating so the detail renders; this ensures the "My vaults" nav item
+    // reliably shows the list instead of a stale detail, and that browser Back
+    // out of a detail doesn't leave a stale selection behind.
+    setSelectedVault(null)
     preloadView(view)
     startTransition(() => {
       setActiveView(view)
@@ -140,6 +142,7 @@ const AppContent = () => {
   }
 
   const handleViewVault = (vault: SavedVault) => {
+    navigateTo('vaults')
     setSelectedVault(vault)
   }
 
@@ -158,6 +161,9 @@ const AppContent = () => {
       const nextView = viewFromPath(window.location.pathname)
       if (nextView !== 'instructions') {
         setInstructionData(undefined)
+      }
+      if (nextView !== 'vaults') {
+        setSelectedVault(null)
       }
       setActiveView(nextView)
     }

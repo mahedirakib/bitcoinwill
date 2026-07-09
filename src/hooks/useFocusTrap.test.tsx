@@ -157,4 +157,35 @@ describe('useFocusTrap', () => {
     expect(document.activeElement).toBe(outside);
     document.body.removeChild(outside);
   });
+
+  it('uses the latest onEscape after a re-render without rebuilding the trap', async () => {
+    // Parent re-renders (e.g. a toast appearing) routinely produce a new
+    // onEscape function reference. The trap must NOT tear down and rebuild on
+    // that identity change (which would steal focus), but Escape must still
+    // dispatch to the latest callback.
+    const firstEscape = vi.fn();
+    const secondEscape = vi.fn();
+    const { getByTestId, rerender } = render(<TrapHost onEscape={firstEscape} />);
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
+
+    // Move focus off the auto-focused first element to prove it stays put.
+    const last = getByTestId('last') as HTMLElement;
+    last.focus();
+    expect(document.activeElement).toBe(last);
+
+    // Re-render with a brand-new onEscape identity.
+    rerender(<TrapHost onEscape={secondEscape} />);
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
+
+    // Focus is preserved (trap was not rebuilt) ...
+    expect(document.activeElement).toBe(last);
+    // ... and Escape reaches the latest callback, not the stale one.
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(firstEscape).not.toHaveBeenCalled();
+    expect(secondEscape).toHaveBeenCalledTimes(1);
+  });
 });

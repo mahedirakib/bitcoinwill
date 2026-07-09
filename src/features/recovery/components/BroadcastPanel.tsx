@@ -16,8 +16,15 @@ export const BroadcastPanel = ({
   reconstructedKey,
 }: BroadcastPanelProps) => {
   const isMainnet = model.network === 'mainnet';
+  const trimmedHex = rawTxHex.trim();
+  // Validate up-front so the button isn't enabled for obviously-invalid input
+  // (e.g. pasted prose). This mirrors sanitizeRawTxHex without throwing.
+  const looksLikeRawTxHex =
+    trimmedHex.length >= 20 &&
+    trimmedHex.length % 2 === 0 &&
+    /^[0-9a-fA-F]+$/.test(trimmedHex);
   const canBroadcast =
-    rawTxHex.trim().length > 0 &&
+    looksLikeRawTxHex &&
     (!isMainnet || broadcastMainnetPhrase === MAINNET_BROADCAST_CONFIRMATION);
 
   return (
