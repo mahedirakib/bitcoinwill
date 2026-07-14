@@ -1,7 +1,10 @@
-import { PlanInput, PlanOutput, AddressType } from './types';
+import { PlanInput, PlanOutput, AddressType, type KeyOrigin } from './types';
 import { calculateTime } from './utils';
 import { buildPlan } from './planEngine';
 import { bytesToHex, hexToBytes } from './hex';
+import { buildLegacyRawDescriptor } from './descriptor';
+
+const TAPROOT_NUMS_KEY = '50929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac0';
 
 /** Constant-time equality check for two equal-length byte arrays. */
 const constantTimeEqual = (a: Uint8Array, b: Uint8Array): boolean => {
@@ -42,6 +45,14 @@ export interface InstructionModel {
   witnessScriptAsm: string;
   /** Bitcoin descriptor for wallet import */
   descriptor: string;
+  /** Taproot control block required for script-path spends */
+  taprootControlBlock?: string;
+  /** Tapscript leaf version */
+  taprootLeafVersion?: number;
+  /** Owner signer origin for hardware-wallet identification */
+  ownerKeyOrigin?: KeyOrigin;
+  /** Beneficiary signer origin for hardware-wallet identification */
+  beneficiaryKeyOrigin?: KeyOrigin;
   /** ISO 8601 timestamp of when instructions were generated */
   createdAt?: string;
 }
@@ -88,6 +99,8 @@ export const generateRecoveryKitChecksum = async (
       recovery_method: plan.recovery_method,
       sss_config: plan.sss_config,
       plan_label: plan.plan_label,
+      owner_key_origin: plan.owner_key_origin,
+      beneficiary_key_origin: plan.beneficiary_key_origin,
     },
     result: {
       address: result.address,
@@ -95,6 +108,8 @@ export const generateRecoveryKitChecksum = async (
       descriptor: result.descriptor,
       network: result.network,
       address_type: result.address_type,
+      taproot_control_block: result.taproot_control_block,
+      taproot_leaf_version: result.taproot_leaf_version,
     },
   });
 
@@ -155,13 +170,23 @@ export const validateAndNormalizeRecoveryKit = (raw: unknown): RecoveryKitData =
   // buildPlan validates all input fields and yields canonical result values.
   const canonicalResult = buildPlan(plan);
 
+  const descriptorMatches =
+    result.descriptor === canonicalResult.descriptor ||
+    result.descriptor === buildLegacyRawDescriptor(plan, canonicalResult.script_hex, TAPROOT_NUMS_KEY);
+  const taprootMetadataMatches =
+    canonicalResult.address_type !== 'p2tr' ||
+    ((result.taproot_control_block === undefined ||
+      result.taproot_control_block === canonicalResult.taproot_control_block) &&
+      (result.taproot_leaf_version === undefined ||
+        result.taproot_leaf_version === canonicalResult.taproot_leaf_version));
   const matchesCanonical =
     result.address === canonicalResult.address &&
     result.script_hex === canonicalResult.script_hex &&
     result.witness_script === canonicalResult.witness_script &&
-    result.descriptor === canonicalResult.descriptor &&
+    descriptorMatches &&
     result.network === canonicalResult.network &&
-    result.address_type === canonicalResult.address_type;
+    result.address_type === canonicalResult.address_type &&
+    taprootMetadataMatches;
 
   if (!matchesCanonical) {
     throw new Error('Recovery Kit failed integrity check. The plan does not match the included result.');
@@ -203,6 +228,10 @@ export const buildInstructions = (plan: PlanInput, result: PlanOutput, createdAt
     witnessScriptHex: result.witness_script,
     witnessScriptAsm: result.script_asm,
     descriptor: result.descriptor,
+    taprootControlBlock: result.taproot_control_block,
+    taprootLeafVersion: result.taproot_leaf_version,
+    ownerKeyOrigin: plan.owner_key_origin,
+    beneficiaryKeyOrigin: plan.beneficiary_key_origin,
     createdAt: createdAt || new Date().toISOString(),
   };
 };
@@ -228,8 +257,8 @@ export const buildInstructions = (plan: PlanInput, result: PlanOutput, createdAt
 export const generateInstructionTxt = (m: InstructionModel): string => {
   const walletNote =
     m.addressType === 'p2tr'
-      ? 'An Advanced Wallet: Tools like Sparrow Wallet that support Taproot script-path spends and custom descriptors.'
-      : 'An Advanced Wallet: Tools like Sparrow Wallet or Electrum that support "Custom Scripts" or "P2WSH" spending.';
+      ? 'An Advanced Tool: Software that supports Taproot script-path spends. The descriptor below is watch-only; spending requires the tapscript recovery data.'
+      : 'An Advanced Tool: Software that supports custom P2WSH spends. The descriptor below is watch-only; spending requires the witness script.';
   return `
 BENEFICIARY INSTRUCTIONS (BITCOIN WILL)
 Generated on: ${m.createdAt}
@@ -242,27 +271,33 @@ from a Bitcoin Will "Dead Man's Switch" vault.
 WHAT YOU NEED
 1. Your Private Key: You must hold the private key corresponding to
    the Beneficiary Public Key listed below.
-2. This Instruction Set: Specifically the Witness Script or Descriptor.
+2. This Instruction Set: Specifically the witness/tapscript data. The descriptor is for watch-only monitoring.
 3. ${walletNote}
 
 WHEN YOU CAN CLAIM
 Delay: ${m.locktimeBlocks} blocks (Approx. ${m.locktimeApprox})
-Condition: You can only claim these funds if they have remained 
-unmoved at the vault address for longer than the delay period 
-since the last funding transaction confirmed.
+Condition: Every unspent output has an independent CSV timer. You can
+claim a specific output only after that output has at least ${m.locktimeBlocks}
+confirmations. Deposits made at different times mature separately.
 
 TECHNICAL DETAILS
 Network: ${m.network}
 Vault Address: ${m.address}
 Beneficiary Pubkey: ${m.beneficiaryPubkey}
+${m.ownerKeyOrigin ? `Owner Signer Origin: ${m.ownerKeyOrigin.fingerprint ? `[${m.ownerKeyOrigin.fingerprint}]` : ''}${m.ownerKeyOrigin.derivation_path} (${m.ownerKeyOrigin.device})` : ''}
+${m.beneficiaryKeyOrigin ? `Beneficiary Signer Origin: ${m.beneficiaryKeyOrigin.fingerprint ? `[${m.beneficiaryKeyOrigin.fingerprint}]` : ''}${m.beneficiaryKeyOrigin.derivation_path} (${m.beneficiaryKeyOrigin.device})` : ''}
 Witness Script (Hex): ${m.witnessScriptHex}
-Descriptor: ${m.descriptor}
+Watch-only Descriptor: ${m.descriptor}
+${m.addressType === 'p2tr' ? `Taproot Control Block: ${m.taprootControlBlock}
+Taproot Leaf Version: 0x${m.taprootLeafVersion?.toString(16)}` : ''}
 
 RECOVERY STEPS
 1. Confirm the vault address has a balance using a blockchain explorer.
-2. Identify the funding transaction and wait for ${m.locktimeBlocks} blocks to pass.
-3. Construct a "Sweep" transaction using a compatible wallet.
-4. Provide your signature and the "Witness Script" to unlock the funds.
+2. Inspect every UTXO you intend to spend and ensure each has at least ${m.locktimeBlocks} confirmations.
+3. Construct a version 2 transaction. For each beneficiary input, set nSequence to ${m.locktimeBlocks}.
+4. ${m.addressType === 'p2tr'
+  ? 'Use witness stack [signature, empty branch selector, tapscript, control block].'
+  : 'Use witness stack [signature, empty branch selector, witness script].'}
 5. Send the funds to a standard address you control.
 
 WARNINGS

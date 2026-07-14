@@ -35,13 +35,13 @@ export const HardwareWalletModal = ({ onConnect, onClose }: HardwareWalletModalP
   };
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-foreground/30 p-6">
+    <div className="fixed inset-0 z-[120] flex items-start justify-center overflow-y-auto bg-foreground/30 p-4 sm:items-center sm:p-6">
       <div
         ref={modalRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="hw-wallet-title"
-        className="panel w-full max-w-md p-6 space-y-5 shadow-xl"
+        className="panel max-h-[calc(100dvh-2rem)] w-full max-w-md space-y-5 overflow-y-auto p-6 shadow-xl sm:max-h-[calc(100dvh-3rem)]"
       >
         <div className="flex items-start gap-3">
           <div className="rounded-md bg-muted p-2 text-foreground">
@@ -106,6 +106,13 @@ export const HardwareWalletModal = ({ onConnect, onClose }: HardwareWalletModalP
             <li>Connect device via USB cable</li>
             <li>Unlock device and approve the connection</li>
           </ul>
+        </div>
+
+        <div className="flex items-start gap-2 rounded-md border border-warning/30 bg-warning-bg p-3 text-xs text-warning">
+          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
+          <p>
+            This connection imports a public key and signer origin only. Before funding, verify your device and wallet can sign this custom P2WSH or Taproot script policy.
+          </p>
         </div>
 
         <div className="flex justify-end">

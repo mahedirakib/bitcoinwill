@@ -53,7 +53,7 @@ export const InstructionsView = ({
             <History className="h-4 w-4 text-foreground/70" /> When you can claim
           </h2>
           <div className="rounded-md border border-border bg-muted/40 p-4 text-sm leading-relaxed text-foreground/80 print:border-gray-300 print:bg-gray-50">
-            <strong className="font-semibold">Condition:</strong> You can claim these funds ONLY if they have remained unmoved at the vault address for at least <strong className="font-semibold">{model.locktimeBlocks} blocks</strong> (approximately <strong className="font-semibold">{model.locktimeApprox}</strong>) since the last funding transaction was confirmed.
+            <strong className="font-semibold">Condition:</strong> Each unspent output can be claimed only after that specific output has at least <strong className="font-semibold">{model.locktimeBlocks} confirmations</strong> (approximately <strong className="font-semibold">{model.locktimeApprox}</strong>). Different deposits can become eligible at different times.
           </div>
         </section>
 
@@ -62,13 +62,13 @@ export const InstructionsView = ({
           <ol className="space-y-3">
             {[
               { title: 'Confirm funds', desc: 'Check the vault address on a blockchain explorer to ensure it still holds a balance.' },
-              { title: 'Verify confirmation', desc: `Find the last funding transaction. Ensure it has at least ${model.locktimeBlocks} confirmations before attempting to claim.` },
+              { title: 'Verify each output', desc: `Inspect every UTXO you intend to spend. Each one independently needs at least ${model.locktimeBlocks} confirmations.` },
               {
                 title: 'Prepare wallet',
                 desc:
                   model.addressType === 'p2tr'
-                    ? 'Use an advanced Bitcoin wallet (e.g., Sparrow Wallet) that supports Taproot script-path spends and custom descriptors.'
-                    : 'Use an advanced Bitcoin wallet (e.g., Sparrow Wallet) that supports P2WSH scripts and custom descriptors.',
+                    ? 'Use an advanced Bitcoin tool that supports Taproot script-path spends. The descriptor below is watch-only; use the tapscript recovery data to construct the spend.'
+                    : 'Use an advanced Bitcoin tool that supports custom P2WSH spends. The descriptor below is watch-only; use the witness script to construct the spend.',
               },
               { title: 'Construct spend', desc: 'Construct a transaction spending from the vault address. You must provide your signature and the witness script listed below.' },
               { title: 'Broadcast', desc: 'Once signed and valid, broadcast the transaction to the network to move the funds to an address you control.' },
@@ -93,8 +93,30 @@ export const InstructionsView = ({
             <DataRow label="Address format" value={model.addressType === 'p2tr' ? 'P2TR (Taproot)' : 'P2WSH (SegWit v0)'} />
             <DataRow label="Vault address" value={model.address} copyable />
             <DataRow label="Beneficiary pubkey" value={model.beneficiaryPubkey} />
+            {model.ownerKeyOrigin && (
+              <DataRow
+                label="Owner signer origin"
+                value={`${model.ownerKeyOrigin.fingerprint ? `[${model.ownerKeyOrigin.fingerprint}]` : ''}${model.ownerKeyOrigin.derivation_path} (${model.ownerKeyOrigin.device})`}
+                copyable
+                mono
+              />
+            )}
+            {model.beneficiaryKeyOrigin && (
+              <DataRow
+                label="Beneficiary signer origin"
+                value={`${model.beneficiaryKeyOrigin.fingerprint ? `[${model.beneficiaryKeyOrigin.fingerprint}]` : ''}${model.beneficiaryKeyOrigin.derivation_path} (${model.beneficiaryKeyOrigin.device})`}
+                copyable
+                mono
+              />
+            )}
             <DataRow label="Witness script (hex)" value={model.witnessScriptHex} copyable mono />
-            <DataRow label="Descriptor" value={model.descriptor} copyable mono />
+            <DataRow label="Watch-only descriptor" value={model.descriptor} copyable mono />
+            {model.addressType === 'p2tr' && model.taprootControlBlock && (
+              <DataRow label="Taproot control block" value={model.taprootControlBlock} copyable mono />
+            )}
+            {model.addressType === 'p2tr' && typeof model.taprootLeafVersion === 'number' && (
+              <DataRow label="Taproot leaf version" value={`0x${model.taprootLeafVersion.toString(16)}`} mono />
+            )}
           </div>
         </section>
 

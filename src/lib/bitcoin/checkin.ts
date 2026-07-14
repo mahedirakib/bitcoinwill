@@ -8,11 +8,26 @@ export interface CheckInPlan {
   cadenceRatio: number;
   recommendedCheckInEveryBlocks: number;
   recommendedCheckInEveryApprox: string;
-  confirmationsSinceLastFunding?: number;
+  oldestUtxoConfirmations?: number;
   blocksUntilRecommendedCheckIn?: number;
   blocksUntilBeneficiaryEligible?: number;
   beneficiaryEligibilityApprox?: string;
+  confirmedUtxoCount: number;
+  unconfirmedUtxoCount: number;
+  unknownAgeUtxoCount: number;
+  matureUtxoCount: number;
+  immatureUtxoCount: number;
+  matureBalanceSats: number;
+  immatureBalanceSats: number;
+  unconfirmedBalanceSats: number;
+  unknownAgeBalanceSats: number;
   status: CheckInStatus;
+}
+
+export interface CheckInUtxo {
+  valueSats: number;
+  confirmed?: boolean;
+  confirmations?: number;
 }
 
 const clamp = (value: number, min: number, max: number): number =>
@@ -25,7 +40,7 @@ const normalizeCadenceRatio = (cadenceRatio: number): number => {
 
 export const buildCheckInPlan = (
   locktimeBlocks: number,
-  confirmationsSinceLastFunding?: number,
+  utxos: readonly CheckInUtxo[] = [],
   cadenceRatio = 0.5,
 ): CheckInPlan => {
   if (
@@ -41,18 +56,46 @@ export const buildCheckInPlan = (
 
   const normalizedCadence = normalizeCadenceRatio(cadenceRatio);
   const recommendedCheckInEveryBlocks = Math.max(1, Math.floor(locktimeBlocks * normalizedCadence));
+  const confirmedUtxos = utxos.filter(
+    (utxo) => utxo.confirmed === true || typeof utxo.confirmations === 'number',
+  );
+  const knownAgeUtxos = confirmedUtxos.filter(
+    (utxo) => typeof utxo.confirmations === 'number' && Number.isFinite(utxo.confirmations),
+  );
+  const unconfirmedUtxos = utxos.filter(
+    (utxo) => utxo.confirmed === false,
+  );
+  const unknownAgeUtxos = confirmedUtxos.filter(
+    (utxo) => typeof utxo.confirmations !== 'number' || !Number.isFinite(utxo.confirmations),
+  );
+  const matureUtxos = knownAgeUtxos.filter((utxo) => Math.max(0, Math.floor(utxo.confirmations!)) >= locktimeBlocks);
+  const immatureUtxos = knownAgeUtxos.filter((utxo) => Math.max(0, Math.floor(utxo.confirmations!)) < locktimeBlocks);
+  const baseSummary = {
+    confirmedUtxoCount: confirmedUtxos.length,
+    unconfirmedUtxoCount: unconfirmedUtxos.length,
+    unknownAgeUtxoCount: unknownAgeUtxos.length,
+    matureUtxoCount: matureUtxos.length,
+    immatureUtxoCount: immatureUtxos.length,
+    matureBalanceSats: matureUtxos.reduce((sum, utxo) => sum + Math.max(0, Math.floor(utxo.valueSats)), 0),
+    immatureBalanceSats: immatureUtxos.reduce((sum, utxo) => sum + Math.max(0, Math.floor(utxo.valueSats)), 0),
+    unconfirmedBalanceSats: unconfirmedUtxos.reduce((sum, utxo) => sum + Math.max(0, Math.floor(utxo.valueSats)), 0),
+    unknownAgeBalanceSats: unknownAgeUtxos.reduce((sum, utxo) => sum + Math.max(0, Math.floor(utxo.valueSats)), 0),
+  };
 
-  if (typeof confirmationsSinceLastFunding !== 'number' || !Number.isFinite(confirmationsSinceLastFunding)) {
+  if (knownAgeUtxos.length === 0) {
     return {
       locktimeBlocks,
       cadenceRatio: normalizedCadence,
       recommendedCheckInEveryBlocks,
       recommendedCheckInEveryApprox: calculateTime(recommendedCheckInEveryBlocks),
+      ...baseSummary,
       status: 'unknown',
     };
   }
 
-  const confirmations = Math.max(0, Math.floor(confirmationsSinceLastFunding));
+  const confirmations = Math.max(
+    ...knownAgeUtxos.map((utxo) => Math.max(0, Math.floor(utxo.confirmations!))),
+  );
   const blocksUntilRecommendedCheckIn = recommendedCheckInEveryBlocks - confirmations;
   const blocksUntilBeneficiaryEligible = locktimeBlocks - confirmations;
 
@@ -68,13 +111,14 @@ export const buildCheckInPlan = (
     cadenceRatio: normalizedCadence,
     recommendedCheckInEveryBlocks,
     recommendedCheckInEveryApprox: calculateTime(recommendedCheckInEveryBlocks),
-    confirmationsSinceLastFunding: confirmations,
+    oldestUtxoConfirmations: confirmations,
     blocksUntilRecommendedCheckIn,
     blocksUntilBeneficiaryEligible,
     beneficiaryEligibilityApprox:
       blocksUntilBeneficiaryEligible > 0
         ? calculateTime(blocksUntilBeneficiaryEligible)
         : 'already eligible',
+    ...baseSummary,
     status,
   };
 };

@@ -1,4 +1,8 @@
 import type { PlanInput, PlanOutput } from '@/lib/bitcoin/types';
+import {
+  validateAndNormalizeRecoveryKit,
+  type RecoveryKitData,
+} from '@/lib/bitcoin/instructions';
 
 export interface SavedVault {
   id: string;
@@ -50,23 +54,32 @@ export const getSavedVaults = (): SavedVault[] => {
     if (!stored) return [];
     const parsed = JSON.parse(stored);
     if (!Array.isArray(parsed)) return [];
-    return parsed.filter(isValidVault);
+    return parsed
+      .map(normalizeSavedVault)
+      .filter((vault): vault is SavedVault => vault !== null);
   } catch {
     return [];
   }
 };
 
 export const saveVault = (plan: PlanInput, result: PlanOutput, name?: string): SavedVault | null => {
+  let normalized: RecoveryKitData;
+  try {
+    normalized = validateAndNormalizeRecoveryKit({ plan, result });
+  } catch {
+    return null;
+  }
+
   const vault: SavedVault = {
     id: generateVaultId(),
-    name: name || `Vault ${result.address.slice(0, 8)}…`,
-    address: result.address,
-    network: plan.network,
-    addressType: result.address_type,
+    name: name || `Vault ${normalized.result.address.slice(0, 8)}…`,
+    address: normalized.result.address,
+    network: normalized.plan.network,
+    addressType: normalized.result.address_type,
     createdAt: new Date().toISOString(),
-    plan,
+    plan: normalized.plan,
     // Never persist the SSS shares — see stripRecoveryKitSecrets.
-    result: stripRecoveryKitSecrets(result),
+    result: stripRecoveryKitSecrets(normalized.result),
   };
 
   const existing = getSavedVaults();
@@ -82,61 +95,66 @@ export const saveVault = (plan: PlanInput, result: PlanOutput, name?: string): S
   return vault;
 };
 
-export const deleteVault = (id: string): void => {
+export const deleteVault = (id: string): boolean => {
   const existing = getSavedVaults();
   const filtered = existing.filter((v) => v.id !== id);
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+    return true;
   } catch {
-    // Ignore storage errors
+    return false;
   }
 };
 
-export const clearAllVaults = (): void => {
+export const clearAllVaults = (): boolean => {
   try {
     localStorage.removeItem(STORAGE_KEY);
+    return true;
   } catch {
-    // Ignore storage errors
+    return false;
   }
 };
 
-export const updateVaultName = (id: string, name: string): void => {
+export const updateVaultName = (id: string, name: string): boolean => {
   const existing = getSavedVaults();
   const updated = existing.map((v) =>
     v.id === id ? { ...v, name: name.trim() || v.name } : v
   );
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    return true;
   } catch {
-    // Ignore storage errors
+    return false;
   }
 };
 
-export const updateVaultNotes = (id: string, notes: string): void => {
+export const updateVaultNotes = (id: string, notes: string): boolean => {
   const existing = getSavedVaults();
   const updated = existing.map((v) =>
     v.id === id ? { ...v, notes: notes.trim() } : v
   );
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    return true;
   } catch {
-    // Ignore storage errors
+    return false;
   }
 };
 
-export const updateVaultLastChecked = (id: string): void => {
+export const updateVaultLastChecked = (id: string): boolean => {
   const existing = getSavedVaults();
   const updated = existing.map((v) =>
     v.id === id ? { ...v, lastCheckedAt: new Date().toISOString() } : v
   );
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    return true;
   } catch {
-    // Ignore storage errors
+    return false;
   }
 };
 
-export const updateVaultTags = (id: string, tags: string[]): void => {
+export const updateVaultTags = (id: string, tags: string[]): boolean => {
   const existing = getSavedVaults();
   const updated = existing.map((v) =>
     v.id === id
@@ -150,8 +168,9 @@ export const updateVaultTags = (id: string, tags: string[]): void => {
   );
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    return true;
   } catch {
-    // Ignore storage errors
+    return false;
   }
 };
 
@@ -201,7 +220,25 @@ export const importVaultsFromBackup = (json: string): ImportResult => {
           result.errors.push(`Invalid vault data: ${vault?.name || 'unknown'}`);
           continue;
         }
-        if (existingAddresses.has(vault.address)) {
+        let normalized: RecoveryKitData;
+        try {
+          normalized = validateAndNormalizeRecoveryKit({
+            plan: vault.plan,
+            result: vault.result,
+          });
+        } catch {
+          result.errors.push(`Vault failed integrity check: ${vault.name}`);
+          continue;
+        }
+        if (
+          vault.address !== normalized.result.address ||
+          vault.network !== normalized.plan.network ||
+          vault.addressType !== normalized.result.address_type
+        ) {
+          result.errors.push(`Vault metadata failed integrity check: ${vault.name}`);
+          continue;
+        }
+        if (existingAddresses.has(normalized.result.address)) {
           result.skipped++;
           continue;
         }
@@ -210,11 +247,12 @@ export const importVaultsFromBackup = (json: string): ImportResult => {
         const newVault: SavedVault = {
           ...vault,
           id: generateVaultId(),
-          result: stripRecoveryKitSecrets(vault.result),
+          plan: normalized.plan,
+          result: stripRecoveryKitSecrets(normalized.result),
         };
         existing.push(newVault);
         importedVaults.push(newVault);
-        existingAddresses.add(vault.address);
+        existingAddresses.add(normalized.result.address);
       }
 
       if (importedVaults.length > 0) {
@@ -230,13 +268,20 @@ export const importVaultsFromBackup = (json: string): ImportResult => {
 
     // Handle single recovery kit format
     if (parsed.plan && parsed.result) {
-      const address = parsed.result.address;
+      let normalized: RecoveryKitData;
+      try {
+        normalized = validateAndNormalizeRecoveryKit(parsed);
+      } catch {
+        result.errors.push('Recovery Kit failed integrity check');
+        return result;
+      }
+      const address = normalized.result.address;
       if (address && getVaultByAddress(address)) {
         result.skipped++;
         return result;
       }
       const safeName = typeof parsed.name === 'string' ? parsed.name : undefined;
-      const saved = saveVault(parsed.plan, parsed.result, safeName);
+      const saved = saveVault(normalized.plan, normalized.result, safeName);
       if (saved) {
         result.imported++;
       } else {
@@ -263,8 +308,33 @@ const isValidVault = (vault: unknown): vault is SavedVault => {
     typeof v.name === 'string' &&
     typeof v.address === 'string' &&
     typeof v.network === 'string' &&
+    typeof v.addressType === 'string' &&
     typeof v.createdAt === 'string' &&
     typeof v.plan === 'object' &&
     typeof v.result === 'object'
   );
+};
+
+const normalizeSavedVault = (vault: unknown): SavedVault | null => {
+  if (!isValidVault(vault)) return null;
+  try {
+    const normalized = validateAndNormalizeRecoveryKit({
+      plan: vault.plan,
+      result: vault.result,
+    });
+    if (
+      vault.address !== normalized.result.address ||
+      vault.network !== normalized.plan.network ||
+      vault.addressType !== normalized.result.address_type
+    ) {
+      return null;
+    }
+    return {
+      ...vault,
+      plan: normalized.plan,
+      result: stripRecoveryKitSecrets(normalized.result),
+    };
+  } catch {
+    return null;
+  }
 };

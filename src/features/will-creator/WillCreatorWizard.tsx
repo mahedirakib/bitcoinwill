@@ -62,7 +62,6 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorW
   const [showDownloadChecklist, setShowDownloadChecklist] = useState(false);
   const [downloadChecklist, setDownloadChecklist] = useState<Record<ChecklistItemId, boolean>>(createChecklistState);
   const [showHardwareWallet, setShowHardwareWallet] = useState(false);
-  const [hardwareWalletConnected, setHardwareWalletConnected] = useState<HardwareWalletType | null>(null);
   const [pendingSSSKey, setPendingSSSKey] = useState<string | null>(null);
   const [pendingSSSConfig, setPendingSSSConfig] = useState<{ threshold: 2 | 3; total: 3 | 5 } | null>(null);
   const [isVaultSaved, setIsVaultSaved] = useState(false);
@@ -289,15 +288,23 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorW
   };
 
   const handleHardwareWalletConnect = async (type: HardwareWalletType) => {
-    const { publicKey } = await connectHardwareWallet(type, network as BitcoinNetwork);
-    dispatch({ type: 'UPDATE_INPUT', payload: { owner_pubkey: publicKey } });
-    setHardwareWalletConnected(type);
+    const { publicKey, path, fingerprint } = await connectHardwareWallet(type, network as BitcoinNetwork);
+    dispatch({
+      type: 'UPDATE_INPUT',
+      payload: {
+        owner_pubkey: publicKey,
+        owner_key_origin: {
+          device: type,
+          derivation_path: path,
+          fingerprint: fingerprint?.toLowerCase(),
+        },
+      },
+    });
     showToast(`${type.charAt(0).toUpperCase() + type.slice(1)} connected successfully`);
   };
 
   const clearHardwareWalletKey = () => {
-    dispatch({ type: 'UPDATE_INPUT', payload: { owner_pubkey: '' } });
-    setHardwareWalletConnected(null);
+    dispatch({ type: 'UPDATE_INPUT', payload: { owner_pubkey: '', owner_key_origin: undefined } });
     showToast('Key cleared');
   };
 
@@ -432,7 +439,7 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorW
             <KeysStep
               input={state.input}
               errors={state.errors}
-              hardwareWalletConnected={hardwareWalletConnected}
+               hardwareWalletConnected={state.input.owner_key_origin?.device ?? null}
               dispatch={dispatch}
               setShowHardwareWallet={setShowHardwareWallet}
               clearHardwareWalletKey={clearHardwareWalletKey}

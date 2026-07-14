@@ -19,12 +19,12 @@ import { VAULTS_STORAGE_KEY } from '@/lib/vaultStorage';
 export interface UseVaultsReturn {
   vaults: SavedVault[];
   saveNewVault: (plan: PlanInput, result: PlanOutput, name?: string) => SavedVault | null;
-  removeVault: (id: string) => void;
-  clearAllVaults: () => void;
-  renameVault: (id: string, name: string) => void;
-  updateNotes: (id: string, notes: string) => void;
-  updateTags: (id: string, tags: string[]) => void;
-  markChecked: (id: string) => void;
+  removeVault: (id: string) => boolean;
+  clearAllVaults: () => boolean;
+  renameVault: (id: string, name: string) => boolean;
+  updateNotes: (id: string, notes: string) => boolean;
+  updateTags: (id: string, tags: string[]) => boolean;
+  markChecked: (id: string) => boolean;
   hasVault: (address: string) => boolean;
   refreshVaults: () => void;
   exportAllVaults: () => string;
@@ -59,45 +59,51 @@ export const useVaults = (): UseVaultsReturn => {
 
   const removeVault = useCallback(
     (id: string) => {
-      deleteVault(id);
-      refreshVaults();
+      const deleted = deleteVault(id);
+      if (deleted) refreshVaults();
+      return deleted;
     },
     [refreshVaults]
   );
 
   const clearAll = useCallback(() => {
-    clearAllVaults();
-    refreshVaults();
+    const cleared = clearAllVaults();
+    if (cleared) refreshVaults();
+    return cleared;
   }, [refreshVaults]);
 
   const renameVault = useCallback(
     (id: string, name: string) => {
-      updateVaultName(id, name);
-      refreshVaults();
+      const updated = updateVaultName(id, name);
+      if (updated) refreshVaults();
+      return updated;
     },
     [refreshVaults]
   );
 
   const updateNotes = useCallback(
     (id: string, notes: string) => {
-      updateVaultNotes(id, notes);
-      refreshVaults();
+      const updated = updateVaultNotes(id, notes);
+      if (updated) refreshVaults();
+      return updated;
     },
     [refreshVaults]
   );
 
   const updateTags = useCallback(
     (id: string, tags: string[]) => {
-      updateVaultTags(id, tags);
-      refreshVaults();
+      const updated = updateVaultTags(id, tags);
+      if (updated) refreshVaults();
+      return updated;
     },
     [refreshVaults]
   );
 
   const markChecked = useCallback(
     (id: string) => {
-      updateVaultLastChecked(id);
-      refreshVaults();
+      const updated = updateVaultLastChecked(id);
+      if (updated) refreshVaults();
+      return updated;
     },
     [refreshVaults]
   );

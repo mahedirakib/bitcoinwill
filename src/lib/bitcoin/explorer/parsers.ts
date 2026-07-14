@@ -1,4 +1,4 @@
-import type { FundingEvent, EsploraTx } from './types';
+import type { FundingEvent, EsploraTx, EsploraUtxo, VaultUtxo } from './types';
 import { toSafeInteger } from './utils';
 
 export const toFundingEvent = (
@@ -51,3 +51,30 @@ export const getOldestConfirmedTxid = (txs: EsploraTx[]): string | null => {
   }
   return null;
 };
+
+export const parseVaultUtxos = (
+  utxos: EsploraUtxo[],
+  tipHeight?: number,
+): VaultUtxo[] => utxos.flatMap((utxo) => {
+  const txid = typeof utxo.txid === 'string' ? utxo.txid : '';
+  if (!Number.isSafeInteger(utxo.vout) || !Number.isSafeInteger(utxo.value)) return [];
+  const vout = utxo.vout as number;
+  const valueSats = utxo.value as number;
+  if (!/^[a-f0-9]{64}$/i.test(txid) || vout < 0 || valueSats <= 0) return [];
+
+  const confirmed = Boolean(utxo.status?.confirmed);
+  const blockHeight = toSafeInteger(utxo.status?.block_height);
+  const confirmations =
+    confirmed && tipHeight !== undefined && blockHeight > 0
+      ? Math.max(0, tipHeight - blockHeight + 1)
+      : undefined;
+
+  return [{
+    txid: txid.toLowerCase(),
+    vout,
+    valueSats,
+    confirmed,
+    blockHeight: blockHeight > 0 ? blockHeight : undefined,
+    confirmations,
+  }];
+});

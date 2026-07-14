@@ -19,6 +19,15 @@ export interface FundingEvent {
   confirmations?: number;
 }
 
+export interface VaultUtxo {
+  txid: string;
+  vout: number;
+  valueSats: number;
+  confirmed: boolean;
+  blockHeight?: number;
+  confirmations?: number;
+}
+
 export interface AddressSummary {
   network: BitcoinNetwork;
   address: string;
@@ -32,6 +41,7 @@ export interface AddressSummary {
   tipHeight?: number;
   lastFundingTx?: FundingEvent;
   lastConfirmedFundingTx?: FundingEvent;
+  utxos: VaultUtxo[];
   fetchedAt: string;
 }
 
@@ -53,6 +63,16 @@ export interface BroadcastTransactionRequest {
   timeoutMs?: number;
   fetcher?: typeof fetch;
   retryConfig?: RetryConfig;
+  vault?: VaultSpendContext;
+}
+
+export interface VaultSpendContext {
+  address: string;
+  addressType: 'p2wsh' | 'p2tr';
+  witnessScriptHex: string;
+  taprootControlBlock?: string;
+  locktimeBlocks: number;
+  destinationAddress: string;
 }
 
 export interface BroadcastTransactionResult {
@@ -62,6 +82,9 @@ export interface BroadcastTransactionResult {
   providerLabel: string;
   usedFallbackProvider: boolean;
   explorerTxUrl: string;
+  feeSats?: number;
+  feeRateSatsPerVbyte?: number;
+  vaultInputCount?: number;
 }
 
 export interface EsploraAddressStats {
@@ -90,4 +113,11 @@ export interface EsploraTx {
   txid?: string;
   status?: EsploraTxStatus;
   vout?: EsploraTxVout[];
+}
+
+export interface EsploraUtxo {
+  txid?: string;
+  vout?: number;
+  value?: number;
+  status?: EsploraTxStatus;
 }

@@ -6,7 +6,7 @@ import { createInitialState, wizardReducer } from './types';
 describe('wizardReducer', () => {
   it('stores the exact completed plan input used to build the result', () => {
     const generatedBeneficiaryPubkey =
-      '03e9634f19b165239105436a5c17e3371901c5651581452a329978747474747474';
+      '02b634f19b165239105436a5c17e3371901c5651581452a3299787474747474747';
     const completedInput: PlanInput = {
       ...createInitialState('testnet').input,
       owner_pubkey: '02e9634f19b165239105436a5c17e3371901c5651581452a329978747474747474',

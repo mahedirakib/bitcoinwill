@@ -117,6 +117,22 @@ describe('Instructions Module', () => {
       expect(result.descriptor).toBe(mockPlanOutput.descriptor);
     });
 
+    it('preserves hardware-wallet signer origins', () => {
+      const input: PlanInput = {
+        ...mockPlanInput,
+        owner_key_origin: {
+          device: 'ledger',
+          derivation_path: "m/84'/1'/0'/0/0",
+          fingerprint: 'a1b2c3d4',
+        },
+      };
+
+      const result = buildInstructions(input, mockPlanOutput);
+
+      expect(result.ownerKeyOrigin).toEqual(input.owner_key_origin);
+      expect(generateInstructionTxt(result)).toContain("[a1b2c3d4]m/84'/1'/0'/0/0 (ledger)");
+    });
+
     it('uses provided createdAt timestamp', () => {
       const customTimestamp = '2026-02-08T10:30:00.000Z';
       const result = buildInstructions(mockPlanInput, mockPlanOutput, customTimestamp);
@@ -227,7 +243,8 @@ describe('Instructions Module', () => {
       const result = generateInstructionTxt(mockInstructionModel);
       expect(result).toContain('RECOVERY STEPS');
       expect(result).toContain('Confirm the vault address');
-      expect(result).toContain('Construct a "Sweep" transaction');
+      expect(result).toContain('Construct a version 2 transaction');
+      expect(result).toContain('set nSequence');
     });
 
     it('includes warnings section', () => {
@@ -242,18 +259,19 @@ describe('Instructions Module', () => {
       expect(result).toContain('WHAT YOU NEED');
       expect(result).toContain('Your Private Key');
       expect(result).toContain('Witness Script');
-      expect(result).toContain('Advanced Wallet');
+      expect(result).toContain('Advanced Tool');
+      expect(result).toContain('watch-only');
     });
 
     it('explains when funds can be claimed', () => {
       const result = generateInstructionTxt(mockInstructionModel);
       expect(result).toContain('WHEN YOU CAN CLAIM');
-      expect(result).toContain('unmoved at the vault address');
+      expect(result).toContain('independent CSV timer');
     });
 
     it('provides practical guidance', () => {
       const result = generateInstructionTxt(mockInstructionModel);
-      expect(result).toContain('Sparrow Wallet');
+      expect(result).toContain('custom P2WSH spends');
       expect(result).toContain('blockchain explorer');
     });
   });
@@ -273,6 +291,48 @@ describe('Instructions Module', () => {
       expect(normalized.plan).toEqual(canonicalPlanInput);
       expect(normalized.result.address).toBe(result.address);
       expect(normalized.result.descriptor).toBe(result.descriptor);
+    });
+
+    it('migrates a legacy raw-script descriptor to the canonical descriptor', () => {
+      const result = buildPlan(canonicalPlanInput);
+      const legacyResult = {
+        ...result,
+        descriptor: `wsh(raw(${result.script_hex}))`,
+      };
+
+      const normalized = validateAndNormalizeRecoveryKit({
+        plan: canonicalPlanInput,
+        result: legacyResult,
+      });
+
+      expect(normalized.result.descriptor).toBe(result.descriptor);
+      expect(normalized.result.descriptor).not.toContain('raw(');
+    });
+
+    it('restores missing Taproot recovery metadata and rejects tampered metadata', () => {
+      const taprootInput: PlanInput = {
+        ...canonicalPlanInput,
+        beneficiary_pubkey: '02b634f19b165239105436a5c17e3371901c5651581452a3299787474747474747',
+        address_type: 'p2tr',
+      };
+      const result = buildPlan(taprootInput);
+      const {
+        taproot_control_block: _controlBlock,
+        taproot_leaf_version: _leafVersion,
+        ...legacyResult
+      } = result;
+
+      const normalized = validateAndNormalizeRecoveryKit({
+        plan: taprootInput,
+        result: legacyResult,
+      });
+      expect(normalized.result.taproot_control_block).toBe(result.taproot_control_block);
+      expect(normalized.result.taproot_leaf_version).toBe(0xc0);
+
+      expect(() => validateAndNormalizeRecoveryKit({
+        plan: taprootInput,
+        result: { ...result, taproot_control_block: '00'.repeat(33) },
+      })).toThrow('failed integrity check');
     });
 
     it('drops social recovery share material from imported recovery kits', () => {

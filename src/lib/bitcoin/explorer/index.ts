@@ -7,6 +7,7 @@ export {
   type AddressSummaryRequest,
   type BroadcastTransactionRequest,
   type BroadcastTransactionResult,
+  type VaultSpendContext,
   type EsploraAddressStats,
   type EsploraAddressResponse,
   type EsploraTxStatus,

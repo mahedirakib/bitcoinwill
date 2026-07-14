@@ -9,7 +9,7 @@ export const buildExplorerAddressUrl = (
   address: string,
 ): string => {
   const config = getExplorerConfig(network, provider);
-  return `${config.explorerBaseUrl}/address/${encodeURIComponent(sanitizeAddress(address))}`;
+  return `${config.explorerBaseUrl}/address/${encodeURIComponent(sanitizeAddress(address, network))}`;
 };
 
 export const buildExplorerTxUrl = (

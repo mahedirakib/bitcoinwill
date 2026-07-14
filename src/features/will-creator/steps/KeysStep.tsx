@@ -78,7 +78,7 @@ export const KeysStep = ({
           id="owner-pubkey"
           type="text"
           value={input.owner_pubkey}
-          onChange={(e) => dispatch({ type: 'UPDATE_INPUT', payload: { owner_pubkey: normalizePubkeyHex(e.target.value) } })}
+          onChange={(e) => dispatch({ type: 'UPDATE_INPUT', payload: { owner_pubkey: normalizePubkeyHex(e.target.value), owner_key_origin: undefined } })}
           autoComplete="off"
           autoCorrect="off"
           autoCapitalize="off"
@@ -92,7 +92,7 @@ export const KeysStep = ({
         {sampleAllowed && (
           <button
             type="button"
-            onClick={() => dispatch({ type: 'UPDATE_INPUT', payload: { owner_pubkey: SAMPLE_KEYS.owner } })}
+            onClick={() => dispatch({ type: 'UPDATE_INPUT', payload: { owner_pubkey: SAMPLE_KEYS.owner, owner_key_origin: undefined } })}
             className="text-xs font-medium text-foreground/60 underline-offset-4 hover:underline"
           >
             Use sample key
@@ -117,6 +117,9 @@ export const KeysStep = ({
             <div className="flex items-center gap-2 text-sm">
               <Shield className="h-4 w-4 text-success" />
               <span className="font-medium capitalize">{hardwareWalletConnected} connected</span>
+              <span className="font-mono text-xs text-muted-foreground">
+                {input.owner_key_origin?.derivation_path}
+              </span>
             </div>
             <button
               type="button"

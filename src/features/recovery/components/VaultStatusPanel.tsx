@@ -113,6 +113,11 @@ export const VaultStatusPanel = ({
                 vaultStatus.usedFallbackProvider ? ' (fallback used)' : ''
               }`}
             />
+            <StatusCard
+              label="Current UTXOs"
+              value={String(vaultStatus.utxos.length)}
+              detail="Maturity is evaluated separately for every unspent output."
+            />
           </div>
 
           {vaultStatus.lastConfirmedFundingTx && (

@@ -2,6 +2,23 @@ import { PlanInput, isBitcoinNetwork, isAddressType, isRecoveryMethod, INHERITAN
 import { isSupportedSSSConfig } from './sss';
 import * as ecc from 'tiny-secp256k1';
 import { hexToBytes } from './hex';
+import type { KeyOrigin } from './types';
+
+const validateKeyOrigin = (origin: KeyOrigin | undefined, label: string): void => {
+  if (origin === undefined) return;
+  if (typeof origin !== 'object' || origin === null) {
+    throw new Error(`Invalid ${label} key origin.`);
+  }
+  if (!['ledger', 'trezor', 'coldcard'].includes(origin.device)) {
+    throw new Error(`Invalid ${label} key origin device.`);
+  }
+  if (!/^m(?:\/\d+['h]?)*$/.test(origin.derivation_path)) {
+    throw new Error(`Invalid ${label} derivation path.`);
+  }
+  if (origin.fingerprint !== undefined && !/^[a-f0-9]{8}$/i.test(origin.fingerprint)) {
+    throw new Error(`Invalid ${label} master fingerprint.`);
+  }
+};
 
 /**
  * Validates a Bitcoin public key format and curve validity.
@@ -68,6 +85,9 @@ export const validatePlanInput = (input: PlanInput): void => {
     throw new Error('Invalid address type. Supported values: p2wsh, p2tr.');
   }
 
+  validateKeyOrigin(input.owner_key_origin, 'owner');
+  validateKeyOrigin(input.beneficiary_key_origin, 'beneficiary');
+
   // Recovery method and SSS config must be internally consistent. The wizard
   // enforces this ad-hoc at the call site, but the library boundary must not
   // rely on that — kit imports or other callers could bypass it.
@@ -128,6 +148,17 @@ export const validatePlanInput = (input: PlanInput): void => {
       '- Owner key: Used to spend funds at any time\n' +
       '- Beneficiary key: Used to claim funds only after the timelock expires\n' +
       'Having different keys ensures the inheritance mechanism works correctly.'
+    );
+  }
+
+  if (
+    input.address_type === 'p2tr' &&
+    input.owner_pubkey.slice(2).toLowerCase() === input.beneficiary_pubkey.slice(2).toLowerCase()
+  ) {
+    throw new Error(
+      'Owner and Beneficiary Taproot keys must have different x-coordinates.\n\n' +
+      'These compressed public keys represent opposite parities of the same Taproot x-only key. ' +
+      'Use a separate key pair for the beneficiary.'
     );
   }
   

@@ -1,7 +1,7 @@
 export const getTimeoutMs = (timeoutMs?: number): number =>
   typeof timeoutMs === 'number' && Number.isFinite(timeoutMs) && timeoutMs > 0 ? timeoutMs : 10_000;
 
-export const sanitizeAddress = (address: string): string => {
+export const sanitizeAddress = (address: string, network: BitcoinNetwork): string => {
   const normalized = address.trim();
   if (normalized.length < 14) {
     throw new Error('Address is too short to query.');
@@ -12,10 +12,13 @@ export const sanitizeAddress = (address: string): string => {
   // to keep funding-event address comparisons reliable. Legacy Base58Check
   // addresses (prefixed with 1/3/m/n/2/...) are case-sensitive and must not be
   // lowercased.
-  if (/^(bc|tb|bcrt)1/i.test(normalized)) {
-    return normalized.toLowerCase();
+  const canonical = /^(bc|tb|bcrt)1/i.test(normalized) ? normalized.toLowerCase() : normalized;
+  try {
+    bitcoinAddress.toOutputScript(canonical, getNetworkParams(network));
+  } catch {
+    throw new Error(`Address is not valid for ${network}.`);
   }
-  return normalized;
+  return canonical;
 };
 
 export const sanitizeRawTxHex = (rawTxHex: string): string => {
@@ -62,3 +65,6 @@ export const formatBtc = (sats: number): string =>
     minimumFractionDigits: 8,
     maximumFractionDigits: 8,
   });
+import { address as bitcoinAddress } from 'bitcoinjs-lib';
+import type { BitcoinNetwork } from '../types';
+import { getNetworkParams } from '../network';

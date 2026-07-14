@@ -15,10 +15,10 @@ export const useCheckInPlan = (
     if (locktimeBlocks <= 0) return null;
     return buildCheckInPlan(
       locktimeBlocks,
-      vaultStatus?.lastConfirmedFundingTx?.confirmations,
+      vaultStatus?.utxos ?? [],
       checkInCadence,
     );
-  }, [locktimeBlocks, vaultStatus?.lastConfirmedFundingTx?.confirmations, checkInCadence]);
+  }, [locktimeBlocks, vaultStatus?.utxos, checkInCadence]);
 
   return { checkInPlan };
 };

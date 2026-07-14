@@ -60,6 +60,8 @@ const RecoveryPage = ({ initialData, onBack }: RecoveryPageProps) => {
   const {
     rawTxHex,
     setRawTxHex,
+    recoveryDestination,
+    setRecoveryDestination,
     broadcastResult,
     broadcastError,
     isBroadcasting,
@@ -67,7 +69,17 @@ const RecoveryPage = ({ initialData, onBack }: RecoveryPageProps) => {
     setBroadcastMainnetPhrase,
     broadcastTransaction,
     clearBroadcastState,
-  } = useTransactionBroadcast(recoveryNetwork, explorerProvider);
+  } = useTransactionBroadcast(
+    recoveryNetwork,
+    explorerProvider,
+    model ? {
+      address: model.address,
+      addressType: model.addressType,
+      witnessScriptHex: model.witnessScriptHex,
+      taprootControlBlock: model.taprootControlBlock,
+      locktimeBlocks: model.locktimeBlocks,
+    } : undefined,
+  );
 
   const processedInitialDataRef = useRef<string | null>(null);
 
@@ -185,6 +197,8 @@ const RecoveryPage = ({ initialData, onBack }: RecoveryPageProps) => {
             model={model}
             rawTxHex={rawTxHex}
             onRawTxHexChange={setRawTxHex}
+            recoveryDestination={recoveryDestination}
+            onRecoveryDestinationChange={setRecoveryDestination}
             broadcastResult={broadcastResult}
             broadcastError={broadcastError}
             isBroadcasting={isBroadcasting}

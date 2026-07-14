@@ -22,6 +22,8 @@ export interface UseVaultStatusReturn {
 export interface UseTransactionBroadcastReturn {
   rawTxHex: string;
   setRawTxHex: (value: string) => void;
+  recoveryDestination: string;
+  setRecoveryDestination: (value: string) => void;
   broadcastResult: BroadcastTransactionResult | null;
   broadcastError: string | null;
   isBroadcasting: boolean;
@@ -64,6 +66,8 @@ export interface BroadcastPanelProps {
   model: InstructionModel;
   rawTxHex: string;
   onRawTxHexChange: (value: string) => void;
+  recoveryDestination: string;
+  onRecoveryDestinationChange: (value: string) => void;
   broadcastResult: BroadcastTransactionResult | null;
   broadcastError: string | null;
   isBroadcasting: boolean;

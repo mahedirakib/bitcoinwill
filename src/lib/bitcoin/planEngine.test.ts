@@ -94,7 +94,11 @@ describe('PlanEngine', () => {
     });
 
     it('delegates to buildTaprootPlan when address_type is p2tr', () => {
-      const taprootInput = { ...sampleInput, address_type: 'p2tr' as const };
+      const taprootInput = {
+        ...sampleInput,
+        beneficiary_pubkey: '02b634f19b165239105436a5c17e3371901c5651581452a3299787474747474747',
+        address_type: 'p2tr' as const,
+      };
       const result = buildPlan(taprootInput);
 
       // Taproot addresses start with bc1p/tb1p/bcrt1p
@@ -130,10 +134,11 @@ describe('PlanEngine', () => {
       expect(result.script_hex).toBe(result.witness_script);
     });
 
-    it('descriptor contains script hex', () => {
+    it('produces a checksummed watch-only descriptor for the vault address', () => {
       const result = buildPlan(sampleInput);
-      expect(result.descriptor).toContain(result.script_hex);
-      expect(result.descriptor).toMatch(/^wsh\(raw\([a-f0-9]+\)\)$/);
+      expect(result.descriptor).toMatch(
+        new RegExp(`^addr\\(${result.address}\\)#[qpzry9x8gf2tvdw0s3jn54khce6mua7l]{8}$`),
+      );
     });
 
     it('script_asm contains expected opcodes', () => {

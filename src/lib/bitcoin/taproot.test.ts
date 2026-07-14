@@ -5,7 +5,7 @@ import { PlanInput } from './types';
 import { hexToBytes } from './hex';
 
 const TEST_OWNER_KEY = '02e9634f19b165239105436a5c17e3371901c5651581452a329978747474747474';
-const TEST_BENEFICIARY_KEY = '03e9634f19b165239105436a5c17e3371901c5651581452a329978747474747474';
+const TEST_BENEFICIARY_KEY = '02b634f19b165239105436a5c17e3371901c5651581452a3299787474747474747';
 
 describe('Taproot (P2TR) Plan Generation', () => {
   it('should generate a valid testnet P2TR address', () => {
@@ -76,7 +76,7 @@ describe('Taproot (P2TR) Plan Generation', () => {
     expect(plan.script_asm).toContain('OP_ENDIF');
   });
 
-  it('should generate a descriptor starting with tr()', () => {
+  it('should generate a checksummed watch-only descriptor', () => {
     const input: PlanInput = {
       network: 'testnet',
       inheritance_type: 'timelock_recovery',
@@ -87,10 +87,25 @@ describe('Taproot (P2TR) Plan Generation', () => {
 
     const plan = buildTaprootPlan(input);
 
-    expect(plan.descriptor.startsWith('tr(')).toBe(true);
+    expect(plan.descriptor).toMatch(
+      new RegExp(`^addr\\(${plan.address}\\)#[qpzry9x8gf2tvdw0s3jn54khce6mua7l]{8}$`),
+    );
+    expect(plan.descriptor).not.toContain('raw(');
   });
 
-  it('should use the full BIP341 NUMS x-only internal key', () => {
+  it('rejects compressed keys that collapse to the same x-only key', () => {
+    const input: PlanInput = {
+      network: 'testnet',
+      inheritance_type: 'timelock_recovery',
+      owner_pubkey: TEST_OWNER_KEY,
+      beneficiary_pubkey: `03${TEST_OWNER_KEY.slice(2)}`,
+      locktime_blocks: 144,
+    };
+
+    expect(() => buildTaprootPlan(input)).toThrow('different x-coordinates');
+  });
+
+  it('should retain the tapscript needed for script-path recovery', () => {
     const input: PlanInput = {
       network: 'testnet',
       inheritance_type: 'timelock_recovery',
@@ -101,9 +116,9 @@ describe('Taproot (P2TR) Plan Generation', () => {
 
     const plan = buildTaprootPlan(input);
 
-    expect(plan.descriptor).toContain(
-      'tr(50929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac0,',
-    );
+    expect(plan.script_hex).toMatch(/^[a-f0-9]+$/);
+    expect(plan.taproot_control_block).toMatch(/^[a-f0-9]{66}$/);
+    expect(plan.taproot_leaf_version).toBe(0xc0);
   });
 
   it('should provide human-readable explanations', () => {

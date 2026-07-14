@@ -54,6 +54,16 @@ export const AppShell = ({ active, onNavigate, topbar, children }: AppShellProps
   const drawerRef = useRef<HTMLDivElement>(null);
   const lastFocusedRef = useRef<HTMLElement | null>(null);
 
+  useEffect(() => {
+    const desktopQuery = window.matchMedia('(min-width: 1024px)');
+    const closeOnDesktop = (event: MediaQueryListEvent) => {
+      if (event.matches) setMobileOpen(false);
+    };
+
+    desktopQuery.addEventListener('change', closeOnDesktop);
+    return () => desktopQuery.removeEventListener('change', closeOnDesktop);
+  }, []);
+
   const navItem = (item: { id: NavView; label: string; icon: typeof HomeIcon }) => {
     const Icon = item.icon;
     const isActive = active === item.id;

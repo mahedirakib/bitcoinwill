@@ -130,6 +130,26 @@ describe('Validation Module', () => {
       expect(() => validatePlanInput(invalidInput)).toThrow('Owner and Beneficiary public keys must be different');
     });
 
+    it('rejects opposite-parity compressed keys for Taproot', () => {
+      const invalidInput = {
+        ...validInput,
+        address_type: 'p2tr' as const,
+      };
+
+      expect(() => validatePlanInput(invalidInput)).toThrow(
+        'Taproot keys must have different x-coordinates',
+      );
+    });
+
+    it('allows opposite-parity compressed keys for P2WSH', () => {
+      const p2wshInput = {
+        ...validInput,
+        address_type: 'p2wsh' as const,
+      };
+
+      expect(() => validatePlanInput(p2wshInput)).not.toThrow();
+    });
+
     it('throws error for locktime of 0', () => {
       const invalidInput = {
         ...validInput,
@@ -240,6 +260,30 @@ describe('Validation Module', () => {
     it('accepts input without optional plan_label', () => {
       const { plan_label: _plan_label, ...inputWithoutLabel } = validInput;
       expect(() => validatePlanInput(inputWithoutLabel as PlanInput)).not.toThrow();
+    });
+
+    it('accepts a valid hardware-wallet owner key origin', () => {
+      const input = {
+        ...validInput,
+        owner_key_origin: {
+          device: 'ledger' as const,
+          derivation_path: "m/84'/1'/0'/0/0",
+          fingerprint: '00a1b2c3',
+        },
+      };
+
+      expect(() => validatePlanInput(input)).not.toThrow();
+    });
+
+    it('rejects malformed hardware-wallet origin metadata', () => {
+      expect(() => validatePlanInput({
+        ...validInput,
+        owner_key_origin: {
+          device: 'ledger',
+          derivation_path: '84/1/0',
+          fingerprint: 'xyz',
+        },
+      } as unknown as PlanInput)).toThrow('Invalid owner derivation path');
     });
 
     it('validates owner key before beneficiary key', () => {

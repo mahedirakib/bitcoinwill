@@ -1,8 +1,8 @@
-import type { AddressSummary, AddressSummaryRequest, EsploraAddressResponse, EsploraTx } from './types';
+import type { AddressSummary, AddressSummaryRequest, EsploraAddressResponse, EsploraTx, EsploraUtxo } from './types';
 import { getExplorerConfig, getProviderOrder, ESPLORA_CHAIN_PAGE_SIZE, ESPLORA_CHAIN_SCAN_PAGE_LIMIT, isExplorerProvider, assertPublicExplorerNetwork } from './config';
 import { getTimeoutMs, sanitizeAddress, toSafeInteger, parseTipHeight } from './utils';
 import { fetchJsonWithTimeout, fetchTextWithTimeout } from './http';
-import { getFundingEvents, getOldestConfirmedTxid } from './parsers';
+import { getFundingEvents, getOldestConfirmedTxid, parseVaultUtxos } from './parsers';
 
 const fetchAddressSummaryWithProvider = async (
   request: Required<Pick<AddressSummaryRequest, 'network' | 'address' | 'provider' | 'timeoutMs' | 'fetcher'>> &
@@ -11,7 +11,7 @@ const fetchAddressSummaryWithProvider = async (
   const config = getExplorerConfig(request.network, request.provider);
   const encodedAddress = encodeURIComponent(request.address);
 
-  const [addressData, txsRaw, tipHeightRaw] = await Promise.all([
+  const [addressData, txsRaw, utxosRaw, tipHeightRaw] = await Promise.all([
     fetchJsonWithTimeout<EsploraAddressResponse>(
       `${config.apiBaseUrl}/address/${encodedAddress}`,
       request.fetcher,
@@ -20,6 +20,12 @@ const fetchAddressSummaryWithProvider = async (
     ),
     fetchJsonWithTimeout<EsploraTx[]>(
       `${config.apiBaseUrl}/address/${encodedAddress}/txs`,
+      request.fetcher,
+      request.timeoutMs,
+      request.retryConfig,
+    ),
+    fetchJsonWithTimeout<EsploraUtxo[]>(
+      `${config.apiBaseUrl}/address/${encodedAddress}/utxo`,
       request.fetcher,
       request.timeoutMs,
       request.retryConfig,
@@ -40,6 +46,7 @@ const fetchAddressSummaryWithProvider = async (
   const txCount = toSafeInteger(addressData.chain_stats?.tx_count) + toSafeInteger(addressData.mempool_stats?.tx_count);
   const tipHeight = parseTipHeight(tipHeightRaw);
   const txs = Array.isArray(txsRaw) ? txsRaw : [];
+  const utxos = parseVaultUtxos(Array.isArray(utxosRaw) ? utxosRaw : [], tipHeight);
 
   const fundingEvents = getFundingEvents(txs, request.address, tipHeight);
   let lastFundingTx = fundingEvents[0];
@@ -106,6 +113,7 @@ const fetchAddressSummaryWithProvider = async (
     tipHeight,
     lastFundingTx,
     lastConfirmedFundingTx,
+    utxos,
     fetchedAt: new Date().toISOString(),
   };
 };
@@ -124,7 +132,7 @@ export const fetchAddressSummary = async ({
     throw new Error('Unsupported explorer provider.');
   }
 
-  const normalizedAddress = sanitizeAddress(address);
+  const normalizedAddress = sanitizeAddress(address, network);
   const requestTimeoutMs = getTimeoutMs(timeoutMs);
   const providerOrder = getProviderOrder(provider, fallbackToOtherProvider);
 

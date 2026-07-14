@@ -7,7 +7,7 @@ describe('wizard draft restore helpers', () => {
     network: 'testnet' as const,
     inheritance_type: 'timelock_recovery' as const,
     owner_pubkey: '02e9634f19b165239105436a5c17e3371901c5651581452a329978747474747474',
-    beneficiary_pubkey: '03e9634f19b165239105436a5c17e3371901c5651581452a329978747474747474',
+    beneficiary_pubkey: '02b634f19b165239105436a5c17e3371901c5651581452a3299787474747474747',
     locktime_blocks: 144,
     address_type: 'p2tr' as const,
     recovery_method: 'single' as const,
@@ -80,6 +80,11 @@ describe('wizard draft restore helpers', () => {
         recovery_method: 'social',
         sss_config: { threshold: 3, total: 5 },
         plan_label: ' Family vault ',
+        owner_key_origin: {
+          device: 'trezor',
+          derivation_path: "m/84'/0'/0'/0/0",
+          fingerprint: 'A1B2C3D4',
+        },
       },
     });
 
@@ -95,6 +100,11 @@ describe('wizard draft restore helpers', () => {
       recovery_method: 'social',
       sss_config: { threshold: 3, total: 5 },
       plan_label: 'Family vault',
+      owner_key_origin: {
+        device: 'trezor',
+        derivation_path: "m/84'/0'/0'/0/0",
+        fingerprint: 'a1b2c3d4',
+      },
     });
   });
 

@@ -23,14 +23,14 @@ export const DownloadChecklistModal = ({
   const allChecked = Object.values(checklist).every(Boolean);
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-foreground/30 p-6">
+    <div className="fixed inset-0 z-[120] flex items-start justify-center overflow-y-auto bg-foreground/30 p-4 sm:items-center sm:p-6">
       <div
         ref={modalRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="download-checklist-title"
         aria-describedby="download-checklist-description"
-        className="panel w-full max-w-xl p-6 space-y-5 shadow-xl"
+        className="panel max-h-[calc(100dvh-2rem)] w-full max-w-xl space-y-5 overflow-y-auto p-6 shadow-xl sm:max-h-[calc(100dvh-3rem)]"
       >
         <div>
           <h3 id="download-checklist-title" className="text-base font-semibold tracking-tight">

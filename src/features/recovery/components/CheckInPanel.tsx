@@ -1,5 +1,6 @@
 import { History } from 'lucide-react';
 import { StatusCard } from '@/components/DataDisplay';
+import { formatBtc, formatSats } from '@/lib/bitcoin/explorer';
 import type { CheckInPanelProps } from '../types';
 
 export const CheckInPanel = ({
@@ -15,7 +16,7 @@ export const CheckInPanel = ({
       </h2>
 
       <p className="text-sm leading-relaxed text-muted-foreground">
-        A check-in means the owner spends and re-locks funds to reset the CSV timer. Choose a cadence and compare it with live confirmations.
+        A check-in means the owner spends every vault UTXO and re-locks the funds. Each UTXO has its own CSV timer, so the oldest output determines urgency.
       </p>
 
       <div className="space-y-1.5">
@@ -56,11 +57,11 @@ export const CheckInPanel = ({
                 : `Locktime is ${model.locktimeBlocks} blocks total.`
             }
           />
-          {typeof checkInPlan.confirmationsSinceLastFunding === 'number' && (
+          {typeof checkInPlan.oldestUtxoConfirmations === 'number' && (
             <StatusCard
-              label="Since last funding"
-              value={`${checkInPlan.confirmationsSinceLastFunding} confirmations`}
-              detail="Based on the latest confirmed funding transaction."
+              label="Oldest unspent output"
+              value={`${checkInPlan.oldestUtxoConfirmations} confirmations`}
+              detail="Check-in urgency is based on the oldest current UTXO."
             />
           )}
           {typeof checkInPlan.blocksUntilBeneficiaryEligible === 'number' && (
@@ -76,6 +77,30 @@ export const CheckInPanel = ({
                   ? `~${checkInPlan.beneficiaryEligibilityApprox}`
                   : 'Beneficiary path may already be spendable.'
               }
+            />
+          )}
+          <StatusCard
+            label="Beneficiary-eligible now"
+            value={`${formatBtc(checkInPlan.matureBalanceSats)} BTC`}
+            detail={`${formatSats(checkInPlan.matureBalanceSats)} sats across ${checkInPlan.matureUtxoCount} UTXO(s)`}
+          />
+          <StatusCard
+            label="Still timelocked"
+            value={`${formatBtc(checkInPlan.immatureBalanceSats)} BTC`}
+            detail={`${formatSats(checkInPlan.immatureBalanceSats)} sats across ${checkInPlan.immatureUtxoCount} confirmed UTXO(s)`}
+          />
+          {checkInPlan.unconfirmedUtxoCount > 0 && (
+            <StatusCard
+              label="Awaiting confirmation"
+              value={`${formatBtc(checkInPlan.unconfirmedBalanceSats)} BTC`}
+              detail={`${formatSats(checkInPlan.unconfirmedBalanceSats)} sats; CSV age starts after confirmation.`}
+            />
+          )}
+          {checkInPlan.unknownAgeUtxoCount > 0 && (
+            <StatusCard
+              label="Confirmation age unavailable"
+              value={`${formatBtc(checkInPlan.unknownAgeBalanceSats)} BTC`}
+              detail={`${formatSats(checkInPlan.unknownAgeBalanceSats)} sats; verify these confirmed UTXOs with another source.`}
             />
           )}
         </div>

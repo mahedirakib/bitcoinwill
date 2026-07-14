@@ -2,7 +2,8 @@ import { useState, useCallback } from 'react';
 import type { BitcoinNetwork } from '@/lib/bitcoin/types';
 import type {
   BroadcastTransactionResult,
-  ExplorerProvider
+  ExplorerProvider,
+  VaultSpendContext,
 } from '@/lib/bitcoin/explorer';
 import {
   broadcastTransaction as broadcastTx,
@@ -16,10 +17,12 @@ const MAINNET_BROADCAST_CONFIRMATION = 'I UNDERSTAND THIS BROADCASTS ON MAINNET'
 
 export const useTransactionBroadcast = (
   network: BitcoinNetwork,
-  explorerProvider: ExplorerProvider
+  explorerProvider: ExplorerProvider,
+  vault?: Omit<VaultSpendContext, 'destinationAddress'>,
 ): UseTransactionBroadcastReturn => {
   const { showToast } = useToast();
-  const [rawTxHex, setRawTxHex] = useState('');
+  const [rawTxHex, setRawTxHexState] = useState('');
+  const [recoveryDestination, setRecoveryDestinationState] = useState('');
   const [broadcastMainnetPhrase, setBroadcastMainnetPhrase] = useState('');
   const {
     data: broadcastResult,
@@ -31,6 +34,16 @@ export const useTransactionBroadcast = (
 
   const publicExplorerAvailable = supportsPublicExplorerNetwork(network);
   const isMainnet = network === 'mainnet';
+
+  const setRawTxHex = useCallback((value: string) => {
+    setRawTxHexState(value);
+    resetAsync();
+  }, [resetAsync]);
+
+  const setRecoveryDestination = useCallback((value: string) => {
+    setRecoveryDestinationState(value);
+    resetAsync();
+  }, [resetAsync]);
 
   const broadcastTransaction = useCallback(async () => {
     if (!publicExplorerAvailable) {
@@ -51,14 +64,16 @@ export const useTransactionBroadcast = (
         provider: explorerProvider,
         rawTxHex,
         fallbackToOtherProvider: true,
+        vault: vault ? { ...vault, destinationAddress: recoveryDestination } : undefined,
       });
       showToast(`Broadcast accepted by ${result.providerLabel}`);
       return result;
     });
-  }, [network, explorerProvider, rawTxHex, isMainnet, broadcastMainnetPhrase, showToast, publicExplorerAvailable, execute]);
+  }, [network, explorerProvider, rawTxHex, isMainnet, broadcastMainnetPhrase, showToast, publicExplorerAvailable, execute, vault, recoveryDestination]);
 
   const clearBroadcastState = useCallback(() => {
-    setRawTxHex('');
+    setRawTxHexState('');
+    setRecoveryDestinationState('');
     setBroadcastMainnetPhrase('');
     resetAsync();
   }, [resetAsync]);
@@ -66,6 +81,8 @@ export const useTransactionBroadcast = (
   return {
     rawTxHex,
     setRawTxHex,
+    recoveryDestination,
+    setRecoveryDestination,
     broadcastResult,
     broadcastError,
     isBroadcasting,

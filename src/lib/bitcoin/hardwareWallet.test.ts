@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import * as ecc from 'tiny-secp256k1';
-import { formatPublicKey, parseLedgerPublicKeyResponse } from './hardwareWallet';
+import { formatMasterFingerprint, formatPublicKey, parseLedgerPublicKeyResponse } from './hardwareWallet';
 import { validatePubkey } from './validation';
 import { hexToBytes } from './hex';
 
@@ -62,5 +62,16 @@ describe('formatPublicKey', () => {
 
   it('rejects malformed hardware wallet public keys', () => {
     expect(() => formatPublicKey('02'.padEnd(66, '0'))).toThrow('Invalid public key format');
+  });
+});
+
+describe('formatMasterFingerprint', () => {
+  it('normalizes and zero-pads device fingerprints', () => {
+    expect(formatMasterFingerprint(0x12ab)).toBe('000012ab');
+    expect(formatMasterFingerprint('0xA1B2C3D4')).toBe('a1b2c3d4');
+  });
+
+  it('rejects malformed device fingerprints', () => {
+    expect(() => formatMasterFingerprint('not-hex')).toThrow('Invalid hardware wallet master fingerprint');
   });
 });

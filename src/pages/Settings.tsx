@@ -51,7 +51,10 @@ export const SettingsPage = ({ onNavigate }: SettingsPageProps) => {
   };
 
   const handleClearAll = () => {
-    clearAllVaults();
+    if (!clearAllVaults()) {
+      showToast('Could not clear vaults from this device', 'error');
+      return;
+    }
     setShowClearConfirm(false);
     showToast('All vaults cleared');
   };

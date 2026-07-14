@@ -5,6 +5,7 @@ import { getNetworkParams } from './network';
 import { validatePlanInput } from './validation';
 import { generatePlanExplanation } from './utils';
 import { bytesToHex, hexToBytes } from './hex';
+import { buildAddressDescriptor } from './descriptor';
 
 // NUMS (Nothing Up My Sleeve) public key for unspendable internal key
 // This is the standard BIP341 NUMS point (32-byte x-only pubkey)
@@ -12,7 +13,7 @@ import { bytesToHex, hexToBytes } from './hex';
 const NUMS_KEY_HEX = '50929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac0';
 
 export const buildTaprootPlan = (input: PlanInput): PlanOutput => {
-  validatePlanInput(input);
+  validatePlanInput({ ...input, address_type: 'p2tr' });
   
   const network = getNetworkParams(input.network);
   // BIP342 tapscript pubkeys must be 32-byte x-only. Strip the parity prefix
@@ -46,6 +47,7 @@ export const buildTaprootPlan = (input: PlanInput): PlanOutput => {
   const p2tr = payments.p2tr({
     internalPubkey,
     scriptTree,
+    redeem: { output: tapscript, redeemVersion: 0xc0 },
     network,
   });
 
@@ -54,15 +56,21 @@ export const buildTaprootPlan = (input: PlanInput): PlanOutput => {
   }
 
   const scriptHex = bytesToHex(tapscript);
+  const controlBlock = p2tr.witness?.[p2tr.witness.length - 1];
+  if (!controlBlock) {
+    throw new Error('Failed to generate Taproot control block');
+  }
 
   return {
-    descriptor: `tr(${NUMS_KEY_HEX}, raw(${scriptHex}))`,
+    descriptor: buildAddressDescriptor(p2tr.address),
     script_asm: script.toASM(tapscript),
     script_hex: scriptHex,
     address: p2tr.address,
     witness_script: scriptHex,
     network: input.network,
     address_type: 'p2tr' as AddressType,
+    taproot_control_block: bytesToHex(controlBlock),
+    taproot_leaf_version: 0xc0,
     human_explanation: generatePlanExplanation(input, p2tr.address),
   };
 };

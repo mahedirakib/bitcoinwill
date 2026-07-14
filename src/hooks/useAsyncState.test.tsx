@@ -105,6 +105,28 @@ describe('useAsyncState', () => {
     expect(result.current.isLoading).toBe(false);
   });
 
+  it('reset() prevents an in-flight request from restoring stale data', async () => {
+    const { result } = renderHook(() => useAsyncState<number>());
+    let resolvePending: ((value: number) => void) | undefined;
+    const pending = new Promise<number>((resolve) => {
+      resolvePending = resolve;
+    });
+
+    act(() => {
+      void result.current.execute(() => pending);
+    });
+    act(() => {
+      result.current.reset();
+    });
+    await act(async () => {
+      resolvePending?.(123);
+      await pending;
+    });
+
+    expect(result.current.data).toBeNull();
+    expect(result.current.isLoading).toBe(false);
+  });
+
   it('setData updates data and clears error', async () => {
     const { result } = renderHook(() => useAsyncState<{ name: string }>());
 
@@ -115,5 +137,26 @@ describe('useAsyncState', () => {
     expect(result.current.data).toEqual({ name: 'manual' });
     expect(result.current.error).toBeNull();
     expect(result.current.isLoading).toBe(false);
+  });
+
+  it('setData prevents an in-flight request from replacing manual data', async () => {
+    const { result } = renderHook(() => useAsyncState<string>());
+    let resolvePending: ((value: string) => void) | undefined;
+    const pending = new Promise<string>((resolve) => {
+      resolvePending = resolve;
+    });
+
+    act(() => {
+      void result.current.execute(() => pending);
+    });
+    act(() => {
+      result.current.setData('manual');
+    });
+    await act(async () => {
+      resolvePending?.('stale');
+      await pending;
+    });
+
+    expect(result.current.data).toBe('manual');
   });
 });

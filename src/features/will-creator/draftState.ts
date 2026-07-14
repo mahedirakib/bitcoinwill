@@ -5,8 +5,9 @@ import {
   type BitcoinNetwork,
   type PlanInput,
   type PlanOutput,
+  type KeyOrigin,
 } from '@/lib/bitcoin/types';
-import { buildPlan } from '@/lib/bitcoin/planEngine';
+import { validateAndNormalizeRecoveryKit } from '@/lib/bitcoin/instructions';
 import { normalizePubkeyHex } from './safety';
 import { stripRecoveryKitSecrets } from './recoveryKit';
 
@@ -59,6 +60,16 @@ const sanitizePlanLabel = (value: unknown): string | undefined => {
   return trimmed.length > 0 ? trimmed : undefined;
 };
 
+const sanitizeKeyOrigin = (value: unknown): KeyOrigin | undefined => {
+  if (!isObjectRecord(value)) return undefined;
+  if (value.device !== 'ledger' && value.device !== 'trezor' && value.device !== 'coldcard') return undefined;
+  if (typeof value.derivation_path !== 'string' || !/^m(?:\/\d+['h]?)*$/.test(value.derivation_path)) return undefined;
+  const fingerprint = typeof value.fingerprint === 'string' && /^[a-f0-9]{8}$/i.test(value.fingerprint)
+    ? value.fingerprint.toLowerCase()
+    : undefined;
+  return { device: value.device, derivation_path: value.derivation_path, fingerprint };
+};
+
 const sanitizePlanInput = (value: Record<string, unknown>, fallbackNetwork: BitcoinNetwork): PlanInput => {
   const recoveryMethod = sanitizeRecoveryMethod(value.recovery_method);
   const sssConfig = recoveryMethod === 'social' ? sanitizeSssConfig(value.sss_config) : undefined;
@@ -73,6 +84,8 @@ const sanitizePlanInput = (value: Record<string, unknown>, fallbackNetwork: Bitc
     recovery_method: recoveryMethod,
     sss_config: sssConfig,
     plan_label: sanitizePlanLabel(value.plan_label),
+    owner_key_origin: sanitizeKeyOrigin(value.owner_key_origin),
+    beneficiary_key_origin: sanitizeKeyOrigin(value.beneficiary_key_origin),
   };
 };
 
@@ -83,19 +96,11 @@ const isValidPlanOutput = (value: unknown): value is PlanOutput => {
   return true;
 };
 
-const resultMatchesPlan = (input: PlanInput, result: PlanOutput): boolean => {
+const normalizePlanOutput = (input: PlanInput, result: PlanOutput): PlanOutput | null => {
   try {
-    const canonical = buildPlan(input);
-    return (
-      result.address === canonical.address &&
-      result.script_hex === canonical.script_hex &&
-      result.witness_script === canonical.witness_script &&
-      result.descriptor === canonical.descriptor &&
-      result.network === canonical.network &&
-      result.address_type === canonical.address_type
-    );
+    return validateAndNormalizeRecoveryKit({ plan: input, result }).result;
   } catch {
-    return false;
+    return null;
   }
 };
 
@@ -155,13 +160,13 @@ export const parseWizardDraft = (
 
   const input = sanitizePlanInput(parsed.input, fallbackNetwork);
   const restoresSocialResult = parsed.step === 'RESULT' && input.recovery_method === 'social';
-  const restoredResult =
-    !restoresSocialResult &&
-    parsed.result &&
-    isValidPlanOutput(parsed.result) &&
-    resultMatchesPlan(input, parsed.result)
-      ? stripRecoveryKitSecrets(parsed.result)
-      : undefined;
+  const normalizedResult =
+    !restoresSocialResult && parsed.result && isValidPlanOutput(parsed.result)
+      ? normalizePlanOutput(input, parsed.result)
+      : null;
+  const restoredResult = normalizedResult
+    ? stripRecoveryKitSecrets(normalizedResult)
+    : undefined;
 
   const restored: RestoredWizardDraft = {
     step: parsed.step === 'RESULT' && !restoredResult ? 'REVIEW' : parsed.step,

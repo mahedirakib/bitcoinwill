@@ -3,6 +3,7 @@ import {
   getSavedVaults,
   saveVault,
   deleteVault,
+  clearAllVaults,
   updateVaultName,
   updateVaultNotes,
   updateVaultLastChecked,
@@ -13,6 +14,7 @@ import {
   importVaultsFromBackup,
 } from './vaultStorage';
 import type { PlanInput, PlanOutput } from './bitcoin/types';
+import { buildPlan } from './bitcoin/planEngine';
 
 const mockPlan: PlanInput = {
   network: 'testnet',
@@ -24,15 +26,14 @@ const mockPlan: PlanInput = {
   recovery_method: 'single',
 };
 
-const mockResult: PlanOutput = {
-  descriptor: 'wsh(raw(abc123))',
-  script_asm: 'OP_IF ... OP_ENDIF',
-  script_hex: 'abc123',
-  address: 'tb1qtestaddress123',
-  witness_script: 'abc123',
-  network: 'testnet',
-  address_type: 'p2wsh',
-  human_explanation: ['Test vault'],
+const mockResult: PlanOutput = buildPlan(mockPlan);
+
+const createCanonicalKit = (locktimeBlocks: number) => {
+  const plan: PlanInput = {
+    ...mockPlan,
+    locktime_blocks: locktimeBlocks,
+  };
+  return { plan, result: buildPlan(plan) };
 };
 
 const createMockStorage = () => {
@@ -86,6 +87,31 @@ describe('vaultStorage', () => {
       ];
       localStorage.setItem('bitcoinwill_saved_vaults', JSON.stringify(invalidVaults));
       expect(getSavedVaults()).toEqual([]);
+    });
+
+    it('filters out stored vaults whose metadata does not match the plan', () => {
+      const vault = saveVault(mockPlan, mockResult)!;
+      localStorage.setItem('bitcoinwill_saved_vaults', JSON.stringify([
+        { ...vault, network: 'mainnet' },
+      ]));
+
+      expect(getSavedVaults()).toEqual([]);
+    });
+
+    it('normalizes legacy descriptors in stored vaults', () => {
+      const vault = saveVault(mockPlan, mockResult)!;
+      const legacyVault = {
+        ...vault,
+        result: {
+          ...vault.result,
+          descriptor: `wsh(raw(${vault.result.script_hex}))`,
+        },
+      };
+      localStorage.setItem('bitcoinwill_saved_vaults', JSON.stringify([legacyVault]));
+
+      const restored = getSavedVaults();
+      expect(restored).toHaveLength(1);
+      expect(restored[0].result.descriptor).toBe(mockResult.descriptor);
     });
   });
 
@@ -154,6 +180,13 @@ describe('vaultStorage', () => {
       const vault = saveVault(mockPlan, mockResult);
       expect(vault).toBeNull();
     });
+
+    it('rejects a result that does not match the plan', () => {
+      const tamperedResult = { ...mockResult, address: 'tb1qtampered' };
+
+      expect(saveVault(mockPlan, tamperedResult)).toBeNull();
+      expect(getSavedVaults()).toHaveLength(0);
+    });
   });
 
   describe('deleteVault', () => {
@@ -161,13 +194,23 @@ describe('vaultStorage', () => {
       const vault = saveVault(mockPlan, mockResult)!;
       expect(getSavedVaults()).toHaveLength(1);
 
-      deleteVault(vault.id);
+      expect(deleteVault(vault.id)).toBe(true);
       expect(getSavedVaults()).toHaveLength(0);
     });
 
     it('should handle deleting non-existent vault gracefully', () => {
       saveVault(mockPlan, mockResult);
       deleteVault('non-existent-id');
+      expect(getSavedVaults()).toHaveLength(1);
+    });
+
+    it('reports when the vault could not be removed from storage', () => {
+      const vault = saveVault(mockPlan, mockResult)!;
+      mockStorage.setItem.mockImplementationOnce(() => {
+        throw new Error('QuotaExceededError');
+      });
+
+      expect(deleteVault(vault.id)).toBe(false);
       expect(getSavedVaults()).toHaveLength(1);
     });
   });
@@ -187,6 +230,28 @@ describe('vaultStorage', () => {
 
       const saved = getSavedVaults();
       expect(saved[0].name).toBe('Original');
+    });
+
+    it('reports a storage failure without changing the vault name', () => {
+      const vault = saveVault(mockPlan, mockResult, 'Original')!;
+      mockStorage.setItem.mockImplementationOnce(() => {
+        throw new Error('QuotaExceededError');
+      });
+
+      expect(updateVaultName(vault.id, 'Updated')).toBe(false);
+      expect(getSavedVaults()[0].name).toBe('Original');
+    });
+  });
+
+  describe('clearAllVaults', () => {
+    it('reports when storage cannot be cleared', () => {
+      saveVault(mockPlan, mockResult);
+      mockStorage.removeItem.mockImplementationOnce(() => {
+        throw new Error('SecurityError');
+      });
+
+      expect(clearAllVaults()).toBe(false);
+      expect(getSavedVaults()).toHaveLength(1);
     });
   });
 
@@ -295,6 +360,7 @@ describe('vaultStorage', () => {
 
   describe('importVaultsFromBackup', () => {
     it('should import vaults from backup', () => {
+      const kit = createCanonicalKit(145);
       const backup = {
         version: '1.0',
         exportedAt: new Date().toISOString(),
@@ -302,12 +368,12 @@ describe('vaultStorage', () => {
           {
             id: 'imported-1',
             name: 'Imported Vault',
-            address: 'tb1qimported',
+            address: kit.result.address,
             network: 'testnet',
             addressType: 'p2wsh',
             createdAt: new Date().toISOString(),
-            plan: mockPlan,
-            result: { ...mockResult, address: 'tb1qimported' },
+            plan: kit.plan,
+            result: kit.result,
           },
         ],
       };
@@ -319,19 +385,20 @@ describe('vaultStorage', () => {
     });
 
     it('should skip existing vaults by address', () => {
-      saveVault(mockPlan, mockResult);
+      const kit = createCanonicalKit(146);
+      saveVault(kit.plan, kit.result);
       const backup = {
         version: '1.0',
         vaults: [
           {
             id: 'imported-1',
             name: 'Imported Vault',
-            address: mockResult.address,
+            address: kit.result.address,
             network: 'testnet',
             addressType: 'p2wsh',
             createdAt: new Date().toISOString(),
-            plan: mockPlan,
-            result: mockResult,
+            plan: kit.plan,
+            result: kit.result,
           },
         ],
       };
@@ -342,10 +409,7 @@ describe('vaultStorage', () => {
     });
 
     it('should import from recovery kit format', () => {
-      const kit = {
-        plan: mockPlan,
-        result: { ...mockResult, address: 'tb1qnewaddress' },
-      };
+      const kit = createCanonicalKit(147);
 
       const result = importVaultsFromBackup(JSON.stringify(kit));
       expect(result.imported).toBe(1);
@@ -353,10 +417,7 @@ describe('vaultStorage', () => {
     });
 
     it('reports a storage failure for single-kit import instead of claiming success', () => {
-      const kit = {
-        plan: mockPlan,
-        result: { ...mockResult, address: 'tb1qfailwrite' },
-      };
+      const kit = createCanonicalKit(148);
 
       // saveVault's write throws (quota / private mode). The importer must not
       // report the kit as imported when nothing was persisted.
@@ -371,18 +432,19 @@ describe('vaultStorage', () => {
     });
 
     it('reports a storage failure for backup imports instead of claiming success', () => {
+      const kit = createCanonicalKit(149);
       const backup = {
         version: '1.0',
         vaults: [
           {
             id: 'imported-1',
             name: 'Imported Vault',
-            address: 'tb1qfailbackupwrite',
+            address: kit.result.address,
             network: 'testnet',
             addressType: 'p2wsh',
             createdAt: new Date().toISOString(),
-            plan: mockPlan,
-            result: { ...mockResult, address: 'tb1qfailbackupwrite' },
+            plan: kit.plan,
+            result: kit.result,
           },
         ],
       };
@@ -398,9 +460,10 @@ describe('vaultStorage', () => {
     });
 
     it('ignores a non-string name when importing a single recovery kit', () => {
+      const canonical = createCanonicalKit(150);
       const kit = {
-        plan: mockPlan,
-        result: { ...mockResult, address: 'tb1qbadname' },
+        plan: canonical.plan,
+        result: canonical.result,
         name: { weird: true },
       };
 
@@ -411,7 +474,44 @@ describe('vaultStorage', () => {
       expect(saved).toHaveLength(1);
       // A non-string name must not be persisted; fall back to the default.
       expect(typeof saved[0].name).toBe('string');
-      expect(saved[0].name).toBe(`Vault ${'tb1qbadname'.slice(0, 8)}…`);
+      expect(saved[0].name).toBe(`Vault ${canonical.result.address.slice(0, 8)}…`);
+    });
+
+    it('rejects a single recovery kit whose result does not match its plan', () => {
+      const kit = createCanonicalKit(152);
+      const tampered = {
+        ...kit,
+        result: { ...kit.result, address: 'tb1qtampered' },
+      };
+
+      const result = importVaultsFromBackup(JSON.stringify(tampered));
+
+      expect(result.imported).toBe(0);
+      expect(result.errors).toEqual(['Recovery Kit failed integrity check']);
+      expect(getSavedVaults()).toHaveLength(0);
+    });
+
+    it('rejects backup metadata that disagrees with the canonical plan', () => {
+      const kit = createCanonicalKit(153);
+      const backup = {
+        version: '1.0',
+        vaults: [{
+          id: 'tampered-metadata',
+          name: 'Tampered Vault',
+          address: kit.result.address,
+          network: 'mainnet',
+          addressType: kit.result.address_type,
+          createdAt: new Date().toISOString(),
+          plan: kit.plan,
+          result: kit.result,
+        }],
+      };
+
+      const result = importVaultsFromBackup(JSON.stringify(backup));
+
+      expect(result.imported).toBe(0);
+      expect(result.errors).toEqual(['Vault metadata failed integrity check: Tampered Vault']);
+      expect(getSavedVaults()).toHaveLength(0);
     });
 
     it('should handle invalid JSON', () => {
@@ -427,6 +527,7 @@ describe('vaultStorage', () => {
     });
 
     it('strips social_recovery_kit shares when importing a backup', () => {
+      const kit = createCanonicalKit(151);
       const backup = {
         version: '1.0',
         exportedAt: new Date().toISOString(),
@@ -434,14 +535,13 @@ describe('vaultStorage', () => {
           {
             id: 'imported-with-shares',
             name: 'Imported Vault',
-            address: 'tb1qwithshares',
+            address: kit.result.address,
             network: 'testnet',
             addressType: 'p2wsh',
             createdAt: new Date().toISOString(),
-            plan: mockPlan,
+            plan: kit.plan,
             result: {
-              ...mockResult,
-              address: 'tb1qwithshares',
+              ...kit.result,
               social_recovery_kit: {
                 config: { threshold: 2, total: 3 },
                 shares: [{ index: 1, share: 'a'.repeat(80) }],

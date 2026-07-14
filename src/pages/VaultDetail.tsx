@@ -61,7 +61,7 @@ export const VaultDetailPage = ({
   onDelete,
 }: VaultDetailPageProps) => {
   const { showToast } = useToast();
-  const { renameVault, updateNotes, updateTags, markChecked } = useVaults();
+  const { removeVault, renameVault, updateNotes, updateTags, markChecked } = useVaults();
   const [isEditingName, setIsEditingName] = useState(false);
   const [editName, setEditName] = useState(vault.name);
   const [isEditingNotes, setIsEditingNotes] = useState(false);
@@ -110,7 +110,10 @@ export const VaultDetailPage = ({
   const handleSaveName = () => {
     const trimmed = editName.trim();
     if (trimmed && trimmed !== vault.name) {
-      renameVault(vault.id, trimmed);
+      if (!renameVault(vault.id, trimmed)) {
+        showToast('Could not save the vault name', 'error');
+        return;
+      }
       showToast('Vault renamed');
     }
     setIsEditingName(false);
@@ -132,7 +135,10 @@ export const VaultDetailPage = ({
   };
 
   const handleSaveNotes = () => {
-    updateNotes(vault.id, editNotes);
+    if (!updateNotes(vault.id, editNotes)) {
+      showToast('Could not save vault notes', 'error');
+      return;
+    }
     setIsEditingNotes(false);
     showToast('Notes saved');
   };
@@ -147,7 +153,10 @@ export const VaultDetailPage = ({
       .split(',')
       .map((t) => t.trim().toLowerCase())
       .filter((t) => t.length > 0);
-    updateTags(vault.id, tags);
+    if (!updateTags(vault.id, tags)) {
+      showToast('Could not save vault tags', 'error');
+      return;
+    }
     setIsEditingTags(false);
     showToast('Tags updated');
   };
@@ -161,7 +170,9 @@ export const VaultDetailPage = ({
     // Only stamp "checked" when the status fetch actually succeeded, so the
     // indicator never claims a check happened when it didn't.
     const ok = await refreshVaultStatus();
-    if (ok) markChecked(vault.id);
+    if (ok && !markChecked(vault.id)) {
+      showToast('Status refreshed, but the check-in time could not be saved', 'error');
+    }
   };
 
   const getExplorerUrl = () => {
@@ -565,6 +576,10 @@ export const VaultDetailPage = ({
             <button
               type="button"
               onClick={() => {
+                if (!removeVault(vault.id)) {
+                  showToast('Could not remove vault from this device', 'error');
+                  return;
+                }
                 onDelete();
                 setShowDeleteConfirm(false);
               }}

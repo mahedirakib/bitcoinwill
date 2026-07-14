@@ -6,6 +6,7 @@ import { validatePlanInput } from './validation';
 import { generatePlanExplanation } from './utils';
 import { bytesToHex, hexToBytes } from './hex';
 import { buildTaprootPlan } from './taproot';
+import { buildAddressDescriptor } from './descriptor';
 
 /**
  * Bitcoin Script Construction Module
@@ -60,7 +61,7 @@ import { buildTaprootPlan } from './taproot';
  * });
  * 
  * console.log(plan.address);     // tb1q... (vault address)
- * console.log(plan.descriptor);  // wsh(bitcoincore_script(...))
+ * console.log(plan.descriptor);  // Checksummed addr(...) watch-only descriptor
  * console.log(plan.script_asm);  // Human-readable script
  */
 export const buildPlan = (input: PlanInput): PlanOutput => {
@@ -102,7 +103,7 @@ export const buildPlan = (input: PlanInput): PlanOutput => {
   const scriptHex = bytesToHex(witnessScript);
 
   return {
-    descriptor: `wsh(raw(${scriptHex}))`,
+    descriptor: buildAddressDescriptor(p2wsh.address),
     script_asm: script.toASM(witnessScript),
     script_hex: scriptHex,
     address: p2wsh.address,

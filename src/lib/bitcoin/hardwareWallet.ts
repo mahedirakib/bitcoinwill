@@ -1,5 +1,6 @@
 import { Buffer } from 'buffer';
 import * as ecc from 'tiny-secp256k1';
+import { crypto as bitcoinCrypto } from 'bitcoinjs-lib';
 import type { BitcoinNetwork } from './types';
 import { bytesToHex } from './hex';
 import { validatePubkey } from './validation';
@@ -18,6 +19,16 @@ export interface WalletPublicKey {
   path: string;
   fingerprint?: string;
 }
+
+export const formatMasterFingerprint = (fingerprint: number | string): string => {
+  const normalized = (typeof fingerprint === 'number'
+    ? fingerprint.toString(16)
+    : fingerprint.trim().replace(/^0x/i, '')).toLowerCase();
+  if (!/^[a-f0-9]{1,8}$/.test(normalized)) {
+    throw new Error('Invalid hardware wallet master fingerprint');
+  }
+  return normalized.padStart(8, '0');
+};
 
 export const SUPPORTED_WALLETS: HardwareWalletInfo[] = [
   {
@@ -153,7 +164,7 @@ const getLedgerWalletPublicKey = async (
 
   return {
     publicKey: parseLedgerPublicKeyResponse(response),
-    path: `m/${path}`,
+    path: path ? `m/${path}` : 'm',
   };
 };
 
@@ -194,7 +205,9 @@ export const connectTrezor = async (
   return {
     publicKey: formatPublicKey(result.payload.publicKey),
     path: result.payload.serializedPath,
-    fingerprint: result.payload.fingerprint?.toString(16),
+    fingerprint: result.payload.fingerprint === undefined
+      ? undefined
+      : formatMasterFingerprint(result.payload.fingerprint),
   };
 };
 
@@ -222,7 +235,17 @@ export const connectLedger = async (
   const path = getDerivationPath(network);
 
   try {
-    return await getLedgerWalletPublicKey(transport, path);
+    const childKey = await getLedgerWalletPublicKey(transport, path);
+    try {
+      const masterKey = await getLedgerWalletPublicKey(transport, '');
+      childKey.fingerprint = bytesToHex(
+        bitcoinCrypto.hash160(Buffer.from(masterKey.publicKey, 'hex')).slice(0, 4),
+      );
+    } catch {
+      // Some Ledger app versions refuse master-key export. The full child path
+      // is still valuable and must not make an otherwise valid connection fail.
+    }
+    return childKey;
   } finally {
     try {
       await transport.close();

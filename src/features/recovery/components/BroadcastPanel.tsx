@@ -7,6 +7,8 @@ export const BroadcastPanel = ({
   model,
   rawTxHex,
   onRawTxHexChange,
+  recoveryDestination,
+  onRecoveryDestinationChange,
   broadcastResult,
   broadcastError,
   isBroadcasting,
@@ -15,7 +17,7 @@ export const BroadcastPanel = ({
   onBroadcast,
   reconstructedKey,
 }: BroadcastPanelProps) => {
-  const isMainnet = model.network === 'mainnet';
+  const isMainnet = model.network.toLowerCase() === 'mainnet';
   const trimmedHex = rawTxHex.trim();
   // Validate up-front so the button isn't enabled for obviously-invalid input
   // (e.g. pasted prose). This mirrors sanitizeRawTxHex without throwing.
@@ -25,6 +27,7 @@ export const BroadcastPanel = ({
     /^[0-9a-fA-F]+$/.test(trimmedHex);
   const canBroadcast =
     looksLikeRawTxHex &&
+    recoveryDestination.trim().length > 0 &&
     (!isMainnet || broadcastMainnetPhrase === MAINNET_BROADCAST_CONFIRMATION);
 
   return (
@@ -54,6 +57,25 @@ export const BroadcastPanel = ({
       <p className="text-sm leading-relaxed text-muted-foreground">
         Paste a fully signed raw transaction hex from your wallet, then broadcast it to the selected public explorer.
       </p>
+
+      <div className="space-y-1.5">
+        <label htmlFor="recovery-destination" className="field-label">
+          Confirm destination address
+        </label>
+        <input
+          id="recovery-destination"
+          type="text"
+          value={recoveryDestination}
+          onChange={(event) => onRecoveryDestinationChange(event.target.value)}
+          placeholder={model.network.toLowerCase() === 'mainnet' ? 'bc1…' : 'tb1…'}
+          className="field-input font-mono"
+          autoComplete="off"
+          spellCheck={false}
+        />
+        <p className="text-xs text-muted-foreground">
+          Broadcasting is blocked unless the transaction contains an output to this exact address.
+        </p>
+      </div>
 
       <div className="space-y-1.5">
         <label htmlFor="raw-transaction-hex" className="field-label">
@@ -128,6 +150,11 @@ export const BroadcastPanel = ({
           <p className="break-all font-mono text-[11px] text-foreground">
             {broadcastResult.txid}
           </p>
+          {typeof broadcastResult.feeSats === 'number' && (
+            <p className="text-xs text-success">
+              Verified {broadcastResult.vaultInputCount} vault input(s); fee {broadcastResult.feeSats} sats ({broadcastResult.feeRateSatsPerVbyte?.toFixed(1)} sat/vB).
+            </p>
+          )}
           <a
             href={broadcastResult.explorerTxUrl}
             target="_blank"

@@ -60,10 +60,12 @@ export function useAsyncState<T>(): UseAsyncStateReturn<T> {
   }, []);
 
   const reset = useCallback(() => {
+    sequenceRef.current += 1;
     setState({ data: null, isLoading: false, error: null });
   }, []);
 
   const setData = useCallback((data: T) => {
+    sequenceRef.current += 1;
     setState({ data, isLoading: false, error: null });
   }, []);
 

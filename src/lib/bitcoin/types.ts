@@ -20,6 +20,12 @@ export const BITCOIN_NETWORKS: readonly BitcoinNetwork[] = ['testnet', 'regtest'
 export const isBitcoinNetwork = (value: unknown): value is BitcoinNetwork =>
   typeof value === 'string' && BITCOIN_NETWORKS.includes(value as BitcoinNetwork);
 
+export interface KeyOrigin {
+  device: 'ledger' | 'trezor' | 'coldcard';
+  derivation_path: string;
+  fingerprint?: string;
+}
+
 /**
  * Protocol Constants
  * 
@@ -110,6 +116,10 @@ export interface PlanInput {
   sss_config?: SSSConfig;
   /** Optional label for identifying this plan */
   plan_label?: string;
+  /** Signing origin for an owner key obtained from a hardware wallet */
+  owner_key_origin?: KeyOrigin;
+  /** Signing origin for a beneficiary hardware-wallet key */
+  beneficiary_key_origin?: KeyOrigin;
 }
 
 export const INHERITANCE_TYPE = 'timelock_recovery' as const;
@@ -121,7 +131,7 @@ export const INHERITANCE_TYPE = 'timelock_recovery' as const;
  * including the address, scripts, and human-readable explanations.
  * 
  * @interface PlanOutput
- * @property {string} descriptor - Bitcoin descriptor for wallet import (e.g., "wsh(bitcoincore_script(...))")
+ * @property {string} descriptor - Checksummed watch-only address descriptor for wallet import
  * @property {string} script_asm - Human-readable assembly representation of the witness script
  * @property {string} script_hex - Hexadecimal representation of the witness script
  * @property {string} address - The P2WSH vault address where funds should be sent
@@ -131,7 +141,7 @@ export const INHERITANCE_TYPE = 'timelock_recovery' as const;
  * 
  * @example
  * const planOutput: PlanOutput = {
- *   descriptor: 'wsh(bitcoincore_script(6376a914...88ac))',
+ *   descriptor: 'addr(tb1q...)#checksum',
  *   script_asm: 'OP_IF 02e963... OP_CHECKSIG OP_ELSE 144 ...',
  *   script_hex: '6376a914...88ac',
  *   address: 'tb1q...',
@@ -159,6 +169,10 @@ export interface PlanOutput {
   network: BitcoinNetwork;
   /** Address type used for this plan */
   address_type: AddressType;
+  /** Taproot script-path control block (hex), present for P2TR plans */
+  taproot_control_block?: string;
+  /** Tapscript leaf version, present for P2TR plans */
+  taproot_leaf_version?: number;
   /** Optional social recovery kit with Shamir shares */
   social_recovery_kit?: SocialRecoveryKit;
   /** Human-readable explanation of the plan's spending conditions */

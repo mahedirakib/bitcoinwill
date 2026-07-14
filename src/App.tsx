@@ -299,7 +299,7 @@ const AppContent = () => {
 
         {(activeView === 'instructions' || activeView === 'recover') && (
           <ErrorBoundary
-            key={`instructions-${pageRetryKey}`}
+            key={`${activeView}-${pageRetryKey}`}
             fallback={
               <PageErrorFallback
                 onRetry={retryCurrentView}

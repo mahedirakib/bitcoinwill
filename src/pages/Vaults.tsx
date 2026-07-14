@@ -323,7 +323,10 @@ export const VaultsPage = ({ onNavigate, onViewVault }: VaultsPageProps) => {
 
   const handleDelete = (id: string) => {
     if (deleteConfirmId === id) {
-      removeVault(id);
+      if (!removeVault(id)) {
+        showToast('Could not remove vault from this device', 'error');
+        return;
+      }
       setDeleteConfirmId(null);
       showToast('Vault removed');
     } else {
@@ -720,8 +723,11 @@ export const VaultsPage = ({ onNavigate, onViewVault }: VaultsPageProps) => {
               onView={() => handleViewVault(vault)}
               onDelete={() => handleDelete(vault.id)}
               onRename={(name) => {
-                renameVault(vault.id, name);
-                showToast('Vault renamed');
+                if (renameVault(vault.id, name)) {
+                  showToast('Vault renamed');
+                } else {
+                  showToast('Could not save the vault name', 'error');
+                }
               }}
             />
           ))}

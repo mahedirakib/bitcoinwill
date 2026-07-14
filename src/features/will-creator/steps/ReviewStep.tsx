@@ -71,6 +71,13 @@ export const ReviewStep = ({ input, errors, network, onBack, onGenerate }: Revie
 
         <SectionLabel>Keys</SectionLabel>
         <Row label="Owner key" value={summarizePubkey(input.owner_pubkey)} mono />
+        {input.owner_key_origin && (
+          <Row
+            label="Owner signer origin"
+            value={`${input.owner_key_origin.fingerprint ? `[${input.owner_key_origin.fingerprint}]` : ''}${input.owner_key_origin.derivation_path} (${input.owner_key_origin.device})`}
+            mono
+          />
+        )}
         <Row
           label={input.recovery_method === 'social' ? 'Beneficiary' : 'Beneficiary key'}
           value={
@@ -95,6 +102,15 @@ export const ReviewStep = ({ input, errors, network, onBack, onGenerate }: Revie
           After generating, download the recovery kit and store it offline. Without it, recovery is significantly harder.
         </p>
       </div>
+
+      {input.owner_key_origin && (
+        <div className="flex gap-2 rounded-md border border-warning/30 bg-warning-bg p-3 text-xs text-warning">
+          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
+          <p>
+            Hardware key origin saved. Confirm the {input.owner_key_origin.device} and your signing wallet support this custom script policy before depositing funds.
+          </p>
+        </div>
+      )}
 
       {network === 'mainnet' && (
         <div className="flex gap-2 rounded-md border border-danger/20 bg-danger/5 p-3 text-xs text-danger">
