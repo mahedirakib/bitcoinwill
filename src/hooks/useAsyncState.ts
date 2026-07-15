@@ -35,6 +35,7 @@ export function useAsyncState<T>(): UseAsyncStateReturn<T> {
   const sequenceRef = useRef(0);
 
   useEffect(() => {
+    isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
     };

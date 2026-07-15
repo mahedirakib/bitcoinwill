@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PlanOutput } from '@/lib/bitcoin/types';
-import { buildSharePrintHtml, buildSharesText, escapeHtml } from './shareExport';
+import { buildSharePrintHtml, buildShareText, escapeHtml } from './shareExport';
 
 const socialRecoveryKit: NonNullable<PlanOutput['social_recovery_kit']> = {
   config: { threshold: 2, total: 3 },
@@ -41,19 +41,21 @@ describe('share export helpers', () => {
       },
     };
 
-    const html = buildSharePrintHtml(maliciousResult);
+    const html = buildSharePrintHtml(maliciousResult, 1);
 
     expect(html).toContain('&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;');
     expect(html).not.toContain('<script>alert("x")</script>');
     expect(html).toContain('tb1p&lt;address&gt;&amp;0');
   });
 
-  it('builds plain text share export content', () => {
-    const text = buildSharesText(resultWithShares);
+  it('builds a plain text artifact containing only the selected share', () => {
+    const text = buildShareText(resultWithShares, 1);
 
-    expect(text).toContain('BITCOIN WILL - SOCIAL RECOVERY SHARES');
+    expect(text).toContain('BITCOIN WILL - SOCIAL RECOVERY SHARE 1');
     expect(text).toContain('Configuration: 2-of-3');
     expect(text).toContain('--- SHARE 1 OF 3 ---');
+    expect(text).not.toContain('--- SHARE 2 OF 3 ---');
+    expect(text).not.toContain('b'.repeat(80));
   });
 
   it('requires social recovery share material', () => {
@@ -62,7 +64,11 @@ describe('share export helpers', () => {
       social_recovery_kit: undefined,
     };
 
-    expect(() => buildSharePrintHtml(resultWithoutShares)).toThrow('Social recovery kit is required');
-    expect(() => buildSharesText(resultWithoutShares)).toThrow('Social recovery kit is required');
+    expect(() => buildSharePrintHtml(resultWithoutShares, 1)).toThrow('Social recovery kit is required');
+    expect(() => buildShareText(resultWithoutShares, 1)).toThrow('Social recovery kit is required');
+  });
+
+  it('rejects an unknown share index', () => {
+    expect(() => buildShareText(resultWithShares, 99)).toThrow('Social recovery share was not found');
   });
 });

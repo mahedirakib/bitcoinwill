@@ -11,18 +11,24 @@ interface ShareInput {
 interface ShareRecoveryProps {
   onKeyReconstructed: (privateKeyHex: string) => void;
   onCancel: () => void;
-  /** When provided, the reconstructed key is verified to derive to this pubkey. */
-  beneficiaryPubkey?: string;
+  beneficiaryPubkey: string;
+  threshold: 2 | 3;
+  totalShares: 3 | 5;
 }
 
-export const ShareRecovery = ({ onKeyReconstructed, onCancel, beneficiaryPubkey }: ShareRecoveryProps) => {
+export const ShareRecovery = ({
+  onKeyReconstructed,
+  onCancel,
+  beneficiaryPubkey,
+  threshold,
+  totalShares,
+}: ShareRecoveryProps) => {
   const { showToast } = useToast();
   const idCounterRef = useRef(0);
   const [shareInputs, setShareInputs] = useState<ShareInput[]>(() => [
     { id: idCounterRef.current++, value: '' },
     { id: idCounterRef.current++, value: '' },
   ]);
-  const [threshold, setThreshold] = useState<2 | 3>(2);
   const [isCombining, setIsCombining] = useState(false);
   const [reconstructedKey, setReconstructedKey] = useState<string | null>(null);
   const [showKey, setShowKey] = useState(false);
@@ -39,10 +45,10 @@ export const ShareRecovery = ({ onKeyReconstructed, onCancel, beneficiaryPubkey 
 
   const addShareInput = useCallback(() => {
     setShareInputs((prev) => {
-      if (prev.length >= 5) return prev;
+      if (prev.length >= totalShares) return prev;
       return [...prev, { id: idCounterRef.current++, value: '' }];
     });
-  }, []);
+  }, [totalShares]);
 
   const removeShareInput = useCallback((id: number) => {
     setShareInputs((prev) => {
@@ -159,23 +165,9 @@ export const ShareRecovery = ({ onKeyReconstructed, onCancel, beneficiaryPubkey 
 
       <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-white p-3">
         <span className="text-sm font-semibold">Share configuration</span>
-        <div className="flex gap-1">
-          {([2, 3] as const).map((t) => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => setThreshold(t)}
-              aria-pressed={threshold === t}
-              className={`rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
-                threshold === t
-                  ? 'border-foreground bg-foreground text-white'
-                  : 'border-border bg-white text-foreground hover:border-border-strong'
-              }`}
-            >
-              {t === 2 ? '2-of-3' : '3-of-5'}
-            </button>
-          ))}
-        </div>
+        <span className="rounded-md border border-foreground bg-foreground px-3 py-1.5 text-xs font-medium text-white">
+          {threshold}-of-{totalShares}
+        </span>
       </div>
 
       <div className="space-y-2">
@@ -211,7 +203,7 @@ export const ShareRecovery = ({ onKeyReconstructed, onCancel, beneficiaryPubkey 
         ))}
       </div>
 
-      {shareInputs.length < 5 && (
+      {shareInputs.length < totalShares && (
         <button
           type="button"
           onClick={addShareInput}

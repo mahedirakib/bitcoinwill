@@ -10,6 +10,7 @@ import { getNetworkParams } from '../network';
 
 const MAX_ABSOLUTE_FEE_SATS = 1_000_000;
 const MAX_FEE_RATE_SATS_PER_VBYTE = 500;
+const MAX_FEE_PERCENT = 10n;
 
 interface VaultTransactionInspection {
   feeSats: number;
@@ -118,8 +119,9 @@ export const inspectVaultTransaction = async (
     destinationAddress,
     getNetworkParams(request.network),
   );
-  if (!transaction.outs.some((output) => bytesToHex(output.script) === bytesToHex(destinationScript))) {
-    throw new Error('Transaction does not pay the confirmed destination address.');
+  const destinationScriptHex = bytesToHex(destinationScript);
+  if (!transaction.outs.every((output) => bytesToHex(output.script) === destinationScriptHex)) {
+    throw new Error('Every transaction output must pay the confirmed destination address.');
   }
 
   const totalOutputSats = transaction.outs.reduce((sum, output) => sum + output.value, 0n);
@@ -129,7 +131,12 @@ export const inspectVaultTransaction = async (
   }
   const feeSats = Number(fee);
   const feeRateSatsPerVbyte = feeSats / transaction.virtualSize();
-  if (feeSats > MAX_ABSOLUTE_FEE_SATS || feeRateSatsPerVbyte > MAX_FEE_RATE_SATS_PER_VBYTE) {
+  const exceedsRelativeFeeLimit = fee * 100n > totalInputSats * MAX_FEE_PERCENT;
+  if (
+    feeSats > MAX_ABSOLUTE_FEE_SATS ||
+    feeRateSatsPerVbyte > MAX_FEE_RATE_SATS_PER_VBYTE ||
+    exceedsRelativeFeeLimit
+  ) {
     throw new Error(
       `Transaction fee is too high (${feeSats} sats, ${feeRateSatsPerVbyte.toFixed(1)} sat/vB).`,
     );

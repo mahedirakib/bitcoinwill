@@ -303,17 +303,31 @@ export const importVaultsFromBackup = (json: string): ImportResult => {
 const isValidVault = (vault: unknown): vault is SavedVault => {
   if (typeof vault !== 'object' || vault === null) return false;
   const v = vault as Record<string, unknown>;
+  const hasValidOptionalMetadata =
+    (v.notes === undefined || typeof v.notes === 'string') &&
+    (v.lastCheckedAt === undefined || isIsoTimestamp(v.lastCheckedAt)) &&
+    (v.tags === undefined || (
+      Array.isArray(v.tags) &&
+      v.tags.length <= 100 &&
+      v.tags.every((tag) => typeof tag === 'string')
+    ));
   return (
     typeof v.id === 'string' &&
     typeof v.name === 'string' &&
     typeof v.address === 'string' &&
     typeof v.network === 'string' &&
     typeof v.addressType === 'string' &&
-    typeof v.createdAt === 'string' &&
+    isIsoTimestamp(v.createdAt) &&
     typeof v.plan === 'object' &&
-    typeof v.result === 'object'
+    typeof v.result === 'object' &&
+    hasValidOptionalMetadata
   );
 };
+
+const isIsoTimestamp = (value: unknown): value is string =>
+  typeof value === 'string' &&
+  Number.isFinite(Date.parse(value)) &&
+  new Date(value).toISOString() === value;
 
 const normalizeSavedVault = (vault: unknown): SavedVault | null => {
   if (!isValidVault(vault)) return null;
@@ -330,9 +344,17 @@ const normalizeSavedVault = (vault: unknown): SavedVault | null => {
       return null;
     }
     return {
-      ...vault,
+      id: vault.id,
+      name: vault.name,
+      address: normalized.result.address,
+      network: normalized.plan.network,
+      addressType: normalized.result.address_type,
+      createdAt: vault.createdAt,
       plan: normalized.plan,
       result: stripRecoveryKitSecrets(normalized.result),
+      notes: vault.notes,
+      lastCheckedAt: vault.lastCheckedAt,
+      tags: vault.tags ? [...vault.tags] : undefined,
     };
   } catch {
     return null;

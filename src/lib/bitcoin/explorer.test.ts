@@ -542,12 +542,33 @@ describe('explorer helpers', () => {
       fallbackToOtherProvider: false,
       fetcher,
       vault,
-    })).rejects.toThrow('does not pay the confirmed destination address');
+    })).rejects.toThrow('Every transaction output must pay the confirmed destination address');
+
+    const splitSpend = makeSpend(bitcoinAddress.toOutputScript(address, networks.testnet), 1n);
+    splitSpend.addOutput(Uint8Array.of(0x51), 8_999n);
+    await expect(broadcastTransaction({
+      network: 'testnet',
+      rawTxHex: splitSpend.toHex(),
+      provider: 'mempool',
+      fallbackToOtherProvider: false,
+      fetcher,
+      vault,
+    })).rejects.toThrow('Every transaction output must pay the confirmed destination address');
 
     inputValue = 2_000_000;
     await expect(broadcastTransaction({
       network: 'testnet',
       rawTxHex: makeSpend(bitcoinAddress.toOutputScript(address, networks.testnet), 1n).toHex(),
+      provider: 'mempool',
+      fallbackToOtherProvider: false,
+      fetcher,
+      vault,
+    })).rejects.toThrow('Transaction fee is too high');
+
+    inputValue = 10_000;
+    await expect(broadcastTransaction({
+      network: 'testnet',
+      rawTxHex: makeSpend(bitcoinAddress.toOutputScript(address, networks.testnet), 8_000n).toHex(),
       provider: 'mempool',
       fallbackToOtherProvider: false,
       fetcher,

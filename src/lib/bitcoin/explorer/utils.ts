@@ -39,13 +39,20 @@ export const sanitizeRawTxHex = (rawTxHex: string): string => {
 };
 
 export const toSafeInteger = (value: unknown): number => {
-  if (typeof value !== 'number' || !Number.isFinite(value)) return 0;
-  return Math.trunc(value);
+  if (
+    typeof value !== 'number' ||
+    !Number.isSafeInteger(value) ||
+    value < 0 ||
+    value > 2_100_000_000_000_000
+  ) return 0;
+  return value;
 };
 
 export const parseTipHeight = (value: string): number | undefined => {
-  const parsed = Number.parseInt(value.trim(), 10);
-  return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
+  const normalized = value.trim();
+  if (!/^\d+$/.test(normalized)) return undefined;
+  const parsed = Number(normalized);
+  return Number.isSafeInteger(parsed) ? parsed : undefined;
 };
 
 export const extractErrorMessage = async (response: Response): Promise<string> => {

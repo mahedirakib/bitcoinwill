@@ -526,6 +526,32 @@ describe('vaultStorage', () => {
       expect(result.errors).toHaveLength(1);
     });
 
+    it('rejects backup metadata that cannot be rendered safely', () => {
+      const kit = createCanonicalKit(151);
+      const backup = {
+        version: '1.0',
+        exportedAt: new Date().toISOString(),
+        vaults: [{
+          id: 'unsafe-metadata',
+          name: 'Unsafe metadata',
+          address: kit.result.address,
+          network: kit.plan.network,
+          addressType: kit.result.address_type,
+          createdAt: new Date().toISOString(),
+          plan: kit.plan,
+          result: kit.result,
+          notes: { text: 'not a renderable string' },
+          tags: 'not-an-array',
+        }],
+      };
+
+      const result = importVaultsFromBackup(JSON.stringify(backup));
+
+      expect(result.imported).toBe(0);
+      expect(result.errors).toEqual(['Invalid vault data: Unsafe metadata']);
+      expect(getSavedVaults()).toHaveLength(0);
+    });
+
     it('strips social_recovery_kit shares when importing a backup', () => {
       const kit = createCanonicalKit(151);
       const backup = {

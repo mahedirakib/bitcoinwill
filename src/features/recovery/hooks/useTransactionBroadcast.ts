@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import type { BitcoinNetwork } from '@/lib/bitcoin/types';
 import type {
   BroadcastTransactionResult,
@@ -24,6 +24,7 @@ export const useTransactionBroadcast = (
   const [rawTxHex, setRawTxHexState] = useState('');
   const [recoveryDestination, setRecoveryDestinationState] = useState('');
   const [broadcastMainnetPhrase, setBroadcastMainnetPhrase] = useState('');
+  const isBroadcastingRef = useRef(false);
   const {
     data: broadcastResult,
     isLoading: isBroadcasting,
@@ -36,16 +37,19 @@ export const useTransactionBroadcast = (
   const isMainnet = network === 'mainnet';
 
   const setRawTxHex = useCallback((value: string) => {
+    if (isBroadcastingRef.current) return;
     setRawTxHexState(value);
     resetAsync();
   }, [resetAsync]);
 
   const setRecoveryDestination = useCallback((value: string) => {
+    if (isBroadcastingRef.current) return;
     setRecoveryDestinationState(value);
     resetAsync();
   }, [resetAsync]);
 
   const broadcastTransaction = useCallback(async () => {
+    if (isBroadcastingRef.current) return;
     if (!publicExplorerAvailable) {
       const message = 'Public broadcast is unavailable on Regtest. Use your local node RPC instead.';
       showToast(message, 'error');
@@ -58,17 +62,22 @@ export const useTransactionBroadcast = (
       return;
     }
 
-    await execute(async () => {
-      const result = await broadcastTx({
-        network,
-        provider: explorerProvider,
-        rawTxHex,
-        fallbackToOtherProvider: true,
-        vault: vault ? { ...vault, destinationAddress: recoveryDestination } : undefined,
+    isBroadcastingRef.current = true;
+    try {
+      await execute(async () => {
+        const result = await broadcastTx({
+          network,
+          provider: explorerProvider,
+          rawTxHex,
+          fallbackToOtherProvider: true,
+          vault: vault ? { ...vault, destinationAddress: recoveryDestination } : undefined,
+        });
+        showToast(`Broadcast accepted by ${result.providerLabel}`);
+        return result;
       });
-      showToast(`Broadcast accepted by ${result.providerLabel}`);
-      return result;
-    });
+    } finally {
+      isBroadcastingRef.current = false;
+    }
   }, [network, explorerProvider, rawTxHex, isMainnet, broadcastMainnetPhrase, showToast, publicExplorerAvailable, execute, vault, recoveryDestination]);
 
   const clearBroadcastState = useCallback(() => {

@@ -71,9 +71,10 @@ export const BroadcastPanel = ({
           className="field-input font-mono"
           autoComplete="off"
           spellCheck={false}
+          disabled={isBroadcasting}
         />
         <p className="text-xs text-muted-foreground">
-          Broadcasting is blocked unless the transaction contains an output to this exact address.
+          Broadcasting is blocked unless every transaction output pays this exact address and the fee is within safety limits.
         </p>
       </div>
 
@@ -87,6 +88,7 @@ export const BroadcastPanel = ({
           onChange={(event) => onRawTxHexChange(event.target.value)}
           placeholder="020000000001…"
           className="field-input h-36 resize-none"
+          disabled={isBroadcasting}
         />
       </div>
 
@@ -105,6 +107,7 @@ export const BroadcastPanel = ({
             onChange={(event) => onBroadcastMainnetPhraseChange(event.target.value)}
             className="field-input"
             placeholder="Type phrase exactly"
+            disabled={isBroadcasting}
           />
         </div>
       )}

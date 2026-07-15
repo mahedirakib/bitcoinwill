@@ -119,14 +119,14 @@ const RecoveryPage = ({ initialData, onBack }: RecoveryPageProps) => {
   };
 
   const handleKeyReconstructed = (privateKeyHex: string) => {
-    if (model && !privateKeyMatchesBeneficiary(privateKeyHex, model.beneficiaryPubkey)) {
+    if (!model || !privateKeyMatchesBeneficiary(privateKeyHex, model.beneficiaryPubkey)) {
       showToast('Reconstructed key does not match this Recovery Kit beneficiary key.', 'error');
       setShowShareRecovery(false);
       return;
     }
 
     setReconstructedKey(privateKeyHex);
-    showToast(model ? 'Private key verified against the Recovery Kit.' : 'Private key reconstructed. Load the Recovery Kit to verify it.');
+    showToast('Private key verified against the Recovery Kit.');
     setShowShareRecovery(false);
   };
 
@@ -146,12 +146,14 @@ const RecoveryPage = ({ initialData, onBack }: RecoveryPageProps) => {
     setModel(null);
   };
 
-  if (showShareRecovery) {
+  if (showShareRecovery && model?.sssConfig) {
     return (
       <ShareRecovery
         onKeyReconstructed={handleKeyReconstructed}
-        onCancel={handleBackToLoader}
-        beneficiaryPubkey={model?.beneficiaryPubkey}
+        onCancel={() => setShowShareRecovery(false)}
+        beneficiaryPubkey={model.beneficiaryPubkey}
+        threshold={model.sssConfig.threshold}
+        totalShares={model.sssConfig.total}
       />
     );
   }
@@ -161,7 +163,6 @@ const RecoveryPage = ({ initialData, onBack }: RecoveryPageProps) => {
       <RecoveryKitLoader
         onLoad={handleLoadModel}
         onBack={onBack}
-        onSocialRecovery={() => setShowShareRecovery(true)}
       />
     );
   }
@@ -173,6 +174,11 @@ const RecoveryPage = ({ initialData, onBack }: RecoveryPageProps) => {
       onPrint={handlePrint}
       onBack={handleBackToLoader}
     >
+      {model.sssConfig && (
+        <button type="button" onClick={() => setShowShareRecovery(true)} className="btn-secondary print:hidden">
+          Combine social recovery shares
+        </button>
+      )}
       {publicExplorerAvailable ? (
         <>
           <VaultStatusPanel

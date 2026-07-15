@@ -8,8 +8,8 @@ interface ResultStepProps {
   onOpenDownloadChecklist: () => void;
   onViewInstructions: () => void;
   onCopyToClipboard: (text: string, label: string) => void;
-  onPrintShares: (result: PlanOutput) => void;
-  onDownloadShares: (result: PlanOutput) => void;
+  onPrintShare: (result: PlanOutput, shareIndex: number) => void;
+  onDownloadShare: (result: PlanOutput, shareIndex: number) => void;
   onSaveVault?: () => void;
   isVaultSaved?: boolean;
 }
@@ -19,8 +19,8 @@ export const ResultStep = ({
   onOpenDownloadChecklist,
   onViewInstructions,
   onCopyToClipboard,
-  onPrintShares,
-  onDownloadShares,
+  onPrintShare,
+  onDownloadShare,
   onSaveVault,
   isVaultSaved,
 }: ResultStepProps) => {
@@ -120,25 +120,16 @@ export const ResultStep = ({
                     <div className="rounded bg-muted px-2 py-1 font-mono text-[10px] break-all text-muted-foreground">
                       {share.share.slice(0, 28)}…{share.share.slice(-28)}
                     </div>
+                    <div className="flex gap-2">
+                      <button type="button" onClick={() => onPrintShare(result, share.index)} className="btn-secondary !px-2 !py-1 text-xs">
+                        <Printer className="h-3.5 w-3.5" /> Print
+                      </button>
+                      <button type="button" onClick={() => onDownloadShare(result, share.index)} className="btn-secondary !px-2 !py-1 text-xs">
+                        <Download className="h-3.5 w-3.5" /> Download
+                      </button>
+                    </div>
                   </div>
                 ))}
-              </div>
-
-              <div className="mt-3 flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => onPrintShares(result)}
-                  className="btn-secondary"
-                >
-                  <Printer className="h-4 w-4" /> Print share cards
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onDownloadShares(result)}
-                  className="btn-secondary"
-                >
-                  <Download className="h-4 w-4" /> Download all
-                </button>
               </div>
 
               <div className="mt-3 rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground space-y-1">

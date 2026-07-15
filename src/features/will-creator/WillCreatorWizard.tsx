@@ -9,7 +9,7 @@ import { useToast } from '@/components/Toast';
 import { useVaults } from '@/hooks/useVaults';
 import { usesDisallowedSampleKey } from './safety';
 import { parseWizardDraft } from './draftState';
-import { buildSharePrintHtml, buildSharesText } from './shareExport';
+import { buildSharePrintHtml, buildShareText } from './shareExport';
 import { splitPrivateKey } from '@/lib/bitcoin/sss';
 import { bytesToHex, hexToBytes } from '@/lib/bitcoin/hex';
 import { generateSecp256k1PrivateKey } from '@/lib/bitcoin/keygen';
@@ -308,11 +308,11 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorW
     showToast('Key cleared');
   };
 
-  const printShares = (result: PlanOutput) => {
+  const printShare = (result: PlanOutput, shareIndex: number) => {
     if (!result.social_recovery_kit) return;
 
     try {
-      const html = buildSharePrintHtml(result);
+      const html = buildSharePrintHtml(result, shareIndex);
       const blob = new Blob([html], { type: 'text/html' });
       const url = URL.createObjectURL(blob);
       const printWindow = window.open(url, '_blank');
@@ -369,11 +369,17 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorW
     };
   }, []);
 
-  const downloadSharesAsTxt = (result: PlanOutput) => {
+  const downloadShareAsTxt = (result: PlanOutput, shareIndex: number) => {
     if (!result.social_recovery_kit) return;
-    downloadTxt(`bitcoin-will-shares-${result.address.slice(0, 8)}.txt`, buildSharesText(result));
-    
-    showToast('Shares downloaded');
+    try {
+      downloadTxt(
+        `bitcoin-will-share-${shareIndex}-${result.address.slice(0, 8)}.txt`,
+        buildShareText(result, shareIndex),
+      );
+      showToast(`Share ${shareIndex} downloaded`);
+    } catch {
+      showToast(`Failed to download share ${shareIndex}`, 'error');
+    }
   };
 
   const updateChecklist = (item: ChecklistItemId) => {
@@ -482,8 +488,8 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorW
                 onViewInstructions({ plan: state.input, result: state.result, created_at: new Date().toISOString() });
               }}
               onCopyToClipboard={copyToClipboard}
-              onPrintShares={printShares}
-              onDownloadShares={downloadSharesAsTxt}
+              onPrintShare={printShare}
+              onDownloadShare={downloadShareAsTxt}
               onSaveVault={handleSaveVault}
               isVaultSaved={isVaultSaved}
             />

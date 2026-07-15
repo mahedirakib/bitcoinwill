@@ -19,8 +19,10 @@ const requireSocialRecoveryKit = (result: PlanOutput) => {
   return result.social_recovery_kit;
 };
 
-export const buildSharePrintHtml = (result: PlanOutput): string => {
+export const buildSharePrintHtml = (result: PlanOutput, shareIndex: number): string => {
   const { shares, config } = requireSocialRecoveryKit(result);
+  const share = shares.find((candidate) => candidate.index === shareIndex);
+  if (!share) throw new Error('Social recovery share was not found');
   const vaultPreview = `${result.address.slice(0, 20)}...${result.address.slice(-10)}`;
 
   return `
@@ -41,19 +43,17 @@ export const buildSharePrintHtml = (result: PlanOutput): string => {
         </head>
         <body>
           <div style="text-align: center; margin-bottom: 30px;">
-            <h1 style="margin: 0;">Bitcoin Will - Social Recovery Shares</h1>
+            <h1 style="margin: 0;">Bitcoin Will - Social Recovery Share</h1>
             <p style="color: #666; margin: 8px 0;">Vault: ${escapeHtml(vaultPreview)}</p>
             <p style="color: #f97316; font-weight: bold;">${config.threshold}-of-${config.total} Configuration</p>
           </div>
-          ${shares.map(share => `
-            <div class="card">
-              <div class="header">Social Recovery Share #${escapeHtml(String(share.index))}</div>
-              <div class="share-number">${escapeHtml(String(share.index))}</div>
-              <div class="share-data">${escapeHtml(share.share)}</div>
-              <div class="info"><strong>This is Share ${escapeHtml(String(share.index))} of ${config.total}</strong><br>Store this card in a safe place. Any ${config.threshold} shares can recover the funds.</div>
-              <div class="warning"><strong>Important:</strong> Do not store multiple shares in the same location. Give this card to a trusted person who understands what it is for.</div>
-            </div>
-          `).join('')}
+          <div class="card">
+            <div class="header">Social Recovery Share #${escapeHtml(String(share.index))}</div>
+            <div class="share-number">${escapeHtml(String(share.index))}</div>
+            <div class="share-data">${escapeHtml(share.share)}</div>
+            <div class="info"><strong>This is Share ${escapeHtml(String(share.index))} of ${config.total}</strong><br>Store this card in a safe place. Any ${config.threshold} shares can recover the funds.</div>
+            <div class="warning"><strong>Important:</strong> Do not store multiple shares in the same location. Give this card to a trusted person who understands what it is for.</div>
+          </div>
           <div style="text-align: center; margin-top: 30px; padding: 20px; background: #fef3c7; border-radius: 8px;">
             <strong>Recovery Instructions:</strong><br>To claim funds, the beneficiary needs:<br>1. This share (or ${config.threshold - 1} other shares)<br>2. The Recovery Kit file<br>3. Access to the Bitcoin Will app
           </div>
@@ -62,23 +62,24 @@ export const buildSharePrintHtml = (result: PlanOutput): string => {
       `;
 };
 
-export const buildSharesText = (result: PlanOutput): string => {
+export const buildShareText = (result: PlanOutput, shareIndex: number): string => {
   const { shares, config } = requireSocialRecoveryKit(result);
+  const share = shares.find((candidate) => candidate.index === shareIndex);
+  if (!share) throw new Error('Social recovery share was not found');
 
-  return `BITCOIN WILL - SOCIAL RECOVERY SHARES
-======================================
+  return `BITCOIN WILL - SOCIAL RECOVERY SHARE ${share.index}
+========================================
 Vault Address: ${result.address}
 Configuration: ${config.threshold}-of-${config.total}
 Generated: ${new Date().toISOString()}
 
 INSTRUCTIONS:
-- Distribute each share to a different trusted person
+- Store this share separately from every other share
 - Any ${config.threshold} shares can reconstruct the beneficiary key
 - Never store all shares in one location
 
-SHARES:
-${shares.map(s => `--- SHARE ${s.index} OF ${config.total} ---
-${s.share}`).join('\n')}
+--- SHARE ${share.index} OF ${config.total} ---
+${share.share}
 
 RECOVERY PROCESS:
 To claim funds, the beneficiary needs:

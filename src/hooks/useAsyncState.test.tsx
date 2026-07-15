@@ -1,8 +1,23 @@
+import { StrictMode, type ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useAsyncState } from './useAsyncState';
 
 describe('useAsyncState', () => {
+  it('completes operations after Strict Mode effect replay', async () => {
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <StrictMode>{children}</StrictMode>
+    );
+    const { result } = renderHook(() => useAsyncState<number>(), { wrapper });
+
+    await act(async () => {
+      await result.current.execute(async () => 42);
+    });
+
+    expect(result.current.data).toBe(42);
+    expect(result.current.isLoading).toBe(false);
+  });
+
   it('returns data on success', async () => {
     const { result } = renderHook(() => useAsyncState<number>());
 

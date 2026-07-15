@@ -1,4 +1,5 @@
 import { PlanInput, PlanOutput, AddressType, type KeyOrigin } from './types';
+import type { SSSConfig } from './sss';
 import { calculateTime } from './utils';
 import { buildPlan } from './planEngine';
 import { bytesToHex, hexToBytes } from './hex';
@@ -53,6 +54,8 @@ export interface InstructionModel {
   ownerKeyOrigin?: KeyOrigin;
   /** Beneficiary signer origin for hardware-wallet identification */
   beneficiaryKeyOrigin?: KeyOrigin;
+  /** Social-recovery threshold loaded from the verified Recovery Kit. */
+  sssConfig?: SSSConfig;
   /** ISO 8601 timestamp of when instructions were generated */
   createdAt?: string;
 }
@@ -232,6 +235,7 @@ export const buildInstructions = (plan: PlanInput, result: PlanOutput, createdAt
     taprootLeafVersion: result.taproot_leaf_version,
     ownerKeyOrigin: plan.owner_key_origin,
     beneficiaryKeyOrigin: plan.beneficiary_key_origin,
+    sssConfig: plan.sss_config,
     createdAt: createdAt || new Date().toISOString(),
   };
 };
