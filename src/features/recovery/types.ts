@@ -6,6 +6,7 @@ import type {
   ExplorerProvider
 } from '@/lib/bitcoin/explorer';
 import type { CheckInPlan } from '@/lib/bitcoin/checkin';
+import type { PlanInput, PlanOutput } from '@/lib/bitcoin/types';
 
 export type { RecoveryKitData };
 
@@ -39,7 +40,7 @@ export interface RecoveryPageProps {
 }
 
 export interface RecoveryKitLoaderProps {
-  onLoad: (model: InstructionModel) => void;
+  onLoad: (kit: RecoveryKitData) => void;
   onBack: () => void;
   onSocialRecovery?: () => void;
 }
@@ -75,6 +76,13 @@ export interface BroadcastPanelProps {
   onBroadcastMainnetPhraseChange: (value: string) => void;
   onBroadcast: () => void;
   reconstructedKey?: string | null;
+}
+
+export interface SpendTemplatePanelProps {
+  model: InstructionModel;
+  plan: PlanInput;
+  result: PlanOutput;
+  vaultStatus: AddressSummary | null;
 }
 
 export interface InstructionsViewProps {

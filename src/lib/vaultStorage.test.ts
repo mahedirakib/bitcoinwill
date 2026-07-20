@@ -12,6 +12,7 @@ import {
   getVaultByAddress,
   exportVaults,
   importVaultsFromBackup,
+  setVaultPersistenceEnabled,
 } from './vaultStorage';
 import type { PlanInput, PlanOutput } from './bitcoin/types';
 import { buildPlan } from './bitcoin/planEngine';
@@ -57,10 +58,12 @@ describe('vaultStorage', () => {
 
   beforeEach(() => {
     mockStorage.clear();
+    setVaultPersistenceEnabled(true);
     vi.stubGlobal('localStorage', mockStorage);
   });
 
   afterEach(() => {
+    setVaultPersistenceEnabled(true);
     vi.unstubAllGlobals();
   });
 
@@ -550,6 +553,22 @@ describe('vaultStorage', () => {
       expect(result.imported).toBe(0);
       expect(result.errors).toEqual(['Invalid vault data: Unsafe metadata']);
       expect(getSavedVaults()).toHaveLength(0);
+    });
+
+    it('blocks reads and writes when vault persistence is disabled', () => {
+      const saved = saveVault(mockPlan, mockResult);
+      expect(saved).not.toBeNull();
+      expect(getSavedVaults()).toHaveLength(1);
+
+      setVaultPersistenceEnabled(false);
+      expect(getSavedVaults()).toEqual([]);
+      expect(saveVault(mockPlan, mockResult)).toBeNull();
+      expect(importVaultsFromBackup(JSON.stringify(createCanonicalKit(200))).errors).toContain(
+        'Vault storage is disabled (ephemeral mode)',
+      );
+
+      setVaultPersistenceEnabled(true);
+      expect(getSavedVaults()).toHaveLength(1);
     });
 
     it('strips social_recovery_kit shares when importing a backup', () => {

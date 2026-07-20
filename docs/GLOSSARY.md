@@ -15,12 +15,12 @@ A Bitcoin protocol upgrade that separates signature data from transaction data, 
 ## Keys
 
 ### Public Key
-A cryptographic key that can be shared publicly. Used to receive Bitcoin and verify signatures. In Bitcoin Will, you provide public keys (not private keys).
+A cryptographic key that can be shared publicly. Used to receive Bitcoin and verify signatures. In Bitcoin Will, standard vaults only need public keys.
 
 **Format:** 66 hexadecimal characters starting with 02 or 03
 
 ### Private Key
-A secret cryptographic key that allows spending Bitcoin. NEVER share your private key. Bitcoin Will never asks for private keys.
+A secret cryptographic key that allows spending Bitcoin. NEVER share your private key. Standard vaults never ask for private keys; optional social recovery generates a beneficiary private key in the browser so it can be split into shares—export offline and do not paste owner keys into the app.
 
 ### Compressed Public Key
 A 33-byte (66 hex char) public key format. Modern standard for Bitcoin. Must start with 02 or 03.

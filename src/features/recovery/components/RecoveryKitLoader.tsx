@@ -1,9 +1,6 @@
 import { useState } from 'react';
 import { ChevronLeft, FileText, Key, Users, Database } from 'lucide-react';
-import {
-  buildInstructions,
-  validateAndNormalizeRecoveryKit,
-} from '@/lib/bitcoin/instructions';
+import { validateAndNormalizeRecoveryKit } from '@/lib/bitcoin/instructions';
 import { useToast } from '@/components/Toast';
 import { useVaults } from '@/hooks/useVaults';
 import type { SavedVault } from '@/lib/vaultStorage';
@@ -50,8 +47,7 @@ export const RecoveryKitLoader = ({
     try {
       const parsed = JSON.parse(serializedKit);
       const normalized = validateAndNormalizeRecoveryKit(parsed);
-      const model = buildInstructions(normalized.plan, normalized.result, normalized.created_at);
-      onLoad(model);
+      onLoad(normalized);
       showToast('Instructions loaded successfully');
     } catch (error) {
       showToast((error as Error).message || 'Error parsing JSON', 'error');
@@ -88,8 +84,12 @@ export const RecoveryKitLoader = ({
 
   const handleLoadSavedVault = (vault: SavedVault) => {
     try {
-      const model = buildInstructions(vault.plan, vault.result, vault.createdAt);
-      onLoad(model);
+      const normalized = validateAndNormalizeRecoveryKit({
+        plan: vault.plan,
+        result: vault.result,
+        created_at: vault.createdAt,
+      });
+      onLoad(normalized);
       showToast(`Loaded ${vault.name}`);
     } catch (error) {
       showToast((error as Error).message || 'Error loading vault', 'error');

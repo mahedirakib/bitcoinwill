@@ -8,7 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
-- No changes yet.
+- Unsigned PSBT spend templates (owner, beneficiary, check-in) on the recovery flow.
+- Vault deep links at `/vaults/:id`.
+- Ephemeral mode setting to disable browser vault storage.
+
+### Changed
+- Aligned public claims with behavior: standard vaults are pubkey-only; optional SSS generates a beneficiary key client-side only.
+- Relabeled `docs/SECURITY_AUDIT_2026-02-17.md` as a dependency/supply-chain hardening report (not a formal crypto audit).
+- Synced PROTOCOL, TODO, ARCHITECTURE, README badges/test counts, and UI copy with shipped Taproot, SSS, and HW features.
 
 ## 1.0.0 - 2026-02-17
 

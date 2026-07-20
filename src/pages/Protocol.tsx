@@ -120,7 +120,7 @@ OP_ENDIF`}
               <Shield className="h-4 w-4 text-foreground/70" /> Security properties
             </h3>
             <ul className="space-y-1.5 text-sm text-foreground/80">
-              <li>• <strong className="font-semibold">Non-custodial:</strong> no private keys are requested or generated.</li>
+              <li>• <strong className="font-semibold">Non-custodial:</strong> no server holds keys; standard vaults use pubkeys only (SSS may generate a beneficiary key locally).</li>
               <li>• <strong className="font-semibold">Stateless:</strong> no user data stored on any server.</li>
               <li>• <strong className="font-semibold">Deterministic:</strong> fixed inputs yield a fixed, auditable output.</li>
             </ul>
@@ -140,7 +140,7 @@ OP_ENDIF`}
               'Runs locally in the browser',
               'Does not require an account',
               'Does not store user data on any server',
-              'Does not see private keys',
+              'Does not upload private keys (SSS keygen stays local)',
             ].map((item) => (
               <li key={item} className="flex items-start gap-2">
                 <CheckCircle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-success" />

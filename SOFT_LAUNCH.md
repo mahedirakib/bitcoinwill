@@ -16,7 +16,7 @@
 ## Who to Share With
 - **Bitcoin Developers:** For peer review of the script logic and security model.
 - **Sovereign Bitcoiners:** For feedback on the UX and "Dead Man's Switch" utility.
-- **Open Source Communities:** To gather contributions for future Taproot support.
+- **Open Source Communities:** To gather contributions for PSBT helpers, independent script review, and UX polish.
 
 ## Who NOT to Market To (Yet)
 - **General Public:** Until the tool has been peer-reviewed by the Bitcoin community.

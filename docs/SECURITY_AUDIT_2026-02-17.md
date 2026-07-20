@@ -1,14 +1,16 @@
-# Security Audit Report (2026-02-17)
+# Dependency Hardening Report (2026-02-17)
 
-This report summarizes the third-party security tooling run for the `v1.0.0` hardening pass.
+**What this is:** automated third-party **dependency and supply-chain tooling** run for the `v1.0.0` hardening pass (npm audit, package signatures, CI secret scanning).
+
+**What this is not:** an independent cryptography or Bitcoin-script audit of P2WSH/P2TR vault construction, Taproot NUMS usage, or Shamir recovery. Treat script correctness as requiring separate review and your own verification.
 
 ## Scope
 
 - Static client application (`React + Vite + TypeScript`)
-- Bitcoin logic modules (`src/lib/bitcoin/`)
 - Dependency and supply-chain checks
+- CI security gates supporting the release decision
 
-## Third-Party Tooling Results
+## Tooling Results
 
 ### 1) npm package signatures and attestations
 
@@ -65,4 +67,4 @@ Based on:
 - Existing CI secret scanning and recurring security workflow
 - Expanded test coverage for Bitcoin logic and explorer integration
 
-This release is approved as `v1.0.0` for production deployment, with ongoing review encouraged through private maintainer, security, and release workflows.
+This release is approved as `v1.0.0` for production deployment **from a dependency-hardening perspective**, with ongoing review encouraged through private maintainer, security, and release workflows. A dedicated independent audit of vault scripts and key-handling paths remains welcome and is tracked in `TODO.md`.

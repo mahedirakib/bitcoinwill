@@ -21,6 +21,15 @@ export interface SavedVault {
 export const VAULTS_STORAGE_KEY = 'bitcoinwill_saved_vaults';
 const STORAGE_KEY = VAULTS_STORAGE_KEY;
 
+/** When false, vault list reads as empty and writes are rejected (ephemeral mode). */
+let vaultPersistenceEnabled = true;
+
+export const isVaultPersistenceEnabled = (): boolean => vaultPersistenceEnabled;
+
+export const setVaultPersistenceEnabled = (enabled: boolean): void => {
+  vaultPersistenceEnabled = enabled;
+};
+
 const generateVaultId = (): string => {
   const timestamp = Date.now().toString(36);
   // Use crypto.randomUUID when available for better collision resistance,
@@ -49,6 +58,7 @@ const stripRecoveryKitSecrets = (result: PlanOutput): PlanOutput => {
 };
 
 export const getSavedVaults = (): SavedVault[] => {
+  if (!vaultPersistenceEnabled) return [];
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (!stored) return [];
@@ -63,6 +73,7 @@ export const getSavedVaults = (): SavedVault[] => {
 };
 
 export const saveVault = (plan: PlanInput, result: PlanOutput, name?: string): SavedVault | null => {
+  if (!vaultPersistenceEnabled) return null;
   let normalized: RecoveryKitData;
   try {
     normalized = validateAndNormalizeRecoveryKit({ plan, result });
@@ -96,6 +107,7 @@ export const saveVault = (plan: PlanInput, result: PlanOutput, name?: string): S
 };
 
 export const deleteVault = (id: string): boolean => {
+  if (!vaultPersistenceEnabled) return false;
   const existing = getSavedVaults();
   const filtered = existing.filter((v) => v.id !== id);
   try {
@@ -116,6 +128,7 @@ export const clearAllVaults = (): boolean => {
 };
 
 export const updateVaultName = (id: string, name: string): boolean => {
+  if (!vaultPersistenceEnabled) return false;
   const existing = getSavedVaults();
   const updated = existing.map((v) =>
     v.id === id ? { ...v, name: name.trim() || v.name } : v
@@ -129,6 +142,7 @@ export const updateVaultName = (id: string, name: string): boolean => {
 };
 
 export const updateVaultNotes = (id: string, notes: string): boolean => {
+  if (!vaultPersistenceEnabled) return false;
   const existing = getSavedVaults();
   const updated = existing.map((v) =>
     v.id === id ? { ...v, notes: notes.trim() } : v
@@ -142,6 +156,7 @@ export const updateVaultNotes = (id: string, notes: string): boolean => {
 };
 
 export const updateVaultLastChecked = (id: string): boolean => {
+  if (!vaultPersistenceEnabled) return false;
   const existing = getSavedVaults();
   const updated = existing.map((v) =>
     v.id === id ? { ...v, lastCheckedAt: new Date().toISOString() } : v
@@ -155,6 +170,7 @@ export const updateVaultLastChecked = (id: string): boolean => {
 };
 
 export const updateVaultTags = (id: string, tags: string[]): boolean => {
+  if (!vaultPersistenceEnabled) return false;
   const existing = getSavedVaults();
   const updated = existing.map((v) =>
     v.id === id
@@ -205,6 +221,11 @@ export interface ImportResult {
 
 export const importVaultsFromBackup = (json: string): ImportResult => {
   const result: ImportResult = { imported: 0, skipped: 0, errors: [] };
+
+  if (!vaultPersistenceEnabled) {
+    result.errors.push('Vault storage is disabled (ephemeral mode)');
+    return result;
+  }
 
   try {
     const parsed = JSON.parse(json);

@@ -140,14 +140,15 @@ Explorer APIs (Mempool.space / Blockstream.info)
 
 ### Stateless Architecture
 - **No server** - Pure client-side application
-- **No database** - All data in browser memory
+- **No database** - No server-side store; optional vault list may use browser localStorage
 - **No accounts** - No user registration or login
-- **Recovery Kit JSON** - The only persistence mechanism
+- **Recovery Kit JSON** - Canonical portable persistence; browser storage is optional convenience
 
 ### Client-Side Only
-- **Private keys never touch the application** - Only public keys are handled
-- **Works offline** - Plan creation works without internet
-- **Air-gap compatible** - Can run on isolated machines
+- **Public-key by default** - Standard vaults use only pubkeys you provide
+- **Social recovery exception** - Optional SSS generates a beneficiary private key in-browser for share split (never uploaded)
+- **Offline-capable planning** - Address/script generation works without internet
+- **Air-gap compatible** - Can run on isolated machines for plan creation; explorers/HW need network or local node
 
 ### P2WSH SegWit with CSV
 - **Pay-to-Witness-Script-Hash** - Efficient, lower fees
@@ -156,9 +157,9 @@ Explorer APIs (Mempool.space / Blockstream.info)
   - Path A: Owner immediate spend
   - Path B: Beneficiary spend after CSV delay
 
-### Taproot Support (v1.1+)
-- **P2TR addresses** - Hidden scripts until spending
-- **Same script logic** - Upgraded address format only
+### Taproot Support
+- **P2TR script-path vaults** - Policy in tapscript with BIP341 NUMS internal key
+- **Same owner / beneficiary CSV policy** - Address format and key encoding differ (x-only in script)
 - **Better privacy** - Scripts don't appear on-chain until used
 
 ## Security Model
@@ -349,11 +350,14 @@ GitHub Pages (or any static host)
 
 ## Future Considerations
 
+### Shipped (keep docs in sync)
+- **Taproot (P2TR) script-path vaults** - See `taproot.ts`
+- **Hardware wallet pubkey import** - Ledger / Trezor
+- **Social recovery** - Shamir's Secret Sharing over beneficiary key
+
 ### Planned Features
-- **Full Taproot (P2TR) support** - Hidden scripts until spending
-- **Hardware wallet integration** - Connect Ledger/Trezor for keys
-- **Social recovery** - Shamir's Secret Sharing for multi-party recovery
 - **Mobile app** - React Native port
+- **Coldcard / QR air-gap** - Additional hardware flows
 
 ### Architecture Evolution
 - **Plugin system** - Allow custom script templates

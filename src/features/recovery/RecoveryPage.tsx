@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import * as ecc from 'tiny-secp256k1';
-import type { InstructionModel } from '@/lib/bitcoin/instructions';
+import type { InstructionModel, RecoveryKitData } from '@/lib/bitcoin/instructions';
 import {
   buildInstructions,
   generateInstructionTxt,
   validateAndNormalizeRecoveryKit,
 } from '@/lib/bitcoin/instructions';
 import { downloadTxt } from '@/lib/utils/download';
-import type { BitcoinNetwork } from '@/lib/bitcoin/types';
+import type { BitcoinNetwork, PlanInput, PlanOutput } from '@/lib/bitcoin/types';
 import { useToast } from '@/components/Toast';
 import { supportsPublicExplorerNetwork } from '@/lib/bitcoin/explorer';
 import { bytesToHex, hexToBytes } from '@/lib/bitcoin/hex';
@@ -18,6 +18,7 @@ import { RecoveryKitLoader } from './components/RecoveryKitLoader';
 import { InstructionsView } from './components/InstructionsView';
 import { VaultStatusPanel } from './components/VaultStatusPanel';
 import { CheckInPanel } from './components/CheckInPanel';
+import { SpendTemplatePanel } from './components/SpendTemplatePanel';
 import { BroadcastPanel } from './components/BroadcastPanel';
 import { ShareRecovery } from './components/ShareRecovery';
 import type { RecoveryPageProps } from './types';
@@ -33,6 +34,8 @@ const privateKeyMatchesBeneficiary = (privateKeyHex: string, beneficiaryPubkey: 
 
 const RecoveryPage = ({ initialData, onBack }: RecoveryPageProps) => {
   const [model, setModel] = useState<InstructionModel | null>(null);
+  const [kitPlan, setKitPlan] = useState<PlanInput | null>(null);
+  const [kitResult, setKitResult] = useState<PlanOutput | null>(null);
   const [showShareRecovery, setShowShareRecovery] = useState(false);
   const [reconstructedKey, setReconstructedKey] = useState<string | null>(null);
   const { showToast } = useToast();
@@ -83,6 +86,20 @@ const RecoveryPage = ({ initialData, onBack }: RecoveryPageProps) => {
 
   const processedInitialDataRef = useRef<string | null>(null);
 
+  const applyKit = (kit: RecoveryKitData) => {
+    const m = buildInstructions(kit.plan, kit.result, kit.created_at);
+    if (
+      reconstructedKey &&
+      !privateKeyMatchesBeneficiary(reconstructedKey, m.beneficiaryPubkey)
+    ) {
+      setReconstructedKey(null);
+      showToast('Reconstructed key does not match this Recovery Kit beneficiary key.', 'error');
+    }
+    setKitPlan(kit.plan);
+    setKitResult(kit.result);
+    setModel(m);
+  };
+
   useEffect(() => {
     // Use a stable key to avoid re-processing when only the object reference changes
     const dataKey = initialData
@@ -94,6 +111,8 @@ const RecoveryPage = ({ initialData, onBack }: RecoveryPageProps) => {
       try {
         const normalized = validateAndNormalizeRecoveryKit(initialData);
         const m = buildInstructions(normalized.plan, normalized.result, normalized.created_at);
+        setKitPlan(normalized.plan);
+        setKitResult(normalized.result);
         setModel(m);
       } catch (error) {
         showToast((error as Error).message || 'Invalid Recovery Kit', 'error');
@@ -107,15 +126,8 @@ const RecoveryPage = ({ initialData, onBack }: RecoveryPageProps) => {
     clearBroadcastState();
   }, [vaultIdentifier, clearVaultStatus, clearBroadcastState]);
 
-  const handleLoadModel = (loadedModel: InstructionModel) => {
-    if (
-      reconstructedKey &&
-      !privateKeyMatchesBeneficiary(reconstructedKey, loadedModel.beneficiaryPubkey)
-    ) {
-      setReconstructedKey(null);
-      showToast('Reconstructed key does not match this Recovery Kit beneficiary key.', 'error');
-    }
-    setModel(loadedModel);
+  const handleLoadKit = (kit: RecoveryKitData) => {
+    applyKit(kit);
   };
 
   const handleKeyReconstructed = (privateKeyHex: string) => {
@@ -143,6 +155,8 @@ const RecoveryPage = ({ initialData, onBack }: RecoveryPageProps) => {
   const handleBackToLoader = () => {
     setShowShareRecovery(false);
     setReconstructedKey(null);
+    setKitPlan(null);
+    setKitResult(null);
     setModel(null);
   };
 
@@ -161,7 +175,7 @@ const RecoveryPage = ({ initialData, onBack }: RecoveryPageProps) => {
   if (!model) {
     return (
       <RecoveryKitLoader
-        onLoad={handleLoadModel}
+        onLoad={handleLoadKit}
         onBack={onBack}
       />
     );
@@ -198,6 +212,15 @@ const RecoveryPage = ({ initialData, onBack }: RecoveryPageProps) => {
             checkInCadence={checkInCadence}
             onCadenceChange={setCheckInCadence}
           />
+
+          {kitPlan && kitResult && (
+            <SpendTemplatePanel
+              model={model}
+              plan={kitPlan}
+              result={kitResult}
+              vaultStatus={vaultStatus}
+            />
+          )}
 
           <BroadcastPanel
             model={model}

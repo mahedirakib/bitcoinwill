@@ -32,7 +32,7 @@ const Learn = ({ onBack }: { onBack: () => void }) => {
         </div>
         <div className="panel p-5">
           <ul className="list-disc list-inside space-y-1.5 text-sm text-foreground/80">
-            <li><strong className="font-semibold">Not a wallet:</strong> we do not store your Bitcoin or your private keys.</li>
+            <li><strong className="font-semibold">Not a wallet:</strong> we do not store your Bitcoin. Standard vaults use public keys only; optional social recovery generates a beneficiary key in your browser only.</li>
             <li><strong className="font-semibold">Not custody:</strong> no one but you (and eventually your heir) has access to the funds.</li>
             <li><strong className="font-semibold">Not legal advice:</strong> this is a technical tool. Consult a lawyer for estate planning.</li>
           </ul>

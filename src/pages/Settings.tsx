@@ -7,6 +7,7 @@ import {
   Shield,
   Info,
   Database,
+  EyeOff,
 } from 'lucide-react';
 import { useSettings, MAINNET_CONFIRMATION_PHRASE } from '@/state/settings';
 import { useVaults } from '@/hooks/useVaults';
@@ -20,11 +21,19 @@ interface SettingsPageProps {
 }
 
 export const SettingsPage = ({ onNavigate }: SettingsPageProps) => {
-  const { network, setNetwork, isMainnetUnlocked, unlockMainnet } = useSettings();
-  const { vaults, exportAllVaults, clearAllVaults } = useVaults();
+  const {
+    network,
+    setNetwork,
+    isMainnetUnlocked,
+    unlockMainnet,
+    ephemeralMode,
+    setEphemeralMode,
+  } = useSettings();
+  const { vaults, exportAllVaults, clearAllVaults, refreshVaults } = useVaults();
   const { showToast } = useToast();
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showMainnetConfirm, setShowMainnetConfirm] = useState(false);
+  const [showEphemeralConfirm, setShowEphemeralConfirm] = useState(false);
   const [confirmPhrase, setConfirmPhrase] = useState('');
   const mainnetPhraseInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -57,6 +66,33 @@ export const SettingsPage = ({ onNavigate }: SettingsPageProps) => {
     }
     setShowClearConfirm(false);
     showToast('All vaults cleared');
+  };
+
+  const enableEphemeralMode = () => {
+    if (!setEphemeralMode(true)) {
+      showToast('Could not enable ephemeral mode', 'error');
+      return;
+    }
+    refreshVaults();
+    setShowEphemeralConfirm(false);
+    showToast('Ephemeral mode on — vaults will not be saved on this device');
+  };
+
+  const handleEphemeralToggle = (enabled: boolean) => {
+    if (enabled) {
+      if (vaults.length > 0) {
+        setShowEphemeralConfirm(true);
+        return;
+      }
+      enableEphemeralMode();
+      return;
+    }
+    if (!setEphemeralMode(false)) {
+      showToast('Could not disable ephemeral mode', 'error');
+      return;
+    }
+    refreshVaults();
+    showToast('Ephemeral mode off — vaults can be saved again');
   };
 
   const handleNetworkChange = (newNetwork: string) => {
@@ -141,20 +177,68 @@ export const SettingsPage = ({ onNavigate }: SettingsPageProps) => {
           <div className="text-sm font-semibold">Data management</div>
         </div>
         <p className="text-xs text-muted-foreground">
-          {vaults.length > 0
-            ? `You have ${vaults.length} saved vault${vaults.length > 1 ? 's' : ''}.`
-            : 'No saved vaults.'}
+          {ephemeralMode
+            ? 'Ephemeral mode is on. My vaults stays empty on this device.'
+            : vaults.length > 0
+              ? `You have ${vaults.length} saved vault${vaults.length > 1 ? 's' : ''}.`
+              : 'No saved vaults.'}
         </p>
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
             onClick={handleExport}
-            disabled={vaults.length === 0}
+            disabled={vaults.length === 0 || ephemeralMode}
             className="btn-secondary"
           >
             <Download className="h-4 w-4" /> Export all vaults
           </button>
         </div>
+      </div>
+
+      {/* Ephemeral mode */}
+      <div className="panel p-5 space-y-4">
+        <div className="flex items-center gap-2">
+          <EyeOff className="h-4 w-4 text-muted-foreground" />
+          <div className="text-sm font-semibold">Ephemeral mode</div>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Do not save vaults in browser storage. Recovery kits remain downloadable files.
+          Best for air-gap or shared machines.
+        </p>
+        <label className="flex items-center gap-3 text-sm">
+          <input
+            type="checkbox"
+            checked={ephemeralMode}
+            onChange={(e) => handleEphemeralToggle(e.target.checked)}
+            className="h-4 w-4 rounded border-border"
+          />
+          <span>Disable vault storage on this device</span>
+        </label>
+        {ephemeralMode && (
+          <div className="rounded-md border border-warning/30 bg-warning-bg p-3 text-xs text-warning">
+            Vault list, import, and auto-save are disabled until you turn this off.
+          </div>
+        )}
+        {showEphemeralConfirm && (
+          <div className="space-y-3">
+            <div className="rounded-md border border-danger/20 bg-danger/5 p-3 text-sm text-danger">
+              Enabling ephemeral mode deletes all {vaults.length} saved vault
+              {vaults.length > 1 ? 's' : ''} from this device. Export a backup first if needed.
+            </div>
+            <div className="flex gap-2">
+              <button type="button" onClick={enableEphemeralMode} className="btn-danger">
+                Delete vaults and enable
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowEphemeralConfirm(false)}
+                className="btn-ghost text-sm"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* App Info */}
@@ -170,7 +254,9 @@ export const SettingsPage = ({ onNavigate }: SettingsPageProps) => {
           </div>
           <div className="flex justify-between">
             <span>Data storage</span>
-            <span className="text-foreground">Local (device only)</span>
+            <span className="text-foreground">
+              {ephemeralMode ? 'Ephemeral (none)' : 'Local (device only)'}
+            </span>
           </div>
           <div className="flex justify-between">
             <span>Architecture</span>

@@ -11,7 +11,7 @@
 <p align="center">
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT"></a>
   <img src="https://img.shields.io/badge/status-stable-success" alt="Status">
-  <img src="https://img.shields.io/badge/tests-215%20unit%20passing-brightgreen" alt="Tests">
+  <img src="https://img.shields.io/badge/tests-424%20unit%20passing-brightgreen" alt="Tests">
   <img src="https://img.shields.io/badge/typescript-5.6-blue" alt="TypeScript">
   <img src="https://img.shields.io/badge/react-18-61DAFB?logo=react" alt="React">
 </p>
@@ -70,14 +70,17 @@ Bitcoin Will is a **stateless, client-side utility** that implements the TimeLoc
 ### Recovery Tools
 - **Recovery Kit** JSON export with all vault data
 - **Live vault status** via Mempool.space / Blockstream.info
+- **Unsigned PSBT templates** for owner, beneficiary, and check-in spends
 - **Owner check-in helper** to track CSV timer
 - **Transaction broadcast** helper for beneficiaries
 - **Print-friendly** beneficiary instructions
+- **My vaults** with deep links (`/vaults/:id`) and optional ephemeral mode
 
 ### Security & Privacy
 - **100% client-side** - No server, no database, no accounts
-- **No private keys** - Only public keys handled
-- **Works offline** - Air-gap compatible
+- **Public-key by default** - Standard vaults use only pubkeys you provide
+- **Social recovery exception** - Optional SSS generates a beneficiary key in-browser; you export and split it (never uploaded)
+- **Offline-capable planning** - Address/script generation works without network; status, broadcast, and hardware need connectivity
 - **Open source (MIT)** - Anyone can audit, self-host, or verify the build
 
 ---
@@ -142,7 +145,7 @@ npm run preview
 - **[TIP Whitepaper](./whitepaper.md)** - Protocol scope, threat model, and assumptions
 - **[Protocol Specification](./PROTOCOL.md)** - TIP script and implementation details
 - **[Security Policy](./SECURITY.md)** - Threat model and safety tips
-- **[Security Audit](./docs/SECURITY_AUDIT_2026-02-17.md)** - Third-party audit results
+- **[Dependency Hardening Report](./docs/SECURITY_AUDIT_2026-02-17.md)** - npm audit / supply-chain checks (not a formal crypto audit)
 - **[API Reference](./src/lib/bitcoin/README.md)** - Bitcoin module documentation
 
 ### Project Management
@@ -209,10 +212,10 @@ See [AGENTS.md](./AGENTS.md) for detailed patterns and constraints.
 
 ## 🔒 Security
 
-- **Stateless:** No server stores your data
-- **Private keys:** Never touch the application
+- **Stateless server-side:** No backend stores your data (browser localStorage may keep vault metadata you choose to save)
+- **Private keys:** Not required for standard pubkey-only vaults. Optional social recovery generates a beneficiary key client-side only—never paste owner keys into the app
 - **Deterministic:** Same inputs always produce same outputs
-- **Audited:** Third-party security audit completed
+- **Hardened:** Dependency signature checks and CI security gates; not a substitute for an independent script/crypto audit
 - **Open source:** Fully auditable; report issues privately via [SECURITY.md](./SECURITY.md)
 
 > **Watch out for malicious forks.** Only trust builds from the official

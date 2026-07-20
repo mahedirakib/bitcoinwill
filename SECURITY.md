@@ -3,8 +3,9 @@
 ## Our Philosophy
 
 Bitcoin Will is designed as a **stateless, client-side utility**.
-- **Non-Custodial:** We never touch your private keys.
-- **Privacy-First:** We never store your public keys or plan data on any server.
+- **Non-Custodial:** No server ever holds your keys or funds. Standard vault creation uses only public keys you provide.
+- **Social recovery exception:** Optional Shamir (SSS) mode generates a beneficiary private key in the browser so it can be split into shares. That key stays on your device unless you export it; it is never uploaded.
+- **Privacy-First:** We never store your public keys or plan data on any server. Optional vault list data may live in browser localStorage only.
 - **Open Source:** The entire codebase is public under the MIT license. Anyone can read, audit, and self-host it. There is no hidden code.
 
 > **Open source is a security feature, not a bug.** If you cannot read the code that touches your Bitcoin inheritance, you cannot trust it.
@@ -108,8 +109,10 @@ feature.
 - Print the **Beneficiary Instructions** and store them with your physical
   estate documents.
 - Use a hardware wallet to manage your keys.
-- Never paste private keys into any web app, including this one. This app
-  never needs them and will never ask for them.
+- Never paste owner or long-term private keys into any web app. Standard
+  vaults only need public keys. If you use social recovery, treat the
+  generated beneficiary key and shares like cash—export offline, then clear
+  them from the browser session.
 
 ## What This App Does NOT Protect Against
 
@@ -118,10 +121,13 @@ feature.
 - Loss of your private keys or Recovery Kit (that is your responsibility).
 - Social engineering targeting you or your beneficiary.
 
-## Recent Audit
+## Dependency Hardening (not a formal crypto audit)
 
 - See [`docs/SECURITY_AUDIT_2026-02-17.md`](./docs/SECURITY_AUDIT_2026-02-17.md)
-  for the latest third-party tooling results and release hardening summary.
+  for npm audit, package-signature, and CI supply-chain checks from the
+  `v1.0.0` hardening pass. That report is **dependency/tooling hardening**,
+  not an independent review of BIP341 scripts or the full threat model.
 
-Independent audits and reviews from the community are welcome. If you publish
-a review, open an issue or PR referencing it and we will link it here.
+Independent script and cryptography reviews from the community are welcome.
+If you publish a review, open an issue or PR referencing it and we will link
+it here.

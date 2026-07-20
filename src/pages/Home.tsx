@@ -217,7 +217,7 @@ export const Home = ({ onNavigate, onViewVault }: HomeProps) => {
       {/* Clarifications */}
       <div className="grid gap-4 md:grid-cols-3">
         {[
-          { t: 'Not a wallet', d: 'We never see, store, or manage your private keys. Only public keys are used.', icon: ShieldCheck },
+          { t: 'Not a wallet', d: 'Standard vaults use only public keys. Optional social recovery generates a beneficiary key in your browser—never on a server.', icon: ShieldCheck },
           { t: 'Not a legal will', d: 'Technical recovery tooling. A separate legal estate plan is still required.', icon: Clock },
           { t: 'Not a custodian', d: 'Your Bitcoin stays on the network under your control until script rules permit recovery.', icon: Shield },
         ].map((x) => (

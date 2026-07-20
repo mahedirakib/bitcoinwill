@@ -36,7 +36,7 @@ Welcome to the Bitcoin Will documentation. This page serves as a central hub to 
 ### 🔒 I'm a Security Researcher
 
 - [Security Policy](../SECURITY.md) - Threat model and safety tips
-- [Security Audit Report](./SECURITY_AUDIT_2026-02-17.md) - Third-party audit results
+- [Dependency Hardening Report](./SECURITY_AUDIT_2026-02-17.md) - npm audit / supply-chain checks (not a formal crypto audit)
 - [Protocol Specification](../PROTOCOL.md) - Bitcoin script details
 - [ADR Index](./adr/README.md) - Architecture decisions with security implications
 
@@ -82,7 +82,7 @@ Welcome to the Bitcoin Will documentation. This page serves as a central hub to 
 | Document | Description | Audience |
 |----------|-------------|----------|
 | [Security Policy](../SECURITY.md) | Threat model and mitigations | Everyone |
-| [Security Audit](./SECURITY_AUDIT_2026-02-17.md) | Third-party audit results | Researchers |
+| [Dependency Hardening](./SECURITY_AUDIT_2026-02-17.md) | npm audit / supply-chain checks | Researchers |
 | [ADR Index](./adr/README.md) | Architecture decisions | Developers, Researchers |
 
 ### Project Management

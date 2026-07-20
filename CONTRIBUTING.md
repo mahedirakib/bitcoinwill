@@ -90,7 +90,7 @@ The app will be available at `http://localhost:5173`.
 - Analytics or tracking code
 - Breaking changes to the Recovery Kit format (requires a migration plan
   and explicit maintainer approval)
-- Features that require private keys (the app must remain non-custodial)
+- Features that upload or server-store private keys (must stay non-custodial; optional local SSS keygen is the only intentional private-key path)
 
 ### Pull Request Workflow
 

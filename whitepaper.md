@@ -14,7 +14,7 @@ If a Bitcoin holder dies or becomes permanently incapacitated without a recovera
 
 ## Protocol Goals
 TIP is designed around these goals:
-- **Non-custodial:** No third party needs private keys.
+- **Non-custodial:** No third party needs or holds private keys.
 - **Bitcoin-native:** Uses existing script primitives, no sidechain or token required.
 - **Deterministic:** Given the same inputs, outputs should be reproducible and auditable.
 - **Composable:** Can be implemented by different applications and operational workflows.
@@ -30,7 +30,7 @@ Canonical structure:
 - `OP_ELSE <locktime_blocks> OP_CHECKSEQUENCEVERIFY OP_DROP <beneficiary_pubkey> OP_CHECKSIG`
 - `OP_ENDIF`
 
-TIP implementations commonly use P2WSH outputs, though future variants may use Taproot-compatible constructions.
+TIP implementations commonly use P2WSH outputs; Taproot (P2TR) script-path constructions are also used where supported.
 
 ## Operational Model
 - **Funding:** The user funds the TIP output address.

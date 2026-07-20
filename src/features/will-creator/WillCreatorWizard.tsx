@@ -248,7 +248,10 @@ export const WillCreatorWizard = ({ onCancel, onViewInstructions }: WillCreatorW
     }
     const saved = saveNewVault(state.input, state.result);
     if (!saved) {
-      showToast('Could not save vault: browser storage is unavailable. Download the Recovery Kit instead.', 'error');
+      showToast(
+        'Could not save vault (storage unavailable or ephemeral mode). Download the Recovery Kit instead.',
+        'error',
+      );
       return;
     }
     setIsVaultSaved(true);

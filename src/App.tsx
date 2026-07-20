@@ -8,7 +8,7 @@ import { KeyboardShortcutsHelp } from './components/KeyboardShortcutsHelp'
 import { PageLoading } from './components/Loading'
 import { AppShell, type NavView } from './components/AppShell'
 import { Home } from './pages/Home'
-import type { SavedVault } from './lib/vaultStorage'
+import { getVaultById, type SavedVault } from './lib/vaultStorage'
 
 type AppView = NavView | 'dev' | 'settings'
 const DEV_VIEW_ENABLED = import.meta.env.DEV
@@ -80,6 +80,17 @@ const normalizeAppPath = (pathname: string): string => {
   return path || '/'
 }
 
+const vaultIdFromPath = (pathname: string): string | null => {
+  const path = normalizeAppPath(pathname)
+  const match = path.match(/^\/vaults\/([^/]+)$/)
+  if (!match) return null
+  try {
+    return decodeURIComponent(match[1])
+  } catch {
+    return match[1]
+  }
+}
+
 const viewFromPath = (pathname: string): AppView => {
   const path = normalizeAppPath(pathname)
   if (path === '/dev') return DEV_VIEW_ENABLED ? 'dev' : 'home'
@@ -89,15 +100,16 @@ const viewFromPath = (pathname: string): AppView => {
   if (path === '/instructions') return 'instructions'
   if (path === '/create') return 'create'
   if (path === '/recover') return 'recover'
-  if (path === '/vaults') return 'vaults'
+  if (path === '/vaults' || path.startsWith('/vaults/')) return 'vaults'
   if (path === '/settings') return 'settings'
   return 'home'
 }
 
-const pathFromView = (view: AppView): string => {
+const pathFromView = (view: AppView, vaultId?: string | null): string => {
   if (view === 'dev') return DEV_VIEW_ENABLED ? '/dev' : '/'
   if (view === 'home') return '/'
   if (view === 'settings') return '/settings'
+  if (view === 'vaults' && vaultId) return `/vaults/${encodeURIComponent(vaultId)}`
   return `/${view}`
 }
 
@@ -113,12 +125,21 @@ const TITLES: Record<NavView, { title: string; subtitle?: string }> = {
   settings:     { title: 'Settings' },
 }
 
+const resolveVaultFromPath = (pathname: string): SavedVault | null => {
+  const id = vaultIdFromPath(pathname)
+  if (!id) return null
+  return getVaultById(id) ?? null
+}
+
 const AppContent = () => {
   const { showToast } = useToast()
   const [activeView, setActiveView] = useState<AppView>(() => viewFromPath(window.location.pathname))
   const historyActionRef = useRef<'push' | 'replace'>('replace')
   const [instructionData, setInstructionData] = useState<InstructionData | undefined>(undefined)
-  const [selectedVault, setSelectedVault] = useState<SavedVault | null>(null)
+  const [selectedVault, setSelectedVault] = useState<SavedVault | null>(() =>
+    resolveVaultFromPath(window.location.pathname)
+  )
+  const missingVaultToastRef = useRef<string | null>(null)
   const [forceQaCrash, setForceQaCrash] = useState(false)
   const [pageRetryKey, setPageRetryKey] = useState(0)
 
@@ -143,8 +164,12 @@ const AppContent = () => {
   }
 
   const handleViewVault = (vault: SavedVault) => {
-    navigateTo('vaults')
+    historyActionRef.current = 'push'
     setSelectedVault(vault)
+    preloadView('vaults')
+    startTransition(() => {
+      setActiveView('vaults')
+    })
   }
 
   const retryCurrentView = () => {
@@ -170,24 +195,57 @@ const AppContent = () => {
 
   useEffect(() => {
     const handlePopstate = () => {
-      const nextView = viewFromPath(window.location.pathname)
+      const pathname = window.location.pathname
+      const nextView = viewFromPath(pathname)
       if (nextView !== 'instructions') {
         setInstructionData(undefined)
       }
-      if (nextView !== 'vaults') {
+      if (nextView === 'vaults') {
+        const id = vaultIdFromPath(pathname)
+        if (id) {
+          const vault = getVaultById(id)
+          if (vault) {
+            setSelectedVault(vault)
+          } else {
+            setSelectedVault(null)
+            if (missingVaultToastRef.current !== id) {
+              missingVaultToastRef.current = id
+              showToast('Vault not found on this device', 'error')
+            }
+          }
+        } else {
+          setSelectedVault(null)
+        }
+      } else {
         setSelectedVault(null)
       }
       setActiveView(nextView)
     }
     window.addEventListener('popstate', handlePopstate)
     return () => window.removeEventListener('popstate', handlePopstate)
-  }, [])
+  }, [showToast])
+
+  // Deep-link: open /vaults/:id on first load when the vault exists.
+  useEffect(() => {
+    const id = vaultIdFromPath(window.location.pathname)
+    if (!id) return
+    const vault = getVaultById(id)
+    if (vault) {
+      setSelectedVault(vault)
+      setActiveView('vaults')
+      return
+    }
+    if (missingVaultToastRef.current !== id) {
+      missingVaultToastRef.current = id
+      showToast('Vault not found on this device', 'error')
+    }
+  }, [showToast])
 
   const meta = TITLES[activeView as NavView] ?? TITLES.home
 
   useEffect(() => {
     const currentPath = normalizeAppPath(window.location.pathname)
-    const nextPath = pathFromView(activeView)
+    const nextPath = pathFromView(activeView, selectedVault?.id ?? null)
     const historyAction = historyActionRef.current
     if (currentPath !== nextPath) {
       const base = import.meta.env.BASE_URL || '/'
@@ -204,7 +262,7 @@ const AppContent = () => {
     // Update document title
     const title = meta.title
     document.title = title === 'Home' ? 'Bitcoin Will' : `${title} · Bitcoin Will`
-  }, [activeView, meta.title])
+  }, [activeView, meta.title, selectedVault?.id])
 
   if (activeView === 'dev' && DEV_VIEW_ENABLED) return <DevPlayground />
 
@@ -346,9 +404,13 @@ const AppContent = () => {
           >
             <VaultDetailPage
               vault={selectedVault}
-              onBack={() => setSelectedVault(null)}
+              onBack={() => {
+                historyActionRef.current = 'push'
+                setSelectedVault(null)
+              }}
               onViewInstructions={handleViewVaultInstructions}
               onDelete={() => {
+                historyActionRef.current = 'push'
                 setSelectedVault(null)
                 showToast('Vault removed')
               }}
